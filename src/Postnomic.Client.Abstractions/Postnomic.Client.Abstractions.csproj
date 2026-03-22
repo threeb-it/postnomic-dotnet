@@ -14,8 +14,6 @@
     <Authors>Postnomic</Authors>
     <PackageTags>postnomic;blog;cms;client;abstractions</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-
-    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
 </Project>
