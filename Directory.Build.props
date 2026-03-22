@@ -2,7 +2,12 @@
 	<PropertyGroup>
 		<RepositoryUrl>https://github.com/threeb-it/postnomic-dotnet</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="/"/>
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all"/>
