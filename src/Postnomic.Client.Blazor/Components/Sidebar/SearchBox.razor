@@ -1,0 +1,71 @@
+@inject IPostnomicBlogService _injectedBlogService
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title fw-bold mb-3">
+            <i class="bi bi-search"></i> Search
+        </h5>
+        <div class="input-group">
+            <input type="text"
+                   class="form-control"
+                   placeholder="Search posts…"
+                   @bind="searchTerm"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDownAsync" />
+            <button class="btn btn-outline-primary" @onclick="SubmitSearchAsync">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+        @if (!string.IsNullOrEmpty(ActiveSearchTerm))
+        {
+            <button class="btn btn-link btn-sm text-decoration-none mt-2 p-0"
+                    @onclick="ClearSearchAsync">
+                &#10005; Clear filter
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The currently active search term synced in from the parent page.
+    /// <see langword="null"/> when no search filter is applied.
+    /// </summary>
+    [Parameter]
+    public string? ActiveSearchTerm { get; set; }
+
+    /// <summary>
+    /// Raised when the user submits a new search term or clears the filter.
+    /// The argument is the new term, or <see langword="null"/> to clear the filter.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> OnFilterChanged { get; set; }
+
+    private string? searchTerm;
+
+    /// <inheritdoc />
+    protected override void OnParametersSet()
+    {
+        searchTerm = ActiveSearchTerm;
+    }
+
+    private async Task SubmitSearchAsync()
+    {
+        var term = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim();
+        await OnFilterChanged.InvokeAsync(term);
+    }
+
+    private async Task HandleKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SubmitSearchAsync();
+        }
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        searchTerm = null;
+        await OnFilterChanged.InvokeAsync(null);
+    }
+}

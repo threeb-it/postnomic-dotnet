@@ -1,0 +1,27 @@
+@* Recursive partial view for rendering a single comment and its nested replies. *@
+@* Invoke with: @await Html.PartialAsync("_Comment", comment) *@
+@model Postnomic.Client.Abstractions.Models.PostnomicComment
+
+<div class="postnomic-comment border-start border-3 ps-3 mb-3">
+    <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="fw-semibold">@(Model.AuthorName ?? "Anonymous")</span>
+        <span class="text-muted small">@Model.CreatedAt.ToString("MMM d, yyyy 'at' h:mm tt")</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Subject))
+    {
+        <p class="mb-1 fw-semibold text-secondary">@Model.Subject</p>
+    }
+
+    <p class="mb-2">@Model.Body</p>
+
+    @if (Model.Replies.Count > 0)
+    {
+        <div class="postnomic-comment-replies ms-3 mt-2">
+            @foreach (var reply in Model.Replies)
+            {
+                @await Html.PartialAsync("_Comment", reply)
+            }
+        </div>
+    }
+</div>

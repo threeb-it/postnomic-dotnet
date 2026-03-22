@@ -1,0 +1,367 @@
+@using Postnomic.Client.Blazor.Components.Sidebar
+@inject IPostnomicBlogService _injectedBlogService
+@inject NavigationManager Navigation
+@inject IOptions<PostnomicClientOptions> _injectedClientOptions
+@implements IDisposable
+
+<PageTitle>@(post?.Title ?? "Post")</PageTitle>
+
+<style>
+    .blog-post-content img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+
+<div class="blog-container">
+    @if (post is null)
+    {
+        <div class="text-center py-5">
+            <p><em>Loading…</em></p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="mb-3">
+                    <a href="@BasePath" class="text-decoration-none">
+                        ← Back to blog
+                    </a>
+                </div>
+
+                <article>
+                    @if (!string.IsNullOrEmpty(post.CoverImageUrl))
+                    {
+                        <div class="text-center mb-4">
+                            <img src="@post.CoverImageUrl"
+                                 class="img-fluid rounded shadow-sm"
+                                 alt="@post.Title"
+                                 style="max-width: 100%; max-height: 450px; object-fit: cover;" />
+                        </div>
+                    }
+
+                    <h1 class="display-6 fw-bold mb-3">@post.Title</h1>
+
+                    <div class="text-muted mb-3 border-bottom pb-3">
+                        <span>
+                            <i class="bi bi-person"></i>
+                            @if (!string.IsNullOrEmpty(post.AuthorSlug))
+                            {
+                                <a href="@($"{BasePath}/author/{post.AuthorSlug}")" class="text-decoration-none">@post.AuthorName</a>
+                            }
+                            else
+                            {
+                                @post.AuthorName
+                            }
+                        </span>
+                        <span class="mx-2">·</span>
+                        <span>
+                            <i class="bi bi-calendar"></i> @post.PublishedAt.ToString("MMMM dd, yyyy")
+                        </span>
+                    </div>
+
+                    @if (post.Tags.Count > 0)
+                    {
+                        <div class="mb-3">
+                            @foreach (var tag in post.Tags)
+                            {
+                                <span class="badge bg-secondary me-1">@tag.Name</span>
+                            }
+                        </div>
+                    }
+
+                    @if (post.Categories.Count > 0)
+                    {
+                        <div class="mb-3">
+                            @foreach (var category in post.Categories)
+                            {
+                                <span class="badge bg-primary me-1">@category.Name</span>
+                            }
+                        </div>
+                    }
+
+                    <div class="blog-post-content mb-5" style="overflow-wrap: break-word; word-break: break-word;">
+                        @((MarkupString)(post.Content ?? ""))
+                    </div>
+                </article>
+
+                @if (ShowBranding)
+                {
+                    <div class="postnomic-branding alert alert-light border text-center py-3 mt-4" role="complementary">
+                        <small class="text-muted">
+                            Powered by <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer" class="fw-semibold text-decoration-none">Postnomic</a>
+                            — The developer-first headless blog platform.
+                            <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Upgrade to remove this banner</a>
+                        </small>
+                    </div>
+                }
+
+                <hr />
+
+                <section class="comments-section mt-4 mb-5">
+                    <h3 class="mb-4">
+                        Comments (@post.Comments.Count)
+                    </h3>
+
+                    @if (post.Comments.Count == 0)
+                    {
+                        <p class="text-muted">No comments yet.</p>
+                    }
+                    else
+                    {
+                        @foreach (var comment in post.Comments)
+                        {
+                            <CommentView Comment="comment"
+                                         Depth="0"
+                                         PostSlug="@PostSlug"
+                                         Post="post"
+                                         OnCommentPosted="HandleCommentPostedAsync" />
+                        }
+                    }
+
+                    @if (post.CommentsEnabled)
+                    {
+                        <hr class="my-4" />
+                        <h4 class="mb-3">Leave a comment</h4>
+
+                        @if (!string.IsNullOrEmpty(commentSuccessMessage))
+                        {
+                            <div class="alert alert-success">@commentSuccessMessage</div>
+                        }
+                        @if (!string.IsNullOrEmpty(commentErrorMessage))
+                        {
+                            <div class="alert alert-danger">@commentErrorMessage</div>
+                        }
+
+                        <EditForm Model="newComment" OnValidSubmit="SubmitCommentAsync" FormName="newTopLevelComment">
+                            <DataAnnotationsValidator />
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        First name @if (post.CommentRequireFirstname) { <span class="text-danger">*</span> }
+                                    </label>
+                                    <InputText @bind-Value="newComment.AuthorFirstname" class="form-control" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        Last name @if (post.CommentRequireLastname) { <span class="text-danger">*</span> }
+                                    </label>
+                                    <InputText @bind-Value="newComment.AuthorLastname" class="form-control" />
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        Email @if (post.CommentRequireEmail) { <span class="text-danger">*</span> }
+                                    </label>
+                                    <InputText @bind-Value="newComment.AuthorEmail" class="form-control" type="email" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        Phone @if (post.CommentRequirePhone) { <span class="text-danger">*</span> }
+                                    </label>
+                                    <InputText @bind-Value="newComment.AuthorPhone" class="form-control" type="tel" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Subject @if (post.CommentRequireSubject) { <span class="text-danger">*</span> }
+                                </label>
+                                <InputText @bind-Value="newComment.Subject" class="form-control" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Comment <span class="text-danger">*</span></label>
+                                <InputTextArea @bind-Value="newComment.Body" class="form-control" rows="4" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                @(isSubmitting ? "Submitting…" : "Post comment")
+                            </button>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <p class="text-muted fst-italic mt-3">Comments are closed for this post.</p>
+                    }
+                </section>
+            </div>
+
+            @* ── Right sidebar ── *@
+            <div class="col-lg-4">
+                <EstimatedReadTime PostContent="@post.Content" />
+                <TopCommentedPosts />
+                <MostReadPosts />
+
+                <PostnomicPromo Visible="ShowBranding" />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>The URL-friendly slug of the post to display.</summary>
+    [Parameter]
+    public string PostSlug { get; set; } = "";
+
+    private PostnomicPostDetail? post;
+    private PostnomicBlogInfo? blogInfo;
+    private CommentFormModel newComment = new();
+    private bool isSubmitting;
+    private string? commentSuccessMessage;
+    private string? commentErrorMessage;
+
+    private readonly string sessionId = Guid.NewGuid().ToString("N");
+    private DateTime pageOpenedAt;
+    private System.Threading.Timer? readDurationTimer;
+
+    [CascadingParameter]
+    private PostnomicBlogContext? BlogContext { get; set; }
+
+    private IPostnomicBlogService BlogService => BlogContext?.BlogService ?? _injectedBlogService;
+    private string BasePath => BlogContext?.Options.BasePath ?? _injectedClientOptions.Value.BasePath;
+    private bool ShowBranding => blogInfo?.ShowBranding
+        ?? BlogContext?.Options.ShowBranding
+        ?? _injectedClientOptions.Value.ShowBranding;
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        pageOpenedAt = DateTime.UtcNow;
+        await LoadPostAsync();
+        _ = TrackPageViewAsync();
+
+        readDurationTimer = new System.Threading.Timer(
+            _ => _ = ReportReadDurationAsync(),
+            null,
+            TimeSpan.FromSeconds(30),
+            TimeSpan.FromSeconds(30));
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        readDurationTimer?.Dispose();
+        _ = ReportReadDurationAsync();
+    }
+
+    private async Task TrackPageViewAsync()
+    {
+        try
+        {
+            await BlogService.RecordPageViewAsync(
+                sessionId: sessionId,
+                postSlug: PostSlug);
+        }
+        catch
+        {
+            // Analytics is best-effort.
+        }
+    }
+
+    private async Task ReportReadDurationAsync()
+    {
+        try
+        {
+            var duration = (int)(DateTime.UtcNow - pageOpenedAt).TotalSeconds;
+            if (duration < 1) return;
+
+            await BlogService.UpdateReadDurationAsync(
+                sessionId: sessionId,
+                durationSeconds: duration);
+        }
+        catch
+        {
+            // Analytics is best-effort.
+        }
+    }
+
+    private async Task LoadPostAsync()
+    {
+        try
+        {
+            var postTask = BlogService.GetPostAsync(PostSlug);
+            var blogInfoTask = BlogService.GetBlogAsync();
+            await Task.WhenAll(postTask, blogInfoTask);
+            post = await postTask;
+            blogInfo = await blogInfoTask;
+        }
+        catch
+        {
+            post = null;
+            blogInfo = null;
+        }
+    }
+
+    private async Task SubmitCommentAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newComment.Body)) return;
+
+        isSubmitting = true;
+        commentSuccessMessage = null;
+        commentErrorMessage = null;
+
+        try
+        {
+            var request = new PostnomicCreateCommentRequest
+            {
+                Subject = newComment.Subject,
+                Body = newComment.Body!,
+                AuthorFirstname = newComment.AuthorFirstname,
+                AuthorLastname = newComment.AuthorLastname,
+                AuthorEmail = newComment.AuthorEmail,
+                AuthorPhone = newComment.AuthorPhone
+            };
+
+            var result = await BlogService.CreateCommentAsync(PostSlug, request);
+
+            if (result is not null)
+            {
+                newComment = new CommentFormModel();
+
+                commentSuccessMessage = post?.CommentRequireModeration == true
+                    ? "Your comment has been submitted and is awaiting moderation."
+                    : "Your comment has been posted!";
+
+                await LoadPostAsync();
+            }
+            else
+            {
+                commentErrorMessage = "Failed to post comment. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            commentErrorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task HandleCommentPostedAsync()
+    {
+        await LoadPostAsync();
+    }
+
+    /// <summary>
+    /// Internal model bound to the top-level comment form.
+    /// </summary>
+    private class CommentFormModel
+    {
+        public string? Subject { get; set; }
+        public string? Body { get; set; }
+        public string? AuthorFirstname { get; set; }
+        public string? AuthorLastname { get; set; }
+        public string? AuthorEmail { get; set; }
+        public string? AuthorPhone { get; set; }
+    }
+}

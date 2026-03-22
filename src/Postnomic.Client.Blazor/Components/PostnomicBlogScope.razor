@@ -1,0 +1,37 @@
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject IServiceProvider ServiceProvider
+
+<CascadingValue Value="context" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    /// <summary>
+    /// The registered name of the blog to scope. Must match the name passed to
+    /// <c>AddPostnomicBlog(string name, ...)</c> during service registration.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string BlogName { get; set; } = "";
+
+    /// <summary>
+    /// The child content that will receive the scoped blog service via cascading parameter.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private PostnomicBlogContext? context;
+
+    /// <inheritdoc />
+    protected override void OnParametersSet()
+    {
+        var service = ServiceProvider.GetRequiredKeyedService<IPostnomicBlogService>(BlogName);
+        var monitor = ServiceProvider.GetRequiredService<IOptionsMonitor<PostnomicClientOptions>>();
+        context = new PostnomicBlogContext
+        {
+            BlogName = BlogName,
+            BlogService = service,
+            Options = monitor.Get(BlogName)
+        };
+    }
+}

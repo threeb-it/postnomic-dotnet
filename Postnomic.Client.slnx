@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Postnomic.Client.Abstractions/Postnomic.Client.Abstractions.csproj" />
+    <Project Path="src/Postnomic.Client/Postnomic.Client.csproj" />
+    <Project Path="src/Postnomic.Client.AspNetCore/Postnomic.Client.AspNetCore.csproj" />
+    <Project Path="src/Postnomic.Client.Blazor/Postnomic.Client.Blazor.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Postnomic.Client.Abstractions.Tests/Postnomic.Client.Abstractions.Tests.csproj" />
+    <Project Path="tests/Postnomic.Client.Tests/Postnomic.Client.Tests.csproj" />
+    <Project Path="tests/Postnomic.Client.AspNetCore.Tests/Postnomic.Client.AspNetCore.Tests.csproj" />
+    <Project Path="tests/Postnomic.Client.Blazor.Tests/Postnomic.Client.Blazor.Tests.csproj" />
+  </Folder>
+</Solution>

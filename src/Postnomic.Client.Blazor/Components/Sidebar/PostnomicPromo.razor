@@ -1,0 +1,26 @@
+@if (Visible)
+{
+    <div class="postnomic-sidebar-ad card mb-4 shadow-sm border-primary" role="complementary">
+        <div class="card-body text-center">
+            <h5 class="card-title fw-bold">Postnomic</h5>
+            <p class="card-text text-muted small">
+                The developer-first headless blog platform. Add a full-featured blog to your app in minutes.
+            </p>
+            <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer"
+               class="btn btn-primary btn-sm mb-2 w-100">Learn More</a>
+            <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
+               class="btn btn-outline-primary btn-sm w-100">View Pricing</a>
+            <p class="mt-2 mb-0">
+                <small class="text-muted">
+                    <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
+                       class="text-decoration-none">Upgrade to remove ads</a>
+                </small>
+            </p>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool Visible { get; set; }
+}

@@ -1,0 +1,5 @@
+<Project>
+	<ItemGroup>
+		<PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all"/>
+	</ItemGroup>
+</Project>

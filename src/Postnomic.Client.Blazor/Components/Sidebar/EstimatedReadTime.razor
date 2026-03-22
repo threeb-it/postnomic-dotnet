@@ -1,0 +1,47 @@
+@using System.Text.RegularExpressions
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title fw-bold mb-3">
+            <i class="bi bi-clock"></i> Estimated Read Time
+        </h5>
+        @if (string.IsNullOrWhiteSpace(PostContent))
+        {
+            <p class="text-muted small">No content available.</p>
+        }
+        else
+        {
+            <div class="d-flex align-items-center gap-2">
+                <span class="display-6 fw-bold text-primary">@ReadTimeMinutes</span>
+                <span class="text-muted">@(ReadTimeMinutes == 1 ? "minute" : "minutes")</span>
+            </div>
+            <p class="text-muted small mb-0 mt-1">@WordCount.ToString("N0") words</p>
+        }
+    </div>
+</div>
+
+@code {
+    private const int WordsPerMinute = 200;
+
+    /// <summary>
+    /// The raw HTML content of the post used to estimate reading time.
+    /// Pass <see langword="null"/> or an empty string when no content is available.
+    /// </summary>
+    [Parameter]
+    public string? PostContent { get; set; }
+
+    private int WordCount => CountWords(PostContent);
+
+    private int ReadTimeMinutes => Math.Max(1, (int)Math.Ceiling(WordCount / (double)WordsPerMinute));
+
+    private static int CountWords(string? html)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+            return 0;
+
+        var text = Regex.Replace(html, "<[^>]+>", " ");
+        text = System.Net.WebUtility.HtmlDecode(text);
+        var words = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        return words.Length;
+    }
+}

@@ -1,0 +1,276 @@
+@page "{authorSlug}"
+@model Postnomic.Client.AspNetCore.Areas.Blog.Pages.AuthorModel
+@{
+    ViewData["Title"] = Model.Profile.Name;
+}
+
+<div class="container py-4">
+    @if (!string.IsNullOrEmpty(Model.Profile.HeaderImageUrl))
+    {
+        <div class="mb-4">
+            <img src="@Model.Profile.HeaderImageUrl"
+                 class="w-100 rounded shadow-sm"
+                 alt="@Model.Profile.Name header"
+                 style="max-height: 300px; object-fit: cover;" />
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    @if (!string.IsNullOrEmpty(Model.Profile.ProfileImageUrl))
+                    {
+                        <img src="@Model.Profile.ProfileImageUrl"
+                             class="rounded-circle mb-3"
+                             alt="@Model.Profile.Name"
+                             style="width: 150px; height: 150px; object-fit: cover;" />
+                    }
+                    <h2 class="h4 fw-bold">@Model.Profile.Name</h2>
+
+                    @if (!string.IsNullOrEmpty(Model.Profile.Headline))
+                    {
+                        <p class="text-muted">@Model.Profile.Headline</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Profile.JobTitle) || !string.IsNullOrEmpty(Model.Profile.Company))
+                    {
+                        <p class="text-muted small">
+                            @Model.Profile.JobTitle
+                            @if (!string.IsNullOrEmpty(Model.Profile.JobTitle) && !string.IsNullOrEmpty(Model.Profile.Company))
+                            {
+                                <text> at </text>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.Profile.Company))
+                            {
+                                <strong>@Model.Profile.Company</strong>
+                            }
+                        </p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Profile.Location))
+                    {
+                        <p class="text-muted small">📍 @Model.Profile.Location</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Profile.WebsiteUrl))
+                    {
+                        <p>
+                            <a href="@Model.Profile.WebsiteUrl" target="_blank" rel="noopener noreferrer"
+                               class="text-decoration-none">🌐 Website</a>
+                        </p>
+                    }
+
+                    <p class="mb-0">
+                        <span class="badge bg-primary">@Model.Profile.PostCount post@(Model.Profile.PostCount == 1 ? "" : "s")</span>
+                    </p>
+                </div>
+            </div>
+
+            @if (Model.Profile.SocialLinks.Count > 0)
+            {
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Connect</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var link in Model.Profile.SocialLinks)
+                            {
+                                <a href="@link.Url" target="_blank" rel="noopener noreferrer"
+                                   class="btn btn-outline-secondary btn-sm">@link.Platform</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (Model.Profile.Skills.Count > 0)
+            {
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Skills</h5>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var skill in Model.Profile.Skills)
+                            {
+                                <span class="badge bg-secondary">@skill</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (Model.Profile.Languages.Count > 0)
+            {
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Languages</h5>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var lang in Model.Profile.Languages)
+                            {
+                                <li>
+                                    @lang.Name
+                                    @if (!string.IsNullOrEmpty(lang.Proficiency))
+                                    {
+                                        <span class="text-muted small">— @lang.Proficiency</span>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+            @if (Model.Profile.Interests.Count > 0)
+            {
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Interests</h5>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var interest in Model.Profile.Interests)
+                            {
+                                <span class="badge bg-info text-dark">@interest</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @* Postnomic promotion (free tier) *@
+            @if (Model.ShowBranding)
+            {
+                <div class="postnomic-sidebar-ad card mt-3 shadow-sm border-primary" role="complementary">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Postnomic</h5>
+                        <p class="card-text text-muted small">
+                            The developer-first headless blog platform. Add a full-featured blog to your app in minutes.
+                        </p>
+                        <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-primary btn-sm mb-2 w-100">Learn More</a>
+                        <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-outline-primary btn-sm w-100">View Pricing</a>
+                        <p class="mt-2 mb-0">
+                            <small class="text-muted">
+                                <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
+                                   class="text-decoration-none">Upgrade to remove ads</a>
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-8">
+            @if (!string.IsNullOrEmpty(Model.Profile.Bio))
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">About</h5>
+                        @Html.Raw(Model.Profile.Bio)
+                    </div>
+                </div>
+            }
+
+            @if (Model.Profile.Certifications.Count > 0)
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Certifications</h5>
+                        @foreach (var cert in Model.Profile.Certifications)
+                        {
+                            <div class="border-bottom py-2">
+                                <strong>@cert.Name</strong>
+                                @if (!string.IsNullOrEmpty(cert.IssuingOrganization))
+                                {
+                                    <br /><span class="text-muted small">@cert.IssuingOrganization</span>
+                                }
+                                @if (cert.IssueDate.HasValue)
+                                {
+                                    <br /><span class="text-muted small">
+                                        Issued @cert.IssueDate.Value.ToString("MMM yyyy")
+                                        @if (cert.ExpirationDate.HasValue)
+                                        {
+                                            <text> · Expires @cert.ExpirationDate.Value.ToString("MMM yyyy")</text>
+                                        }
+                                    </span>
+                                }
+                                @if (!string.IsNullOrEmpty(cert.CredentialUrl))
+                                {
+                                    <br />
+                                    <a href="@cert.CredentialUrl" target="_blank" rel="noopener noreferrer"
+                                       class="small text-decoration-none">View credential</a>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (Model.Profile.Education.Count > 0)
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Education</h5>
+                        @foreach (var edu in Model.Profile.Education)
+                        {
+                            <div class="border-bottom py-2">
+                                <strong>@edu.Institution</strong>
+                                @if (!string.IsNullOrEmpty(edu.Degree) || !string.IsNullOrEmpty(edu.FieldOfStudy))
+                                {
+                                    <br /><span class="text-muted small">
+                                        @edu.Degree
+                                        @if (!string.IsNullOrEmpty(edu.Degree) && !string.IsNullOrEmpty(edu.FieldOfStudy))
+                                        {
+                                            <text>, </text>
+                                        }
+                                        @edu.FieldOfStudy
+                                    </span>
+                                }
+                                @if (edu.StartDate.HasValue)
+                                {
+                                    <br /><span class="text-muted small">
+                                        @edu.StartDate.Value.ToString("yyyy")
+                                        @if (edu.EndDate.HasValue)
+                                        {
+                                            <text> – @edu.EndDate.Value.ToString("yyyy")</text>
+                                        }
+                                        else
+                                        {
+                                            <text> – Present</text>
+                                        }
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (Model.Profile.RecentPosts.Count > 0)
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Recent Posts</h5>
+                        @foreach (var post in Model.Profile.RecentPosts)
+                        {
+                            <div class="border-bottom py-2">
+                                <a href="@Model.BasePath/post/@post.Slug"
+                                   class="text-decoration-none fw-bold">@post.Title</a>
+                                <br />
+                                <span class="text-muted small">@post.PublishedAt.ToString("MMMM dd, yyyy")</span>
+                                @if (!string.IsNullOrEmpty(post.Excerpt))
+                                {
+                                    <p class="text-muted small mt-1 mb-0">@post.Excerpt</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="mb-3">
+                <a href="@Model.BasePath" class="btn btn-outline-secondary btn-sm">
+                    &larr; Back to Blog
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,86 @@
+@inject IPostnomicBlogService _injectedBlogService
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title fw-bold mb-3">
+            <i class="bi bi-folder"></i> Categories
+        </h5>
+        @if (categories is null)
+        {
+            <p class="text-muted"><em>Loading…</em></p>
+        }
+        else if (categories.Count == 0)
+        {
+            <p class="text-muted small">No categories found.</p>
+        }
+        else
+        {
+            <ul class="list-group list-group-flush">
+                @foreach (var cat in categories)
+                {
+                    var isActive = cat.Slug == ActiveCategorySlug;
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 @(isActive ? "fw-bold" : "")">
+                        <button class="btn btn-link text-decoration-none p-0 text-start @(isActive ? "fw-bold" : "")"
+                                @onclick="() => OnCategorySelectedAsync(cat.Slug)">
+                            @cat.Name
+                        </button>
+                        <span class="badge bg-primary rounded-pill">@cat.PostCount</span>
+                    </li>
+                }
+            </ul>
+            @if (!string.IsNullOrEmpty(ActiveCategorySlug))
+            {
+                <button class="btn btn-link btn-sm text-decoration-none mt-2 p-0"
+                        @onclick="ClearFilterAsync">
+                    &#10005; Clear filter
+                </button>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The currently active category slug filter, if any.
+    /// <see langword="null"/> when no category filter is applied.
+    /// </summary>
+    [Parameter]
+    public string? ActiveCategorySlug { get; set; }
+
+    /// <summary>
+    /// Raised when the user selects a category or clears the category filter.
+    /// The argument is the category slug, or <see langword="null"/> to clear the filter.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> OnFilterChanged { get; set; }
+
+    [CascadingParameter]
+    private PostnomicBlogContext? BlogContext { get; set; }
+
+    private IPostnomicBlogService BlogService => BlogContext?.BlogService ?? _injectedBlogService;
+
+    private List<PostnomicCategory>? categories;
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            categories = await BlogService.GetCategoriesAsync();
+        }
+        catch
+        {
+            categories = [];
+        }
+    }
+
+    private async Task OnCategorySelectedAsync(string slug)
+    {
+        await OnFilterChanged.InvokeAsync(slug == ActiveCategorySlug ? null : slug);
+    }
+
+    private async Task ClearFilterAsync()
+    {
+        await OnFilterChanged.InvokeAsync(null);
+    }
+}

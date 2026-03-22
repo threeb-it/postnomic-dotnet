@@ -1,0 +1,387 @@
+@page "{postSlug}"
+@model Postnomic.Client.AspNetCore.Areas.Blog.Pages.PostModel
+@{
+    ViewData["Title"] = Model.Post.Title;
+}
+
+<style>
+    .postnomic-cover-image {
+        max-height: 450px;
+        width: 100%;
+        object-fit: cover;
+    }
+
+    .postnomic-post-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.375rem;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row g-4">
+
+        @* ══ Main content ════════════════════════════════════════════════════════ *@
+        <div class="col-lg-8">
+
+            @* ── Cover image ── *@
+            @if (!string.IsNullOrWhiteSpace(Model.Post.CoverImageUrl))
+            {
+                <img src="@Model.Post.CoverImageUrl"
+                     alt="@Model.Post.Title cover image"
+                     class="postnomic-cover-image rounded mb-4" />
+            }
+
+            @* ── Post header ── *@
+            <h1 class="fw-bold mb-2">@Model.Post.Title</h1>
+
+            <div class="d-flex flex-wrap gap-2 align-items-center text-muted small mb-3">
+                <span>By
+                    @if (!string.IsNullOrEmpty(Model.Post.AuthorSlug))
+                    {
+                        <a href="@Model.BasePath/author/@Model.Post.AuthorSlug"
+                           class="text-decoration-none"><strong>@Model.Post.AuthorName</strong></a>
+                    }
+                    else
+                    {
+                        <strong>@Model.Post.AuthorName</strong>
+                    }
+                </span>
+                <span>&middot;</span>
+                <span>@Model.Post.PublishedAt.ToString("MMMM d, yyyy")</span>
+                @if (Model.EstimatedReadMinutes > 0)
+                {
+                    <span>&middot;</span>
+                    <span>~@Model.EstimatedReadMinutes min read</span>
+                }
+            </div>
+
+            @* ── Tags ── *@
+            @if (Model.Post.Tags.Count > 0)
+            {
+                <div class="d-flex flex-wrap gap-1 mb-1">
+                    @foreach (var tag in Model.Post.Tags)
+                    {
+                        <a href="@Model.BasePath?tag=@Uri.EscapeDataString(tag.Slug)"
+                           class="badge bg-secondary text-decoration-none">@tag.Name</a>
+                    }
+                </div>
+            }
+
+            @* ── Categories ── *@
+            @if (Model.Post.Categories.Count > 0)
+            {
+                <div class="d-flex flex-wrap gap-1 mb-3">
+                    @foreach (var cat in Model.Post.Categories)
+                    {
+                        <a href="@Model.BasePath?category=@Uri.EscapeDataString(cat.Slug)"
+                           class="badge bg-primary text-decoration-none">@cat.Name</a>
+                    }
+                </div>
+            }
+
+            <hr />
+
+            @* ── Post body ── *@
+            @if (!string.IsNullOrWhiteSpace(Model.Post.Content))
+            {
+                <div class="postnomic-post-content mb-5">
+                    @Html.Raw(Model.Post.Content)
+                </div>
+            }
+            else
+            {
+                <p class="text-muted fst-italic">No content available.</p>
+            }
+
+            @if (Model.ShowBranding)
+            {
+                <div class="postnomic-branding alert alert-light border text-center py-3 mt-4" role="complementary">
+                    <small class="text-muted">
+                        Powered by <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer" class="fw-semibold text-decoration-none">Postnomic</a>
+                        — The developer-first headless blog platform.
+                        <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Upgrade to remove this banner</a>
+                    </small>
+                </div>
+            }
+
+            <hr />
+
+            @* ════ Comments section ══════════════════════════════════════════════ *@
+            <section id="comments" class="mt-4">
+                <h3 class="mb-3">
+                    Comments
+                    @if (Model.Post.Comments.Count > 0)
+                    {
+                        <span class="text-muted fs-6">(@Model.Post.Comments.Count)</span>
+                    }
+                </h3>
+
+                @* ── Success / error banners ── *@
+                @if (!string.IsNullOrEmpty(Model.CommentSubmitSuccessMessage))
+                {
+                    <div class="alert alert-success" role="alert">
+                        @Model.CommentSubmitSuccessMessage
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.CommentSubmitErrorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @Model.CommentSubmitErrorMessage
+                    </div>
+                }
+
+                @* ── Existing comments ── *@
+                @if (Model.Post.Comments.Count > 0)
+                {
+                    <div class="mb-4">
+                        @foreach (var comment in Model.Post.Comments)
+                        {
+                            @await Html.PartialAsync("_Comment", comment)
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted fst-italic mb-4">
+                        No comments yet. Be the first to share your thoughts!
+                    </p>
+                }
+
+                @* ── Comment form ── *@
+                @if (Model.Post.CommentsEnabled)
+                {
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h4 class="card-title h5 mb-3">Leave a Comment</h4>
+
+                            @if (Model.Post.CommentRequireModeration)
+                            {
+                                <p class="text-muted small mb-3">
+                                    Your comment will be reviewed before it appears publicly.
+                                </p>
+                            }
+
+                            <form method="post">
+                                @Html.AntiForgeryToken()
+
+                                @* Validation summary *@
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                                @* Body (always required) *@
+                                <div class="mb-3">
+                                    <label asp-for="CommentInput.Body" class="form-label fw-semibold">
+                                        Comment <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea asp-for="CommentInput.Body"
+                                              class="form-control"
+                                              rows="4"
+                                              placeholder="Write your comment here&hellip;"></textarea>
+                                    <span asp-validation-for="CommentInput.Body" class="text-danger small"></span>
+                                </div>
+
+                                @* Subject (optional or required per blog settings) *@
+                                <div class="mb-3">
+                                    <label asp-for="CommentInput.Subject" class="form-label">
+                                        Subject
+                                        @if (Model.Post.CommentRequireSubject)
+                                        {
+                                            <span class="text-danger">*</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">(optional)</span>
+                                        }
+                                    </label>
+                                    <input asp-for="CommentInput.Subject"
+                                           type="text"
+                                           class="form-control"
+                                           placeholder="Comment subject" />
+                                    <span asp-validation-for="CommentInput.Subject" class="text-danger small"></span>
+                                </div>
+
+                                @* Name fields *@
+                                <div class="row g-3 mb-3">
+                                    <div class="col-sm-6">
+                                        <label asp-for="CommentInput.Firstname" class="form-label">
+                                            First Name
+                                            @if (Model.Post.CommentRequireFirstname)
+                                            {
+                                                <span class="text-danger">*</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">(optional)</span>
+                                            }
+                                        </label>
+                                        <input asp-for="CommentInput.Firstname"
+                                               type="text"
+                                               class="form-control"
+                                               placeholder="Jane" />
+                                        <span asp-validation-for="CommentInput.Firstname" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label asp-for="CommentInput.Lastname" class="form-label">
+                                            Last Name
+                                            @if (Model.Post.CommentRequireLastname)
+                                            {
+                                                <span class="text-danger">*</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">(optional)</span>
+                                            }
+                                        </label>
+                                        <input asp-for="CommentInput.Lastname"
+                                               type="text"
+                                               class="form-control"
+                                               placeholder="Smith" />
+                                        <span asp-validation-for="CommentInput.Lastname" class="text-danger small"></span>
+                                    </div>
+                                </div>
+
+                                @* Contact fields *@
+                                <div class="row g-3 mb-3">
+                                    <div class="col-sm-6">
+                                        <label asp-for="CommentInput.Email" class="form-label">
+                                            Email Address
+                                            @if (Model.Post.CommentRequireEmail)
+                                            {
+                                                <span class="text-danger">*</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">(optional)</span>
+                                            }
+                                        </label>
+                                        <input asp-for="CommentInput.Email"
+                                               type="email"
+                                               class="form-control"
+                                               placeholder="jane@example.com" />
+                                        <span asp-validation-for="CommentInput.Email" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label asp-for="CommentInput.Phone" class="form-label">
+                                            Phone Number
+                                            @if (Model.Post.CommentRequirePhone)
+                                            {
+                                                <span class="text-danger">*</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">(optional)</span>
+                                            }
+                                        </label>
+                                        <input asp-for="CommentInput.Phone"
+                                               type="tel"
+                                               class="form-control"
+                                               placeholder="+1 555 000 0000" />
+                                        <span asp-validation-for="CommentInput.Phone" class="text-danger small"></span>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    Submit Comment
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted fst-italic mt-2">Comments are closed for this post.</p>
+                }
+            </section>
+        </div>
+
+        @* ══ Sidebar ════════════════════════════════════════════════════════════ *@
+        <div class="col-lg-4">
+
+            @* Back to blog *@
+            <div class="mb-3">
+                <a href="@Model.BasePath" class="btn btn-outline-secondary btn-sm">
+                    &larr; Back to Blog
+                </a>
+            </div>
+
+            @* Read time card *@
+            @if (Model.EstimatedReadMinutes > 0)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <span class="display-6 fw-bold text-primary">@Model.EstimatedReadMinutes</span>
+                        <p class="mb-0 text-muted">min read</p>
+                    </div>
+                </div>
+            }
+
+            @* Top Commented *@
+            @if (Model.TopCommented.Count > 0)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Top Commented</h5>
+                        <ol class="mb-0 ps-3">
+                            @foreach (var post in Model.TopCommented)
+                            {
+                                <li class="mb-1">
+                                    <a href="@Model.BasePath/post/@post.Slug"
+                                       class="text-decoration-none">@post.Title</a>
+                                    <span class="text-muted small d-block">
+                                        @post.Count comment@(post.Count == 1 ? "" : "s")
+                                    </span>
+                                </li>
+                            }
+                        </ol>
+                    </div>
+                </div>
+            }
+
+            @* Most Read *@
+            @if (Model.MostRead.Count > 0)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Most Read</h5>
+                        <ol class="mb-0 ps-3">
+                            @foreach (var post in Model.MostRead)
+                            {
+                                <li class="mb-1">
+                                    <a href="@Model.BasePath/post/@post.Slug"
+                                       class="text-decoration-none">@post.Title</a>
+                                    <span class="text-muted small d-block">
+                                        @post.Count view@(post.Count == 1 ? "" : "s")
+                                    </span>
+                                </li>
+                            }
+                        </ol>
+                    </div>
+                </div>
+            }
+
+            @* Postnomic promotion (free tier) *@
+            @if (Model.ShowBranding)
+            {
+                <div class="postnomic-sidebar-ad card mb-4 shadow-sm border-primary" role="complementary">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Postnomic</h5>
+                        <p class="card-text text-muted small">
+                            The developer-first headless blog platform. Add a full-featured blog to your app in minutes.
+                        </p>
+                        <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-primary btn-sm mb-2 w-100">Learn More</a>
+                        <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-outline-primary btn-sm w-100">View Pricing</a>
+                        <p class="mt-2 mb-0">
+                            <small class="text-muted">
+                                <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
+                                   class="text-decoration-none">Upgrade to remove ads</a>
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,86 @@
+@inject IPostnomicBlogService _injectedBlogService
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title fw-bold mb-3">
+            <i class="bi bi-people"></i> Authors
+        </h5>
+        @if (authors is null)
+        {
+            <p class="text-muted"><em>Loading…</em></p>
+        }
+        else if (authors.Count == 0)
+        {
+            <p class="text-muted small">No authors found.</p>
+        }
+        else
+        {
+            <ul class="list-group list-group-flush">
+                @foreach (var author in authors)
+                {
+                    var isActive = author.Name == ActiveAuthorName;
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 @(isActive ? "fw-bold" : "")">
+                        <button class="btn btn-link text-decoration-none p-0 text-start @(isActive ? "fw-bold" : "")"
+                                @onclick="() => OnAuthorSelectedAsync(author.Name)">
+                            <i class="bi bi-person-circle me-1"></i>@author.Name
+                        </button>
+                        <span class="badge bg-info rounded-pill">@author.PostCount</span>
+                    </li>
+                }
+            </ul>
+            @if (!string.IsNullOrEmpty(ActiveAuthorName))
+            {
+                <button class="btn btn-link btn-sm text-decoration-none mt-2 p-0"
+                        @onclick="ClearFilterAsync">
+                    &#10005; Clear filter
+                </button>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The currently active author display-name filter, if any.
+    /// <see langword="null"/> when no author filter is applied.
+    /// </summary>
+    [Parameter]
+    public string? ActiveAuthorName { get; set; }
+
+    /// <summary>
+    /// Raised when the user selects an author or clears the author filter.
+    /// The argument is the author display name, or <see langword="null"/> to clear the filter.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> OnFilterChanged { get; set; }
+
+    [CascadingParameter]
+    private PostnomicBlogContext? BlogContext { get; set; }
+
+    private IPostnomicBlogService BlogService => BlogContext?.BlogService ?? _injectedBlogService;
+
+    private List<PostnomicAuthor>? authors;
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            authors = await BlogService.GetAuthorsAsync();
+        }
+        catch
+        {
+            authors = [];
+        }
+    }
+
+    private async Task OnAuthorSelectedAsync(string name)
+    {
+        await OnFilterChanged.InvokeAsync(name == ActiveAuthorName ? null : name);
+    }
+
+    private async Task ClearFilterAsync()
+    {
+        await OnFilterChanged.InvokeAsync(null);
+    }
+}

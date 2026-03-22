@@ -1,0 +1,347 @@
+@page
+@model Postnomic.Client.AspNetCore.Areas.Blog.Pages.IndexModel
+@{
+    var blogName = Model.BlogInfo?.Name ?? "Blog";
+    var blogDescription = Model.BlogInfo?.Description;
+    ViewData["Title"] = blogName;
+}
+
+<style>
+    .postnomic-post-thumbnail {
+        max-height: 300px;
+        width: 100%;
+        object-fit: cover;
+    }
+
+    .postnomic-masonry {
+        column-count: 2;
+        column-gap: 1.5rem;
+    }
+
+    .postnomic-masonry > article {
+        break-inside: avoid;
+        margin-bottom: 1.5rem;
+    }
+
+    @@media (max-width: 768px) {
+        .postnomic-masonry {
+            column-count: 1;
+        }
+    }
+</style>
+
+<div class="container py-4">
+
+    @* ── Blog header ── *@
+    <div class="mb-4">
+        <h1 class="display-5 fw-bold">@blogName</h1>
+        @if (!string.IsNullOrWhiteSpace(blogDescription))
+        {
+            <p class="lead text-muted">@blogDescription</p>
+        }
+        <hr />
+    </div>
+
+    @* ── Active filter indicator ── *@
+    @if (Model.HasActiveFilter)
+    {
+        <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert">
+            <span>
+                Showing filtered results
+                @if (!string.IsNullOrWhiteSpace(Model.Search))
+                {
+                    <span> &mdash; search: <strong>@Model.Search</strong></span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Tag))
+                {
+                    <span> &mdash; tag: <strong>@Model.Tag</strong></span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Category))
+                {
+                    <span> &mdash; category: <strong>@Model.Category</strong></span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Author))
+                {
+                    <span> &mdash; author: <strong>@Model.Author</strong></span>
+                }
+            </span>
+            <a href="@Model.BasePath" class="ms-auto btn btn-sm btn-outline-secondary">Clear filters</a>
+        </div>
+    }
+
+    <div class="row g-4">
+
+        @* ══ Main content (post list) ══════════════════════════════════════════ *@
+        <div class="col-lg-8">
+
+            @if (Model.Posts.Items.Count == 0)
+            {
+                <div class="text-center py-5 text-muted">
+                    <p class="fs-5">No posts found.</p>
+                    @if (Model.HasActiveFilter)
+                    {
+                        <a href="@Model.BasePath" class="btn btn-outline-primary">View all posts</a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="@(Model.IsMasonry ? "postnomic-masonry" : "")">
+                @foreach (var post in Model.Posts.Items)
+                {
+                    <article class="card mb-4 border-0 shadow-sm">
+                        @if (!string.IsNullOrWhiteSpace(post.ThumbnailImageUrl))
+                        {
+                            <img src="@post.ThumbnailImageUrl"
+                                 alt="@post.Title thumbnail"
+                                 class="card-img-top postnomic-post-thumbnail" />
+                        }
+                        <div class="card-body">
+                            <h2 class="card-title h4">
+                                <a href="@Model.BasePath/post/@post.Slug"
+                                   class="text-decoration-none text-dark">@post.Title</a>
+                            </h2>
+
+                            <div class="d-flex flex-wrap gap-2 align-items-center text-muted small mb-2">
+                                <span>By
+                                    @if (!string.IsNullOrEmpty(post.AuthorSlug))
+                                    {
+                                        <a href="@Model.BasePath/author/@post.AuthorSlug"
+                                           class="text-decoration-none"><strong>@post.AuthorName</strong></a>
+                                    }
+                                    else
+                                    {
+                                        <strong>@post.AuthorName</strong>
+                                    }
+                                </span>
+                                <span>&middot;</span>
+                                <span>@post.PublishedAt.ToString("MMMM d, yyyy")</span>
+                                <span>&middot;</span>
+                                <span>@post.CommentCount comment@(post.CommentCount == 1 ? "" : "s")</span>
+                            </div>
+
+                            @* Tags *@
+                            @if (post.Tags.Count > 0)
+                            {
+                                <div class="d-flex flex-wrap gap-1 mb-1">
+                                    @foreach (var tag in post.Tags)
+                                    {
+                                        <a href="@Model.BasePath?tag=@Uri.EscapeDataString(tag.Slug)"
+                                           class="badge bg-secondary text-decoration-none">@tag.Name</a>
+                                    }
+                                </div>
+                            }
+
+                            @* Categories *@
+                            @if (post.Categories.Count > 0)
+                            {
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    @foreach (var cat in post.Categories)
+                                    {
+                                        <a href="@Model.BasePath?category=@Uri.EscapeDataString(cat.Slug)"
+                                           class="badge bg-primary text-decoration-none">@cat.Name</a>
+                                    }
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(post.Excerpt))
+                            {
+                                <p class="card-text text-muted">@post.Excerpt</p>
+                            }
+
+                            <a href="@Model.BasePath/post/@post.Slug"
+                               class="btn btn-sm btn-outline-primary mt-1">Read More &rarr;</a>
+                        </div>
+                    </article>
+                }
+                </div>
+
+                @* ── Pagination ── *@
+                @if (Model.Posts.TotalPages > 1)
+                {
+                    <nav aria-label="Post pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                                <a class="page-link"
+                                   href="@Model.PageUrl(Model.PageNumber - 1)"
+                                   aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+
+                            @for (int p = 1; p <= Model.Posts.TotalPages; p++)
+                            {
+                                <li class="page-item @(p == Model.PageNumber ? "active" : "")">
+                                    <a class="page-link"
+                                       href="@Model.PageUrl(p)">@p</a>
+                                </li>
+                            }
+
+                            <li class="page-item @(Model.PageNumber >= Model.Posts.TotalPages ? "disabled" : "")">
+                                <a class="page-link"
+                                   href="@Model.PageUrl(Model.PageNumber + 1)"
+                                   aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                        <p class="text-center text-muted small">
+                            Showing page @Model.PageNumber of @Model.Posts.TotalPages
+                            (@Model.Posts.TotalCount post@(Model.Posts.TotalCount == 1 ? "" : "s") total)
+                        </p>
+                    </nav>
+                }
+            }
+        </div>
+
+        @* ══ Sidebar ════════════════════════════════════════════════════════════ *@
+        <div class="col-lg-4">
+
+            @* Search *@
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Search</h5>
+                    <form method="get" action="@Model.BasePath">
+                        <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                        <div class="input-group">
+                            <input type="search"
+                                   name="search"
+                                   value="@Model.Search"
+                                   class="form-control"
+                                   placeholder="Search posts&hellip;" />
+                            <button type="submit" class="btn btn-primary">Go</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @* Tags *@
+            @if (Model.Tags.Count > 0)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Tags</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var tag in Model.Tags)
+                            {
+                                <a href="@Model.BasePath?tag=@Uri.EscapeDataString(tag.Slug)"
+                                   class="badge bg-secondary text-decoration-none fs-6">
+                                    @tag.Name
+                                    <span class="ms-1 opacity-75">(@tag.PostCount)</span>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @* Categories *@
+            @if (Model.Categories.Count > 0)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Categories</h5>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                    <a href="@Model.BasePath?category=@Uri.EscapeDataString(cat.Slug)"
+                                       class="badge bg-primary text-decoration-none">@cat.Name</a>
+                                    <span class="text-muted small">@cat.PostCount post@(cat.PostCount == 1 ? "" : "s")</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+            @* Authors *@
+            @if (Model.Authors.Count > 0)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Authors</h5>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var author in Model.Authors)
+                            {
+                                <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                    <a href="@Model.BasePath?author=@Uri.EscapeDataString(author.Name)"
+                                       class="text-decoration-none">@author.Name</a>
+                                    <span class="text-muted small">@author.PostCount post@(author.PostCount == 1 ? "" : "s")</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+            @* Top Commented *@
+            @if (Model.TopCommented.Count > 0)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Top Commented</h5>
+                        <ol class="mb-0 ps-3">
+                            @foreach (var post in Model.TopCommented)
+                            {
+                                <li class="mb-1">
+                                    <a href="@Model.BasePath/post/@post.Slug"
+                                       class="text-decoration-none">@post.Title</a>
+                                    <span class="text-muted small d-block">
+                                        @post.Count comment@(post.Count == 1 ? "" : "s")
+                                    </span>
+                                </li>
+                            }
+                        </ol>
+                    </div>
+                </div>
+            }
+
+            @* Most Read *@
+            @if (Model.MostRead.Count > 0)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Most Read</h5>
+                        <ol class="mb-0 ps-3">
+                            @foreach (var post in Model.MostRead)
+                            {
+                                <li class="mb-1">
+                                    <a href="@Model.BasePath/post/@post.Slug"
+                                       class="text-decoration-none">@post.Title</a>
+                                    <span class="text-muted small d-block">
+                                        @post.Count view@(post.Count == 1 ? "" : "s")
+                                    </span>
+                                </li>
+                            }
+                        </ol>
+                    </div>
+                </div>
+            }
+
+            @* Postnomic promotion (free tier) *@
+            @if (Model.ShowBranding)
+            {
+                <div class="postnomic-sidebar-ad card mb-4 shadow-sm border-primary" role="complementary">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Postnomic</h5>
+                        <p class="card-text text-muted small">
+                            The developer-first headless blog platform. Add a full-featured blog to your app in minutes.
+                        </p>
+                        <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-primary btn-sm mb-2 w-100">Learn More</a>
+                        <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-outline-primary btn-sm w-100">View Pricing</a>
+                        <p class="mt-2 mb-0">
+                            <small class="text-muted">
+                                <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
+                                   class="text-decoration-none">Upgrade to remove ads</a>
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>

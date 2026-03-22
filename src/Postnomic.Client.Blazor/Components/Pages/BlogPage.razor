@@ -1,0 +1,351 @@
+@using Postnomic.Client.Blazor.Components.Sidebar
+@inject IPostnomicBlogService _injectedBlogService
+@inject NavigationManager Navigation
+@inject IOptions<PostnomicClientOptions> _injectedClientOptions
+
+<PageTitle>@(blog?.Name ?? "Blog")</PageTitle>
+
+<style>
+    .blog-container img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .postnomic-masonry {
+        column-count: 2;
+        column-gap: 1.5rem;
+    }
+
+    .postnomic-masonry > article {
+        break-inside: avoid;
+        margin-bottom: 1.5rem;
+    }
+
+    @@media (max-width: 768px) {
+        .postnomic-masonry {
+            column-count: 1;
+        }
+    }
+</style>
+
+<div class="blog-container">
+    <div class="blog-header text-center py-4 mb-4 border-bottom">
+        @if (blog is not null)
+        {
+            <h1 class="display-5 fw-bold">@blog.Name</h1>
+            @if (!string.IsNullOrEmpty(blog.Description))
+            {
+                <p class="lead text-muted">@blog.Description</p>
+            }
+        }
+        else
+        {
+            <p><em>Loading…</em></p>
+        }
+    </div>
+
+    <div class="row">
+        @* ── Main content column ── *@
+        <div class="col-lg-8">
+            @if (HasActiveFilter)
+            {
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+                    <span>
+                        <i class="bi bi-funnel"></i> Filtered by: <strong>@ActiveFilterLabel</strong>
+                    </span>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="ClearAllFiltersAsync">
+                        &#10005; Clear all
+                    </button>
+                </div>
+            }
+
+            @if (pagedPosts is not null)
+            {
+                @if (pagedPosts.Items.Count == 0)
+                {
+                    <div class="text-center text-muted py-5">
+                        <p>No posts found.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="@(IsMasonry ? "postnomic-masonry" : "")">
+                    @foreach (var post in pagedPosts.Items)
+                    {
+                        <article class="card mb-4 shadow-sm">
+                            @if (!string.IsNullOrEmpty(post.ThumbnailImageUrl))
+                            {
+                                <div class="text-center overflow-hidden">
+                                    <img src="@post.ThumbnailImageUrl"
+                                         class="card-img-top"
+                                         alt="@post.Title"
+                                         style="max-width: 100%; max-height: 300px; object-fit: cover;" />
+                                </div>
+                            }
+                            <div class="card-body">
+                                <h2 class="card-title h4">
+                                    <a href="@($"{BasePath}/post/{post.Slug}")"
+                                       class="text-decoration-none text-dark">
+                                        @post.Title
+                                    </a>
+                                </h2>
+                                <div class="text-muted small mb-2">
+                                    <span>
+                                        <i class="bi bi-person"></i>
+                                        @if (!string.IsNullOrEmpty(post.AuthorSlug))
+                                        {
+                                            <a href="@($"{BasePath}/author/{post.AuthorSlug}")" class="text-decoration-none">@post.AuthorName</a>
+                                        }
+                                        else
+                                        {
+                                            @post.AuthorName
+                                        }
+                                    </span>
+                                    <span class="mx-2">·</span>
+                                    <span>
+                                        <i class="bi bi-calendar"></i> @post.PublishedAt.ToString("MMMM dd, yyyy")
+                                    </span>
+                                    <span class="mx-2">·</span>
+                                    <span>
+                                        <i class="bi bi-chat"></i> @post.CommentCount @(post.CommentCount == 1 ? "comment" : "comments")
+                                    </span>
+                                </div>
+                                @if (post.Tags.Count > 0)
+                                {
+                                    <div class="mb-2">
+                                        @foreach (var tag in post.Tags)
+                                        {
+                                            <span class="badge bg-secondary me-1">@tag.Name</span>
+                                        }
+                                    </div>
+                                }
+                                @if (post.Categories.Count > 0)
+                                {
+                                    <div class="mb-2">
+                                        @foreach (var category in post.Categories)
+                                        {
+                                            <span class="badge bg-primary me-1">@category.Name</span>
+                                        }
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(post.Excerpt))
+                                {
+                                    <p class="card-text">@post.Excerpt</p>
+                                }
+                                <a href="@($"{BasePath}/post/{post.Slug}")"
+                                   class="btn btn-outline-primary btn-sm">
+                                    Read More →
+                                </a>
+                            </div>
+                        </article>
+                    }
+                    </div>
+
+                    @if (pagedPosts.TotalPages > 1)
+                    {
+                        <nav aria-label="Blog pagination" class="d-flex justify-content-center mb-4">
+                            <ul class="pagination">
+                                <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                    <button class="page-link"
+                                            @onclick="() => GoToPageAsync(currentPage - 1)"
+                                            disabled="@(currentPage <= 1)">
+                                        ← Previous
+                                    </button>
+                                </li>
+                                @for (int i = 1; i <= pagedPosts.TotalPages; i++)
+                                {
+                                    var pageNum = i;
+                                    <li class="page-item @(pageNum == currentPage ? "active" : "")">
+                                        <button class="page-link" @onclick="() => GoToPageAsync(pageNum)">
+                                            @pageNum
+                                        </button>
+                                    </li>
+                                }
+                                <li class="page-item @(currentPage >= pagedPosts.TotalPages ? "disabled" : "")">
+                                    <button class="page-link"
+                                            @onclick="() => GoToPageAsync(currentPage + 1)"
+                                            disabled="@(currentPage >= pagedPosts.TotalPages)">
+                                        Next →
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <p><em>Loading posts…</em></p>
+                </div>
+            }
+        </div>
+
+        @* ── Right sidebar ── *@
+        <div class="col-lg-4">
+            <SearchBox ActiveSearchTerm="@filterSearch"
+                       OnFilterChanged="OnSearchChangedAsync" />
+
+            <TagCloud ActiveTagSlug="@filterTag"
+                      OnFilterChanged="OnTagFilterChangedAsync" />
+
+            <CategoryList ActiveCategorySlug="@filterCategory"
+                          OnFilterChanged="OnCategoryFilterChangedAsync" />
+
+            <AuthorList ActiveAuthorName="@filterAuthor"
+                        OnFilterChanged="OnAuthorFilterChangedAsync" />
+
+            <TopCommentedPosts />
+
+            <MostReadPosts />
+
+            <PostnomicPromo Visible="ShowBranding" />
+        </div>
+    </div>
+</div>
+
+@code {
+    private PostnomicBlogInfo? blog;
+    private PostnomicPagedResult<PostnomicPostSummary>? pagedPosts;
+    private int currentPage = 1;
+    private const int PageSize = 5;
+
+    private string? filterTag;
+    private string? filterCategory;
+    private string? filterAuthor;
+    private string? filterSearch;
+
+    [CascadingParameter]
+    private PostnomicBlogContext? BlogContext { get; set; }
+
+    private IPostnomicBlogService BlogService => BlogContext?.BlogService ?? _injectedBlogService;
+    private string BasePath => BlogContext?.Options.BasePath ?? _injectedClientOptions.Value.BasePath;
+
+    private bool IsMasonry => string.Equals(blog?.DefaultLayout, "Masonry", StringComparison.OrdinalIgnoreCase);
+
+    private bool ShowBranding => blog?.ShowBranding
+        ?? BlogContext?.Options.ShowBranding
+        ?? _injectedClientOptions.Value.ShowBranding;
+
+    private bool HasActiveFilter =>
+        !string.IsNullOrEmpty(filterTag) ||
+        !string.IsNullOrEmpty(filterCategory) ||
+        !string.IsNullOrEmpty(filterAuthor) ||
+        !string.IsNullOrEmpty(filterSearch);
+
+    private string ActiveFilterLabel
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(filterSearch)) return $"\"{filterSearch}\"";
+            if (!string.IsNullOrEmpty(filterTag)) return filterTag;
+            if (!string.IsNullOrEmpty(filterCategory)) return filterCategory;
+            if (!string.IsNullOrEmpty(filterAuthor)) return filterAuthor;
+            return "";
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBlogAsync();
+        await LoadPostsAsync();
+        _ = TrackPageViewAsync();
+    }
+
+    private async Task TrackPageViewAsync()
+    {
+        try
+        {
+            await BlogService.RecordPageViewAsync(
+                sessionId: Guid.NewGuid().ToString("N"),
+                postSlug: null);
+        }
+        catch
+        {
+            // Analytics is best-effort; do not break the page if it fails.
+        }
+    }
+
+    private async Task LoadBlogAsync()
+    {
+        try
+        {
+            blog = await BlogService.GetBlogAsync();
+        }
+        catch
+        {
+            blog = null;
+        }
+    }
+
+    private async Task LoadPostsAsync()
+    {
+        try
+        {
+            pagedPosts = await BlogService.GetPostsAsync(
+                page: currentPage,
+                pageSize: PageSize,
+                tag: filterTag,
+                category: filterCategory,
+                author: filterAuthor,
+                search: filterSearch);
+        }
+        catch
+        {
+            pagedPosts = new PostnomicPagedResult<PostnomicPostSummary>
+            {
+                Items = [],
+                Page = currentPage,
+                PageSize = PageSize,
+                TotalCount = 0,
+                TotalPages = 0
+            };
+        }
+    }
+
+    private async Task GoToPageAsync(int page)
+    {
+        currentPage = page;
+        await LoadPostsAsync();
+    }
+
+    private async Task ApplyFilterAndReloadAsync()
+    {
+        currentPage = 1;
+        await LoadPostsAsync();
+    }
+
+    private async Task OnTagFilterChangedAsync(string? slug)
+    {
+        filterTag = slug;
+        await ApplyFilterAndReloadAsync();
+    }
+
+    private async Task OnCategoryFilterChangedAsync(string? slug)
+    {
+        filterCategory = slug;
+        await ApplyFilterAndReloadAsync();
+    }
+
+    private async Task OnAuthorFilterChangedAsync(string? name)
+    {
+        filterAuthor = name;
+        await ApplyFilterAndReloadAsync();
+    }
+
+    private async Task OnSearchChangedAsync(string? term)
+    {
+        filterSearch = term;
+        await ApplyFilterAndReloadAsync();
+    }
+
+    private async Task ClearAllFiltersAsync()
+    {
+        filterTag = null;
+        filterCategory = null;
+        filterAuthor = null;
+        filterSearch = null;
+        await ApplyFilterAndReloadAsync();
+    }
+}
