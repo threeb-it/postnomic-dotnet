@@ -58,11 +58,14 @@ jobs:
         dotnet-version: '10.0.x'
 
     - name: Publish to GitHub Packages
-      run: >
-        dotnet nuget push "./artifacts/*.nupkg"
-        --source "https://nuget.pkg.github.com/threeb-it/index.json"
-        --api-key ${{ secrets.GITHUB_TOKEN }}
-        --skip-duplicate
+      run: |
+        SOURCE="https://nuget.pkg.github.com/threeb-it/index.json"
+        KEY="${{ secrets.GITHUB_TOKEN }}"
+        # Push in dependency order to avoid transient resolution failures
+        dotnet nuget push ./artifacts/Postnomic.Client.Abstractions.*.nupkg --source "$SOURCE" --api-key "$KEY" --skip-duplicate
+        dotnet nuget push ./artifacts/Postnomic.Client.[0-9]*.nupkg          --source "$SOURCE" --api-key "$KEY" --skip-duplicate
+        dotnet nuget push ./artifacts/Postnomic.Client.AspNetCore.*.nupkg    --source "$SOURCE" --api-key "$KEY" --skip-duplicate
+        dotnet nuget push ./artifacts/Postnomic.Client.Blazor.*.nupkg        --source "$SOURCE" --api-key "$KEY" --skip-duplicate
 
   publish-nuget:
     needs: build-test-pack
@@ -82,8 +85,11 @@ jobs:
         dotnet-version: '10.0.x'
 
     - name: Publish to NuGet.org
-      run: >
-        dotnet nuget push "./artifacts/*.nupkg"
-        --source "https://api.nuget.org/v3/index.json"
-        --api-key ${{ secrets.NUGET_API_KEY }}
-        --skip-duplicate
+      run: |
+        SOURCE="https://api.nuget.org/v3/index.json"
+        KEY="${{ secrets.NUGET_API_KEY }}"
+        # Push in dependency order to avoid transient resolution failures
+        dotnet nuget push ./artifacts/Postnomic.Client.Abstractions.*.nupkg --source "$SOURCE" --api-key "$KEY" --skip-duplicate
+        dotnet nuget push ./artifacts/Postnomic.Client.[0-9]*.nupkg          --source "$SOURCE" --api-key "$KEY" --skip-duplicate
+        dotnet nuget push ./artifacts/Postnomic.Client.AspNetCore.*.nupkg    --source "$SOURCE" --api-key "$KEY" --skip-duplicate
+        dotnet nuget push ./artifacts/Postnomic.Client.Blazor.*.nupkg        --source "$SOURCE" --api-key "$KEY" --skip-duplicate
