@@ -1,4 +1,9 @@
 <Project>
+	<PropertyGroup>
+		<RepositoryUrl>https://github.com/threeb-it/postnomic-dotnet</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all"/>
 	</ItemGroup>

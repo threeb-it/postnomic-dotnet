@@ -15,7 +15,7 @@
     <Authors>Postnomic</Authors>
     <PackageTags>postnomic;blog;cms;client;aspnetcore;razorpages</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/threeb-it/postnomic</RepositoryUrl>
+
   </PropertyGroup>
 
   <ItemGroup>
