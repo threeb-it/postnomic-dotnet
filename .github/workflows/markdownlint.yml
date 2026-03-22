@@ -1,0 +1,25 @@
+name: Markdownlint
+
+permissions:
+  contents: read
+
+# run even on changes without markdown changes, so that we can
+# make it in GitHub a required check for PR's
+on:
+  pull_request:
+
+jobs:
+  lint:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Use Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: 16.x
+    - name: Run Markdownlint
+      run: |
+        echo "::add-matcher::.github/workflows/markdownlint-problem-matcher.json"
+        npm i -g markdownlint-cli
+        markdownlint --ignore '.dotnet/' '**/*.md'
