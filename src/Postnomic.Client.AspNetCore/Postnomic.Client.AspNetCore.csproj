@@ -12,9 +12,7 @@
     <PackageId>Postnomic.Client.AspNetCore</PackageId>
     <Title>Postnomic Client for ASP.NET Core</Title>
     <Description>Razor Pages Area for rendering a Postnomic blog in ASP.NET Core MVC/Razor Pages applications. The blog URL is configurable via PostnomicClientOptions.BasePath (default: /blog).</Description>
-    <Authors>Postnomic</Authors>
     <PackageTags>postnomic;blog;cms;client;aspnetcore;razorpages</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
   </PropertyGroup>
 

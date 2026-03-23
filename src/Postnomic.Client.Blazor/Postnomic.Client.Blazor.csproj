@@ -11,9 +11,7 @@
     <PackageId>Postnomic.Client.Blazor</PackageId>
     <Title>Postnomic Client Blazor</Title>
     <Description>Blazor components for embedding a Postnomic blog. The blog URL is configurable via PostnomicClientOptions.BasePath (default: /blog).</Description>
-    <Authors>Postnomic</Authors>
     <PackageTags>postnomic;blog;cms;client;blazor</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
   </PropertyGroup>
 

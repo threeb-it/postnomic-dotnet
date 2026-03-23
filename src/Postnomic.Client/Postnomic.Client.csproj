@@ -11,9 +11,7 @@
     <PackageId>Postnomic.Client</PackageId>
     <Title>Postnomic Client</Title>
     <Description>HTTP client implementation and DI registration for the Postnomic blog client SDK.</Description>
-    <Authors>Postnomic</Authors>
     <PackageTags>postnomic;blog;cms;client</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
   </PropertyGroup>
 
