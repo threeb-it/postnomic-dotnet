@@ -1,13 +1,28 @@
 <Project>
 	<PropertyGroup>
+		<!-- Package identity -->
+		<Authors>threeb-it</Authors>
+		<Company>ThreeB IT GmbH</Company>
+		<Copyright>Copyright (c) ThreeB IT GmbH</Copyright>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/threeb-it/postnomic-dotnet</PackageProjectUrl>
+
+		<!-- Repository -->
 		<RepositoryUrl>https://github.com/threeb-it/postnomic-dotnet</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+
+		<!-- Package content -->
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>icon.png</PackageIcon>
+
+		<!-- Versioning -->
 		<MinVerTagPrefix>v</MinVerTagPrefix>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="/"/>
+		<None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="/"/>
 	</ItemGroup>
 
 	<ItemGroup>
