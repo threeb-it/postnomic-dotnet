@@ -21,17 +21,17 @@ internal sealed class PostnomicBlogAreaRouteConvention(string basePath) : IPageR
         if (model.RelativePath.EndsWith("Index.cshtml", StringComparison.OrdinalIgnoreCase))
         {
             templates.Add(trimmedPath);
-            templates.Add($"{trimmedPath}/{{lang:regex(^[a-z]{{2}}$)}}");
+            templates.Add($"{trimmedPath}/{{lang:regex(^[a-z][a-z]$)}}");
         }
         else if (model.RelativePath.EndsWith("Post.cshtml", StringComparison.OrdinalIgnoreCase))
         {
             templates.Add($"{trimmedPath}/post/{{postSlug}}");
-            templates.Add($"{trimmedPath}/{{lang:regex(^[a-z]{{2}}$)}}/post/{{postSlug}}");
+            templates.Add($"{trimmedPath}/{{lang:regex(^[a-z][a-z]$)}}/post/{{postSlug}}");
         }
         else if (model.RelativePath.EndsWith("Author.cshtml", StringComparison.OrdinalIgnoreCase))
         {
             templates.Add($"{trimmedPath}/author/{{authorSlug}}");
-            templates.Add($"{trimmedPath}/{{lang:regex(^[a-z]{{2}}$)}}/author/{{authorSlug}}");
+            templates.Add($"{trimmedPath}/{{lang:regex(^[a-z][a-z]$)}}/author/{{authorSlug}}");
         }
         foreach (var template in templates)
         {

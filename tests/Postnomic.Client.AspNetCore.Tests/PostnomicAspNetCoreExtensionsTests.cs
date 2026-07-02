@@ -240,7 +240,7 @@ public class PostnomicAspNetCoreExtensionsTests
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("blog/author/{authorSlug}");
         model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("blog/{lang:regex(^[a-z]{2}$)}/author/{authorSlug}");
+            .Should().Be("blog/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}");
     }
 
     [Fact]
@@ -267,7 +267,7 @@ public class PostnomicAspNetCoreExtensionsTests
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("articles/author/{authorSlug}");
         model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("articles/{lang:regex(^[a-z]{2}$)}/author/{authorSlug}");
+            .Should().Be("articles/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}");
     }
 
     [Fact]
@@ -294,7 +294,7 @@ public class PostnomicAspNetCoreExtensionsTests
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("news/author/{authorSlug}");
         model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("news/{lang:regex(^[a-z]{2}$)}/author/{authorSlug}");
+            .Should().Be("news/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}");
     }
 
     [Fact]
@@ -391,7 +391,7 @@ public class PostnomicAspNetCoreExtensionsTests
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("blog");
         model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("blog/{lang:regex(^[a-z]{2}$)}");
+            .Should().Be("blog/{lang:regex(^[a-z][a-z]$)}");
     }
 
     [Fact]
@@ -425,7 +425,7 @@ public class PostnomicAspNetCoreExtensionsTests
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("blog/post/{postSlug}");
         model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("blog/{lang:regex(^[a-z]{2}$)}/post/{postSlug}");
+            .Should().Be("blog/{lang:regex(^[a-z][a-z]$)}/post/{postSlug}");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

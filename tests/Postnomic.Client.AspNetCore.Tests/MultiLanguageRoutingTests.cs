@@ -43,7 +43,7 @@ public class MultiLanguageRoutingTests
             .ToList();
 
         templates.Should().Contain("blog/post/{postSlug}");
-        templates.Should().Contain("blog/{lang:regex(^[a-z]{2}$)}/post/{postSlug}");
+        templates.Should().Contain("blog/{lang:regex(^[a-z][a-z]$)}/post/{postSlug}");
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class MultiLanguageRoutingTests
             .ToList();
 
         templates.Should().Contain("blog");
-        templates.Should().Contain("blog/{lang:regex(^[a-z]{2}$)}");
+        templates.Should().Contain("blog/{lang:regex(^[a-z][a-z]$)}");
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class MultiLanguageRoutingTests
             .ToList();
 
         templates.Should().Contain("blog/author/{authorSlug}");
-        templates.Should().Contain("blog/{lang:regex(^[a-z]{2}$)}/author/{authorSlug}");
+        templates.Should().Contain("blog/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}");
     }
 
     // ── PostModel — CanonicalUrl / AlternateLanguageUrls ──────────────────────
