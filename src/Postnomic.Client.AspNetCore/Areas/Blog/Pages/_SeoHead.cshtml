@@ -1,0 +1,66 @@
+@model Postnomic.Client.AspNetCore.Seo.PostnomicSeoModel
+@* Renders canonical/hreflang/OpenGraph/Twitter/JSON-LD tags for a Blog area page. Rendered inside
+   the host layout's <head> via the "PostnomicHead" section (see _ViewStart.cshtml + each page). *@
+<link rel="canonical" href="@Model.CanonicalUrl" />
+@if (!string.IsNullOrWhiteSpace(Model.Description))
+{
+    <meta name="description" content="@Model.Description" />
+}
+<meta name="robots" content="@Model.Robots" />
+
+@foreach (var alternate in Model.Alternates)
+{
+    <link rel="alternate" hreflang="@alternate.Lang" href="@alternate.Url" />
+}
+<link rel="alternate" hreflang="x-default" href="@Model.CanonicalUrl" />
+
+<meta property="og:type" content="@Model.OgType" />
+<meta property="og:title" content="@Model.Title" />
+@if (!string.IsNullOrWhiteSpace(Model.Description))
+{
+    <meta property="og:description" content="@Model.Description" />
+}
+<meta property="og:url" content="@Model.CanonicalUrl" />
+@if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+{
+    <meta property="og:image" content="@Model.ImageUrl" />
+}
+<meta property="og:site_name" content="@Model.SiteName" />
+<meta property="og:locale" content="@Model.Locale" />
+
+@if (string.Equals(Model.OgType, "article", StringComparison.Ordinal))
+{
+    @if (Model.PublishedAt is { } publishedAt)
+    {
+        <meta property="article:published_time" content="@publishedAt.ToString("O")" />
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.AuthorName))
+    {
+        <meta property="article:author" content="@Model.AuthorName" />
+    }
+    @foreach (var tag in Model.Tags)
+    {
+        <meta property="article:tag" content="@tag" />
+    }
+}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="@Model.Title" />
+@if (!string.IsNullOrWhiteSpace(Model.Description))
+{
+    <meta name="twitter:description" content="@Model.Description" />
+}
+@if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+{
+    <meta name="twitter:image" content="@Model.ImageUrl" />
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.JsonLd))
+{
+    @* Rendered as a single raw HTML chunk (rather than a normal <script type="..."> tag) because
+       Razor's tag-helper attribute pipeline HTML-encodes literal attribute values (including
+       "+"), which would otherwise mangle the "application/ld+json" media type into
+       "application/ld&#x2B;json". Model.JsonLd itself is already script-safe: it was serialized
+       with System.Text.Json's default encoder, which escapes '<', '>', '&', etc. *@
+    @Html.Raw($"<script type=\"application/ld+json\">{Model.JsonLd}</script>")
+}

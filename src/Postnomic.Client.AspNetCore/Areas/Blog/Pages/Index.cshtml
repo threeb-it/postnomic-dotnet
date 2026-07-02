@@ -5,6 +5,11 @@
     var blogDescription = Model.BlogInfo?.Description;
     ViewData["Title"] = blogName;
     var indexUrl = PostnomicRouteBuilder.BuildIndex(Model.BasePath, Model.RouteStyle, Model.Lang);
+    var seoModel = PostnomicSeo.ForIndex(Model.HttpContext.Request, Model);
+}
+
+@section PostnomicHead {
+    <partial name="_SeoHead" model="seoModel" />
 }
 
 <style>

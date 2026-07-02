@@ -3,6 +3,11 @@
 @{
     ViewData["Title"] = Model.Profile.Name;
     var indexUrl = PostnomicRouteBuilder.BuildIndex(Model.BasePath, Model.RouteStyle, Model.Lang);
+    var seoModel = PostnomicSeo.ForAuthor(Model.HttpContext.Request, Model);
+}
+
+@section PostnomicHead {
+    <partial name="_SeoHead" model="seoModel" />
 }
 
 <div class="container py-4">
@@ -27,7 +32,7 @@
                              alt="@Model.Profile.Name"
                              style="width: 150px; height: 150px; object-fit: cover;" />
                     }
-                    <h2 class="h4 fw-bold">@Model.Profile.Name</h2>
+                    <h1 class="h4 fw-bold">@Model.Profile.Name</h1>
 
                     @if (!string.IsNullOrEmpty(Model.Profile.Headline))
                     {
