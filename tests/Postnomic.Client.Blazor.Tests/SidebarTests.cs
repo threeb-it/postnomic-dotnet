@@ -12,7 +12,8 @@ namespace Postnomic.Client.Blazor.Tests;
 /// <summary>
 /// bUnit tests for the sidebar components:
 /// <see cref="EstimatedReadTime"/>, <see cref="TagCloud"/>,
-/// <see cref="CategoryList"/>, and <see cref="AuthorList"/>.
+/// <see cref="CategoryList"/>, <see cref="AuthorList"/>,
+/// <see cref="TopCommentedPosts"/>, and <see cref="MostReadPosts"/>.
 /// </summary>
 public class SidebarTests : BunitContext
 {
@@ -478,5 +479,55 @@ public class SidebarTests : BunitContext
         // And no profile-page anchor should be present
         var links = cut.FindAll("a[href]");
         links.Should().NotContain(a => a.GetAttribute("href")!.Contains("/author/"));
+    }
+
+    // ── TopCommentedPosts / MostReadPosts — language-aware links ────────────────
+
+    private void UseOptions(PostnomicLanguageRouteStyle style, string basePath = "/blog")
+    {
+        Services.AddSingleton<IOptions<PostnomicClientOptions>>(
+            Options.Create(new PostnomicClientOptions { BasePath = basePath, LanguageRouteStyle = style }));
+    }
+
+    [Fact]
+    public void TopCommentedPosts_PrefixStyleWithLanguage_PostLinkUsesLangPrefix()
+    {
+        // Arrange
+        UseOptions(PostnomicLanguageRouteStyle.Prefix);
+        _blogServiceMock
+            .Setup(s => s.GetTopCommentedPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<PostnomicPopularPost>
+            {
+                new() { Slug = "hello-world", Title = "Hello World", Count = 5 }
+            });
+
+        // Act
+        var cut = Render<TopCommentedPosts>(p =>
+            p.Add(c => c.Language, "de"));
+
+        // Assert — must be language-prefixed, not the bare unprefixed base-path link.
+        cut.FindAll("a[href='/de/blog/post/hello-world']").Should().NotBeEmpty();
+        cut.FindAll("a[href='/blog/post/hello-world']").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void MostReadPosts_PrefixStyleWithLanguage_PostLinkUsesLangPrefix()
+    {
+        // Arrange
+        UseOptions(PostnomicLanguageRouteStyle.Prefix);
+        _blogServiceMock
+            .Setup(s => s.GetMostReadPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<PostnomicPopularPost>
+            {
+                new() { Slug = "hello-world", Title = "Hello World", Count = 42 }
+            });
+
+        // Act
+        var cut = Render<MostReadPosts>(p =>
+            p.Add(c => c.Language, "de"));
+
+        // Assert — must be language-prefixed, not the bare unprefixed base-path link.
+        cut.FindAll("a[href='/de/blog/post/hello-world']").Should().NotBeEmpty();
+        cut.FindAll("a[href='/blog/post/hello-world']").Should().BeEmpty();
     }
 }
