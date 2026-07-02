@@ -61,6 +61,7 @@ public class BlogPageTests : BunitContext
                 It.IsAny<string?>(),
                 It.IsAny<string?>(),
                 It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPagedResult<PostnomicPostSummary>
             {
@@ -99,7 +100,7 @@ public class BlogPageTests : BunitContext
                 It.IsAny<int>(), It.IsAny<int>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .Returns(postsTcs.Task);
 
         // Act

@@ -97,11 +97,12 @@ internal sealed class CachingPostnomicBlogService : IPostnomicBlogService, IPost
         int page = 1, int pageSize = 5,
         string? tag = null, string? category = null,
         string? author = null, string? search = null,
+        string? language = null,
         CancellationToken cancellationToken = default)
     {
-        var key = $"{_prefix}posts:p{page}s{pageSize}t{tag ?? "_"}c{category ?? "_"}a{author ?? "_"}q{search ?? "_"}";
+        var key = $"{_prefix}posts:p{page}s{pageSize}t{tag ?? "_"}c{category ?? "_"}a{author ?? "_"}q{search ?? "_"}l{language ?? "_"}";
         return await GetOrTrackAsync<PostnomicPagedResult<PostnomicPostSummary>>(key, _cacheOptions.PostListDuration,
-            async ct => await _inner.GetPostsAsync(page, pageSize, tag, category, author, search, ct),
+            async ct => await _inner.GetPostsAsync(page, pageSize, tag, category, author, search, language, ct),
             cancellationToken) ?? new PostnomicPagedResult<PostnomicPostSummary>
         {
             Items = [],
@@ -113,11 +114,11 @@ internal sealed class CachingPostnomicBlogService : IPostnomicBlogService, IPost
     }
 
     public async Task<PostnomicPostDetail?> GetPostAsync(
-        string postSlug, CancellationToken cancellationToken = default)
+        string postSlug, string? language = null, CancellationToken cancellationToken = default)
     {
-        var key = $"{_prefix}post:{postSlug}";
+        var key = $"{_prefix}post:{postSlug}:{language ?? "_"}";
         return await GetOrTrackAsync(key, _cacheOptions.PostDetailDuration,
-            ct => _inner.GetPostAsync(postSlug, ct), cancellationToken);
+            ct => _inner.GetPostAsync(postSlug, language, ct), cancellationToken);
     }
 
     public async Task<List<PostnomicPopularPost>> GetTopCommentedPostsAsync(
@@ -175,7 +176,12 @@ internal sealed class CachingPostnomicBlogService : IPostnomicBlogService, IPost
 
     public void InvalidatePost(string postSlug)
     {
-        _cache.Remove($"{_prefix}post:{postSlug}");
+        // Post detail cache keys are now per-language (post:{slug}:{lang}). IMemoryCache does
+        // not support enumerating/removing by key prefix, so we cannot evict every language
+        // variant here without new invalidation infrastructure (tracked key removal by prefix,
+        // out of scope for this change). This only removes the default-language ("_") entry;
+        // other per-language entries expire naturally via PostDetailDuration TTL.
+        _cache.Remove($"{_prefix}post:{postSlug}:_");
     }
 
     public void InvalidateMetadata()

@@ -96,6 +96,7 @@ public class IndexPageModelTests
                 It.IsAny<int>(), It.IsAny<int>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPagedResult<PostnomicPostSummary>
             {
@@ -141,6 +142,7 @@ public class IndexPageModelTests
                 It.IsAny<int>(), It.IsAny<int>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPagedResult<PostnomicPostSummary>
             {
@@ -282,6 +284,7 @@ public class IndexPageModelTests
             It.IsAny<string?>(),
             It.IsAny<string?>(),
             It.IsAny<string?>(),
+            It.IsAny<string?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -300,6 +303,7 @@ public class IndexPageModelTests
             It.IsAny<int>(),
             It.IsAny<string?>(),
             "tutorials",
+            It.IsAny<string?>(),
             It.IsAny<string?>(),
             It.IsAny<string?>(),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -322,6 +326,7 @@ public class IndexPageModelTests
             It.IsAny<string?>(),
             "Jane Doe",
             It.IsAny<string?>(),
+            It.IsAny<string?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -342,6 +347,7 @@ public class IndexPageModelTests
             It.IsAny<string?>(),
             It.IsAny<string?>(),
             "blazor",
+            It.IsAny<string?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -358,6 +364,7 @@ public class IndexPageModelTests
         _blogServiceMock.Verify(s => s.GetPostsAsync(
             3,
             It.IsAny<int>(),
+            It.IsAny<string?>(),
             It.IsAny<string?>(),
             It.IsAny<string?>(),
             It.IsAny<string?>(),
@@ -457,6 +464,7 @@ public class IndexPageModelTests
                 It.IsAny<int>(), It.IsAny<int>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPagedResult<PostnomicPostSummary>
             {
@@ -494,6 +502,7 @@ public class IndexPageModelTests
                 It.IsAny<int>(), It.IsAny<int>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
                 It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPagedResult<PostnomicPostSummary>
             {

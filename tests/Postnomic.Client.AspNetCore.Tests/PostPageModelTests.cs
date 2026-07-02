@@ -84,7 +84,7 @@ public class PostPageModelTests
     private void SetupPost(PostnomicPostDetail? post)
     {
         _blogServiceMock
-            .Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(post);
     }
 
@@ -505,7 +505,7 @@ public class PostPageModelTests
         var mock = new Mock<IPostnomicBlogService>();
         mock.Setup(s => s.GetBlogAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicBlogInfo { Name = "Free Blog", Slug = "free-blog", ShowBranding = true });
-        mock.Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        mock.Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateDetail());
         mock.Setup(s => s.GetTopCommentedPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PostnomicPopularPost>());
@@ -530,7 +530,7 @@ public class PostPageModelTests
         var mock = new Mock<IPostnomicBlogService>();
         mock.Setup(s => s.GetBlogAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicBlogInfo { Name = "Paid Blog", Slug = "paid-blog", ShowBranding = false });
-        mock.Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        mock.Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateDetail());
         mock.Setup(s => s.GetTopCommentedPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PostnomicPopularPost>());
@@ -557,7 +557,7 @@ public class PostPageModelTests
         var mock = new Mock<IPostnomicBlogService>();
         mock.Setup(s => s.GetBlogAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicBlogInfo { Name = "Paid Blog", Slug = "paid-blog", ShowBranding = false });
-        mock.Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        mock.Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateDetail());
         mock.Setup(s => s.GetTopCommentedPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PostnomicPopularPost>());

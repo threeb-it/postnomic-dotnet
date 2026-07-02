@@ -161,7 +161,7 @@ public class PostModel(
     {
         var blogService = ResolveBlogService();
 
-        var postTask = blogService.GetPostAsync(PostSlug, cancellationToken);
+        var postTask = blogService.GetPostAsync(PostSlug, cancellationToken: cancellationToken);
         var blogInfoTask = blogService.GetBlogAsync(cancellationToken);
         var topCommentedTask = blogService.GetTopCommentedPostsAsync(cancellationToken: cancellationToken);
         var mostReadTask = blogService.GetMostReadPostsAsync(cancellationToken: cancellationToken);

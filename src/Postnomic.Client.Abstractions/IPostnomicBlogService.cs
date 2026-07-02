@@ -94,6 +94,9 @@ public interface IPostnomicBlogService
     /// Optional search term matched against post titles, excerpts, and content.
     /// Pass <see langword="null"/> to omit the filter.
     /// </param>
+    /// <param name="language">
+    /// Optional ISO-639-1 language code (e.g. "de"). Null serves the blog's default language.
+    /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the asynchronous operation.
     /// </param>
@@ -108,6 +111,7 @@ public interface IPostnomicBlogService
         string? category = null,
         string? author = null,
         string? search = null,
+        string? language = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -115,6 +119,9 @@ public interface IPostnomicBlogService
     /// settings, and the approved comment tree.
     /// </summary>
     /// <param name="postSlug">The URL-friendly slug of the post to retrieve.</param>
+    /// <param name="language">
+    /// Optional ISO-639-1 language code (e.g. "de"). Null serves the blog's default language.
+    /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the asynchronous operation.
     /// </param>
@@ -124,6 +131,7 @@ public interface IPostnomicBlogService
     /// </returns>
     Task<PostnomicPostDetail?> GetPostAsync(
         string postSlug,
+        string? language = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

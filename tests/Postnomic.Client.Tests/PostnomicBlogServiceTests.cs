@@ -413,6 +413,24 @@ public class PostnomicBlogServiceTests : IDisposable
         capturedUrl.Should().NotContain("search=");
     }
 
+    [Fact]
+    public async Task GetPostsAsync_WithLanguage_IncludesLangQueryParameter()
+    {
+        // Arrange
+        var pagedResult = CreateEmptyPagedResult();
+
+        _mockHttp
+            .Expect(HttpMethod.Get, $"{BaseUrl}/public/blogs/{BlogSlug}/posts")
+            .WithQueryString("lang", "de")
+            .Respond(HttpStatusCode.OK, JsonContent.Create(pagedResult));
+
+        // Act
+        await _sut.GetPostsAsync(language: "de");
+
+        // Assert
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
     // ── GetPostAsync ──────────────────────────────────────────────────────────
 
     [Fact]
@@ -470,6 +488,25 @@ public class PostnomicBlogServiceTests : IDisposable
 
         // Act
         await _sut.GetPostAsync(postSlug);
+
+        // Assert
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task GetPostAsync_WithLanguage_IncludesLangQueryParameter()
+    {
+        // Arrange
+        const string postSlug = "my-post";
+        var detail = new PostnomicPostDetail { Slug = postSlug, Title = "My Post", AuthorName = "Jane" };
+
+        _mockHttp
+            .Expect(HttpMethod.Get, $"{BaseUrl}/public/blogs/{BlogSlug}/posts/{postSlug}")
+            .WithQueryString("lang", "de")
+            .Respond(HttpStatusCode.OK, JsonContent.Create(detail));
+
+        // Act
+        await _sut.GetPostAsync(postSlug, "de");
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();

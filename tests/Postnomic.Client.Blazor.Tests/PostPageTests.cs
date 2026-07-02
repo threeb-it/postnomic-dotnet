@@ -42,7 +42,7 @@ public class PostPageTests : BunitContext
     private void SetupPost(PostnomicPostDetail? post)
     {
         _blogServiceMock
-            .Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(post);
     }
 
@@ -84,7 +84,7 @@ public class PostPageTests : BunitContext
         // Arrange
         var tcs = new TaskCompletionSource<PostnomicPostDetail?>();
         _blogServiceMock
-            .Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
 
         // Act

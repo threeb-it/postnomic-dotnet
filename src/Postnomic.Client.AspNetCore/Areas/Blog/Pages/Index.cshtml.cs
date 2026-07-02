@@ -100,7 +100,8 @@ public class IndexModel(
         var blogService = ResolveBlogService();
 
         var postsTask = blogService.GetPostsAsync(
-            PageNumber, PageSize, Tag, Category, Author, Search, cancellationToken);
+            PageNumber, PageSize, Tag, Category, Author, Search,
+            cancellationToken: cancellationToken);
         var blogTask = blogService.GetBlogAsync(cancellationToken);
         var tagsTask = blogService.GetTagsAsync(cancellationToken);
         var categoriesTask = blogService.GetCategoriesAsync(cancellationToken);

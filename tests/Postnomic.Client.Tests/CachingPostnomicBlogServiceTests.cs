@@ -216,7 +216,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
     {
         // Arrange
         var pagedResult = CreateEmptyPagedResult(page: 1, pageSize: 5);
-        _innerMock.Setup(s => s.GetPostsAsync(1, 5, null, null, null, null, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostsAsync(1, 5, null, null, null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(pagedResult);
 
         // Act
@@ -227,7 +227,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         first.Should().NotBeNull();
         second.Should().NotBeNull();
         _innerMock.Verify(
-            s => s.GetPostsAsync(1, 5, null, null, null, null, It.IsAny<CancellationToken>()),
+            s => s.GetPostsAsync(1, 5, null, null, null, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -238,9 +238,9 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var page1Result = CreateEmptyPagedResult(page: 1, pageSize: 5);
         var page2Result = CreateEmptyPagedResult(page: 2, pageSize: 5);
 
-        _innerMock.Setup(s => s.GetPostsAsync(1, 5, null, null, null, null, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostsAsync(1, 5, null, null, null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(page1Result);
-        _innerMock.Setup(s => s.GetPostsAsync(2, 5, null, null, null, null, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostsAsync(2, 5, null, null, null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(page2Result);
 
         // Act
@@ -249,10 +249,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
 
         // Assert — inner called once for each distinct page
         _innerMock.Verify(
-            s => s.GetPostsAsync(1, 5, null, null, null, null, It.IsAny<CancellationToken>()),
+            s => s.GetPostsAsync(1, 5, null, null, null, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
         _innerMock.Verify(
-            s => s.GetPostsAsync(2, 5, null, null, null, null, It.IsAny<CancellationToken>()),
+            s => s.GetPostsAsync(2, 5, null, null, null, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -263,9 +263,9 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var csharpResult = CreateEmptyPagedResult();
         var dotnetResult = CreateEmptyPagedResult();
 
-        _innerMock.Setup(s => s.GetPostsAsync(1, 5, "csharp", null, null, null, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostsAsync(1, 5, "csharp", null, null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(csharpResult);
-        _innerMock.Setup(s => s.GetPostsAsync(1, 5, "dotnet", null, null, null, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostsAsync(1, 5, "dotnet", null, null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(dotnetResult);
 
         // Act — call each tag combination twice
@@ -276,10 +276,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
 
         // Assert — inner called once per distinct filter value
         _innerMock.Verify(
-            s => s.GetPostsAsync(1, 5, "csharp", null, null, null, It.IsAny<CancellationToken>()),
+            s => s.GetPostsAsync(1, 5, "csharp", null, null, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
         _innerMock.Verify(
-            s => s.GetPostsAsync(1, 5, "dotnet", null, null, null, It.IsAny<CancellationToken>()),
+            s => s.GetPostsAsync(1, 5, "dotnet", null, null, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -291,7 +291,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         // Arrange
         const string postSlug = "my-post";
         var post = new PostnomicPostDetail { Slug = postSlug, Title = "My Post", AuthorName = "Jane" };
-        _innerMock.Setup(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(post);
 
         // Act
@@ -303,7 +303,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         second.Should().NotBeNull();
         first!.Title.Should().Be(second!.Title);
         _innerMock.Verify(
-            s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()),
+            s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -314,9 +314,9 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var postA = new PostnomicPostDetail { Slug = "post-a", Title = "Post A", AuthorName = "Jane" };
         var postB = new PostnomicPostDetail { Slug = "post-b", Title = "Post B", AuthorName = "John" };
 
-        _innerMock.Setup(s => s.GetPostAsync("post-a", It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostAsync("post-a", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(postA);
-        _innerMock.Setup(s => s.GetPostAsync("post-b", It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostAsync("post-b", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(postB);
 
         // Act — each post fetched twice
@@ -330,8 +330,42 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         a2!.Title.Should().Be("Post A");
         b1!.Title.Should().Be("Post B");
         b2!.Title.Should().Be("Post B");
-        _innerMock.Verify(s => s.GetPostAsync("post-a", It.IsAny<CancellationToken>()), Times.Once);
-        _innerMock.Verify(s => s.GetPostAsync("post-b", It.IsAny<CancellationToken>()), Times.Once);
+        _innerMock.Verify(s => s.GetPostAsync("post-a", null, It.IsAny<CancellationToken>()), Times.Once);
+        _innerMock.Verify(s => s.GetPostAsync("post-b", null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPostAsync_CallsInner_ForDifferentLanguage()
+    {
+        _innerMock.Setup(s => s.GetPostAsync("slug", "en", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicPostDetail { Slug = "slug", Title = "EN", AuthorName = "a" });
+        _innerMock.Setup(s => s.GetPostAsync("slug", "de", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicPostDetail { Slug = "slug", Title = "DE", AuthorName = "a" });
+
+        await _sut.GetPostAsync("slug", "en");
+        await _sut.GetPostAsync("slug", "en");
+        await _sut.GetPostAsync("slug", "de");
+        await _sut.GetPostAsync("slug", "de");
+
+        _innerMock.Verify(s => s.GetPostAsync("slug", "en", It.IsAny<CancellationToken>()), Times.Once);
+        _innerMock.Verify(s => s.GetPostAsync("slug", "de", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPostsAsync_CallsInner_ForDifferentLanguage()
+    {
+        _innerMock.Setup(s => s.GetPostsAsync(1, 5, null, null, null, null, "en", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicPagedResult<PostnomicPostSummary> { Items = [], Page = 1, PageSize = 5, TotalCount = 0, TotalPages = 0 });
+        _innerMock.Setup(s => s.GetPostsAsync(1, 5, null, null, null, null, "de", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicPagedResult<PostnomicPostSummary> { Items = [], Page = 1, PageSize = 5, TotalCount = 0, TotalPages = 0 });
+
+        await _sut.GetPostsAsync(language: "en");
+        await _sut.GetPostsAsync(language: "en");
+        await _sut.GetPostsAsync(language: "de");
+        await _sut.GetPostsAsync(language: "de");
+
+        _innerMock.Verify(s => s.GetPostsAsync(1, 5, null, null, null, null, "en", It.IsAny<CancellationToken>()), Times.Once);
+        _innerMock.Verify(s => s.GetPostsAsync(1, 5, null, null, null, null, "de", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ── GetTopCommentedPostsAsync — caching ───────────────────────────────────
@@ -520,14 +554,14 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         };
         var request = new PostnomicCreateCommentRequest { Body = "Nice post!" };
 
-        _innerMock.Setup(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(post);
         _innerMock.Setup(s => s.CreateCommentAsync(postSlug, request, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comment);
 
         // Prime cache
         await _sut.GetPostAsync(postSlug);
-        _innerMock.Verify(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()), Times.Once);
+        _innerMock.Verify(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()), Times.Once);
 
         // Act — create a comment, which should bust the post detail cache
         await _sut.CreateCommentAsync(postSlug, request);
@@ -536,7 +570,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         await _sut.GetPostAsync(postSlug);
 
         // Assert — inner called a second time for GetPostAsync after invalidation
-        _innerMock.Verify(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _innerMock.Verify(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     [Fact]
@@ -547,7 +581,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var post = new PostnomicPostDetail { Slug = postSlug, Title = "A Post", AuthorName = "Jane" };
         var request = new PostnomicCreateCommentRequest { Body = "Bad comment" };
 
-        _innerMock.Setup(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(post);
         _innerMock.Setup(s => s.CreateCommentAsync(postSlug, request, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PostnomicComment?)null);
@@ -562,7 +596,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         await _sut.GetPostAsync(postSlug);
 
         // Assert — inner called only once; cache was not invalidated
-        _innerMock.Verify(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()), Times.Once);
+        _innerMock.Verify(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ── IPostnomicCacheControl.InvalidateAll ──────────────────────────────────
@@ -632,8 +666,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var postA = new PostnomicPostDetail { Slug = slugA, Title = "Post A", AuthorName = "Jane" };
         var postB = new PostnomicPostDetail { Slug = slugB, Title = "Post B", AuthorName = "John" };
 
-        _innerMock.Setup(s => s.GetPostAsync(slugA, It.IsAny<CancellationToken>())).ReturnsAsync(postA);
-        _innerMock.Setup(s => s.GetPostAsync(slugB, It.IsAny<CancellationToken>())).ReturnsAsync(postB);
+        _innerMock.Setup(s => s.GetPostAsync(slugA, null, It.IsAny<CancellationToken>())).ReturnsAsync(postA);
+        _innerMock.Setup(s => s.GetPostAsync(slugB, null, It.IsAny<CancellationToken>())).ReturnsAsync(postB);
 
         await _sut.GetPostAsync(slugA);
         await _sut.GetPostAsync(slugB);
@@ -646,8 +680,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         await _sut.GetPostAsync(slugB);
 
         // Assert — post A re-fetched (2×), post B still cached (1×)
-        _innerMock.Verify(s => s.GetPostAsync(slugA, It.IsAny<CancellationToken>()), Times.Exactly(2));
-        _innerMock.Verify(s => s.GetPostAsync(slugB, It.IsAny<CancellationToken>()), Times.Once);
+        _innerMock.Verify(s => s.GetPostAsync(slugA, null, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _innerMock.Verify(s => s.GetPostAsync(slugB, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -657,7 +691,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         const string postSlug = "my-post";
         _innerMock.Setup(s => s.GetBlogAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicBlogInfo { Name = "Blog", Slug = BlogSlug });
-        _innerMock.Setup(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPostDetail { Slug = postSlug, Title = "T", AuthorName = "A" });
 
         await _sut.GetBlogAsync();
@@ -739,11 +773,11 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         const string postSlug = "my-post";
         _innerMock.Setup(s => s.GetBlogAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicBlogInfo { Name = "Blog", Slug = BlogSlug });
-        _innerMock.Setup(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPostDetail { Slug = postSlug, Title = "T", AuthorName = "A" });
         _innerMock.Setup(s => s.GetPostsAsync(
                 It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<string?>(),
-                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string?>(), It.IsAny<string?>(), null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateEmptyPagedResult());
 
         await _sut.GetPostAsync(postSlug);
@@ -757,11 +791,11 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         await _sut.GetPostsAsync();
 
         // Assert — post detail and post list NOT re-fetched (still cached)
-        _innerMock.Verify(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()), Times.Once);
+        _innerMock.Verify(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()), Times.Once);
         _innerMock.Verify(
             s => s.GetPostsAsync(
                 It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<string?>(),
-                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+                It.IsAny<string?>(), It.IsAny<string?>(), null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -789,7 +823,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
     {
         // Arrange — post does not exist
         const string postSlug = "missing-post";
-        _innerMock.Setup(s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()))
+        _innerMock.Setup(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PostnomicPostDetail?)null);
 
         // Act
@@ -800,7 +834,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         first.Should().BeNull();
         second.Should().BeNull();
         _innerMock.Verify(
-            s => s.GetPostAsync(postSlug, It.IsAny<CancellationToken>()),
+            s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

@@ -84,6 +84,7 @@ public sealed class PostnomicBlogService(
         string? category = null,
         string? author = null,
         string? search = null,
+        string? language = null,
         CancellationToken cancellationToken = default)
     {
         var query = BuildQuery(
@@ -92,7 +93,8 @@ public sealed class PostnomicBlogService(
             ("tag", tag),
             ("category", category),
             ("author", author),
-            ("search", search));
+            ("search", search),
+            ("lang", language));
 
         var result = await httpClient.GetFromJsonAsync<PostnomicPagedResult<PostnomicPostSummary>>(
             $"public/blogs/{_options.BlogSlug}/posts{query}", cancellationToken);
@@ -120,10 +122,12 @@ public sealed class PostnomicBlogService(
     /// <inheritdoc />
     public async Task<PostnomicPostDetail?> GetPostAsync(
         string postSlug,
+        string? language = null,
         CancellationToken cancellationToken = default)
     {
+        var langQuery = language is null ? string.Empty : $"?lang={Uri.EscapeDataString(language)}";
         var response = await httpClient.GetAsync(
-            $"public/blogs/{_options.BlogSlug}/posts/{postSlug}", cancellationToken);
+            $"public/blogs/{_options.BlogSlug}/posts/{postSlug}{langQuery}", cancellationToken);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
         response.EnsureSuccessStatusCode();
         var post = await response.Content.ReadFromJsonAsync<PostnomicPostDetail>(cancellationToken);
