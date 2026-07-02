@@ -134,6 +134,27 @@ public class SeoRenderingTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetPostPage_ForGermanLanguageRoute_CanonicalIsSelfReferentialToTheDeUrl()
+    {
+        // The canonical for a language variant must point to that variant's own URL, not to the
+        // default/English URL — otherwise search engines treat the de page as a duplicate of en.
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        html.Should().MatchRegex("<link rel=\"canonical\" href=\"https?://[^\"]+/de/blog/post/" + Slug + "\"");
+    }
+
+    [Fact]
+    public async Task GetPostPage_RendersOgLocaleInOpenGraphUnderscoreRegionFormat()
+    {
+        // og:locale must follow the OpenGraph convention (e.g. "de_DE"), not a bare language code.
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        html.Should().Contain("property=\"og:locale\" content=\"de_DE\"");
+    }
+
+    [Fact]
     public async Task GetPostPage_RendersOpenGraphTitle()
     {
         var response = await _client.GetAsync($"/de/blog/post/{Slug}");

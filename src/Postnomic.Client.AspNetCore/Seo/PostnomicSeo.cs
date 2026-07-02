@@ -35,8 +35,11 @@ public sealed record PostnomicSeoModel
     /// <summary>The value of the <c>robots</c> meta tag. Defaults to <c>"index, follow"</c>.</summary>
     public string Robots { get; init; } = "index, follow";
 
-    /// <summary>The OpenGraph locale (e.g. <c>"en"</c>), used for <c>og:locale</c>.</summary>
-    public string Locale { get; init; } = "en";
+    /// <summary>
+    /// The OpenGraph locale in <c>xx_XX</c> form (e.g. <c>"en_US"</c>, <c>"de_DE"</c>), used for
+    /// <c>og:locale</c>.
+    /// </summary>
+    public string Locale { get; init; } = "en_US";
 
     /// <summary>
     /// hreflang alternates for this page: one (language code, absolute URL) pair per available
@@ -117,7 +120,7 @@ public static class PostnomicSeo
             CanonicalUrl = canonical,
             OgType = "website",
             SiteName = title,
-            Locale = lang,
+            Locale = ToOgLocale(lang),
             Alternates = [(lang, canonical)],
             JsonLd = SerializeGraph(blogNode, itemList, breadcrumb),
         };
@@ -127,7 +130,11 @@ public static class PostnomicSeo
     public static PostnomicSeoModel ForPost(HttpRequest request, PostModel model)
     {
         var post = model.Post;
-        var canonical = ToAbsoluteUrl(request, model.CanonicalUrl);
+        // Self-referential canonical: canonicalize to the URL of the language variant actually
+        // being rendered (model.Lang), not model.CanonicalUrl (which always points at the
+        // default-language URL and is kept that way for existing consumers — see README).
+        var canonical = ToAbsoluteUrl(request,
+            PostnomicRouteBuilder.BuildPost(model.BasePath, model.RouteStyle, model.Lang, model.PostSlug));
         var image = ToAbsoluteUrlOrNull(request, post.CoverImageUrl);
         var alternates = model.AlternateLanguageUrls
             .Select(a => (a.Language, ToAbsoluteUrl(request, a.Url)))
@@ -171,7 +178,7 @@ public static class PostnomicSeo
             ImageUrl = string.IsNullOrEmpty(image) ? null : image,
             OgType = "article",
             SiteName = blogName,
-            Locale = post.Language,
+            Locale = ToOgLocale(post.Language),
             Alternates = alternates,
             JsonLd = SerializeGraph(blogPosting, breadcrumb),
             PublishedAt = post.PublishedAt,
@@ -234,7 +241,7 @@ public static class PostnomicSeo
             ImageUrl = string.IsNullOrEmpty(image) ? null : image,
             OgType = "profile",
             SiteName = profile.Name,
-            Locale = lang,
+            Locale = ToOgLocale(lang),
             Alternates = [(lang, canonical)],
             JsonLd = SerializeGraph(profilePage, breadcrumb),
         };
@@ -261,6 +268,28 @@ public static class PostnomicSeo
     /// </summary>
     public static string? ToAbsoluteUrlOrNull(HttpRequest request, string? pathOrUrl)
         => string.IsNullOrEmpty(pathOrUrl) ? null : ToAbsoluteUrl(request, pathOrUrl);
+
+    /// <summary>
+    /// Maps a bare ISO-639-1 language code (e.g. <c>"de"</c>) to the OpenGraph-conventional
+    /// <c>xx_XX</c> locale form used by <c>og:locale</c> (e.g. <c>"de_DE"</c>). <c>de</c> and
+    /// <c>en</c> map to their well-known region variants (<c>de_DE</c>, <c>en_US</c>); any other
+    /// two-letter code is paired with its upper-cased self as the region (e.g. <c>"fr"</c> →
+    /// <c>"fr_FR"</c>). Anything else is returned unchanged.
+    /// </summary>
+    private static string ToOgLocale(string? languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode))
+            return "en_US";
+
+        var code = languageCode.Trim().ToLowerInvariant();
+        return code switch
+        {
+            "de" => "de_DE",
+            "en" => "en_US",
+            _ when code.Length == 2 => $"{code}_{code.ToUpperInvariant()}",
+            _ => languageCode,
+        };
+    }
 
     private static string BuildDescription(string? excerpt, string? content, string fallback)
     {
