@@ -101,4 +101,10 @@ public record PostnomicPostDetail
     /// Never <see langword="null"/>; may be empty.
     /// </summary>
     public ICollection<PostnomicComment> Comments { get; init; } = [];
+
+    /// <summary>The language this post is presented in (ISO-639-1, e.g. "en").</summary>
+    public string Language { get; init; } = "en";
+
+    /// <summary>All languages this post is available in (blog default first). Never null; may be empty.</summary>
+    public IReadOnlyList<string> AvailableLanguages { get; init; } = [];
 }
