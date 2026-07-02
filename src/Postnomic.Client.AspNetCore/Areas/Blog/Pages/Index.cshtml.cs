@@ -45,6 +45,13 @@ public class IndexModel(
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
 
+    /// <summary>
+    /// Optional ISO-639-1 language code bound from the <c>/{lang}/</c> route segment (e.g. "de").
+    /// Null when the request used the default (non-prefixed) route.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Lang { get; set; }
+
     // ── Page data ─────────────────────────────────────────────────────────────
 
     /// <summary>Public metadata for the blog (name, description, layout).</summary>
@@ -101,6 +108,7 @@ public class IndexModel(
 
         var postsTask = blogService.GetPostsAsync(
             PageNumber, PageSize, Tag, Category, Author, Search,
+            language: Lang,
             cancellationToken: cancellationToken);
         var blogTask = blogService.GetBlogAsync(cancellationToken);
         var tagsTask = blogService.GetTagsAsync(cancellationToken);

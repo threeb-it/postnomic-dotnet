@@ -22,6 +22,14 @@ public class AuthorModel(
     [BindProperty(SupportsGet = true)]
     public string AuthorSlug { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Optional ISO-639-1 language code bound from the <c>/{lang}/</c> route segment (e.g. "de").
+    /// Not forwarded to the API — the Author endpoint has no language argument — but binding it
+    /// lets the <c>/{lang}/author/...</c> route resolve.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Lang { get; set; }
+
     /// <summary>The full author profile loaded from the API.</summary>
     public PostnomicAuthorProfile Profile { get; private set; } = null!;
 

@@ -25,6 +25,13 @@ public class PostModel(
     [BindProperty(SupportsGet = true)]
     public string PostSlug { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Optional ISO-639-1 language code bound from the <c>/{lang}/</c> route segment (e.g. "de").
+    /// Null when the request used the default (non-prefixed) route.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Lang { get; set; }
+
     // ── Page data ─────────────────────────────────────────────────────────────
 
     /// <summary>Full detail of the post including content, comment settings, and comments.</summary>
@@ -157,11 +164,34 @@ public class PostModel(
         }
     }
 
+    /// <summary>The canonical (default-language) URL for this post: {BasePath}/post/{slug}.</summary>
+    public string CanonicalUrl => $"{BasePath.TrimEnd('/')}/post/{PostSlug}";
+
+    /// <summary>
+    /// hreflang alternates: one (languageCode, url) per available language. The blog default
+    /// language (AvailableLanguages first, else Post.Language) maps to the canonical URL; others
+    /// get the /{lang}/ prefix. Empty when the post has no AvailableLanguages.
+    /// </summary>
+    public IReadOnlyList<(string Language, string Url)> AlternateLanguageUrls
+    {
+        get
+        {
+            var langs = Post?.AvailableLanguages ?? [];
+            if (langs.Count == 0) return [];
+            var defaultLang = langs.FirstOrDefault() ?? Post!.Language;
+            var basePath = BasePath.TrimEnd('/');
+            return langs.Select(code => (code,
+                string.Equals(code, defaultLang, StringComparison.OrdinalIgnoreCase)
+                    ? $"{basePath}/post/{PostSlug}"
+                    : $"{basePath}/{code}/post/{PostSlug}")).ToList();
+        }
+    }
+
     private async Task<IActionResult> LoadPostAsync(CancellationToken cancellationToken)
     {
         var blogService = ResolveBlogService();
 
-        var postTask = blogService.GetPostAsync(PostSlug, cancellationToken: cancellationToken);
+        var postTask = blogService.GetPostAsync(PostSlug, language: Lang, cancellationToken: cancellationToken);
         var blogInfoTask = blogService.GetBlogAsync(cancellationToken);
         var topCommentedTask = blogService.GetTopCommentedPostsAsync(cancellationToken: cancellationToken);
         var mostReadTask = blogService.GetMostReadPostsAsync(cancellationToken: cancellationToken);

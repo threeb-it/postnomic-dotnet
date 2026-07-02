@@ -17,34 +17,29 @@ internal sealed class PostnomicBlogAreaRouteConvention(string basePath) : IPageR
 
         var trimmedPath = basePath.Trim('/');
 
-        string? template = null;
-
+        var templates = new List<string>();
         if (model.RelativePath.EndsWith("Index.cshtml", StringComparison.OrdinalIgnoreCase))
         {
-            template = trimmedPath;
+            templates.Add(trimmedPath);
+            templates.Add($"{trimmedPath}/{{lang:regex(^[a-z]{{2}}$)}}");
         }
         else if (model.RelativePath.EndsWith("Post.cshtml", StringComparison.OrdinalIgnoreCase))
         {
-            template = $"{trimmedPath}/post/{{postSlug}}";
+            templates.Add($"{trimmedPath}/post/{{postSlug}}");
+            templates.Add($"{trimmedPath}/{{lang:regex(^[a-z]{{2}}$)}}/post/{{postSlug}}");
         }
         else if (model.RelativePath.EndsWith("Author.cshtml", StringComparison.OrdinalIgnoreCase))
         {
-            template = $"{trimmedPath}/author/{{authorSlug}}";
+            templates.Add($"{trimmedPath}/author/{{authorSlug}}");
+            templates.Add($"{trimmedPath}/{{lang:regex(^[a-z]{{2}}$)}}/author/{{authorSlug}}");
         }
-
-        if (template is null) return;
-
-        // Check if any existing selector already has this exact template
-        var alreadyExists = model.Selectors.Any(s =>
-            s.AttributeRouteModel is not null &&
-            string.Equals(s.AttributeRouteModel.Template, template, StringComparison.OrdinalIgnoreCase));
-
-        if (!alreadyExists)
+        foreach (var template in templates)
         {
-            model.Selectors.Add(new SelectorModel
-            {
-                AttributeRouteModel = new AttributeRouteModel { Template = template }
-            });
+            var alreadyExists = model.Selectors.Any(s =>
+                s.AttributeRouteModel is not null &&
+                string.Equals(s.AttributeRouteModel.Template, template, StringComparison.OrdinalIgnoreCase));
+            if (!alreadyExists)
+                model.Selectors.Add(new SelectorModel { AttributeRouteModel = new AttributeRouteModel { Template = template } });
         }
     }
 }

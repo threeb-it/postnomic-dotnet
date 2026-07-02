@@ -235,10 +235,12 @@ public class PostnomicAspNetCoreExtensionsTests
         // Act
         convention.Apply(model);
 
-        // Assert — convention adds a new selector with the mapped route
-        model.Selectors.Should().HaveCount(2);
+        // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
+        model.Selectors.Should().HaveCount(3);
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("blog/author/{authorSlug}");
+        model.Selectors[2].AttributeRouteModel!.Template
+            .Should().Be("blog/{lang:regex(^[a-z]{2}$)}/author/{authorSlug}");
     }
 
     [Fact]
@@ -260,10 +262,12 @@ public class PostnomicAspNetCoreExtensionsTests
         // Act
         convention.Apply(model);
 
-        // Assert — convention adds a new selector with the mapped route
-        model.Selectors.Should().HaveCount(2);
+        // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
+        model.Selectors.Should().HaveCount(3);
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("articles/author/{authorSlug}");
+        model.Selectors[2].AttributeRouteModel!.Template
+            .Should().Be("articles/{lang:regex(^[a-z]{2}$)}/author/{authorSlug}");
     }
 
     [Fact]
@@ -285,10 +289,12 @@ public class PostnomicAspNetCoreExtensionsTests
         // Act
         convention.Apply(model);
 
-        // Assert — convention adds a new selector with the mapped route
-        model.Selectors.Should().HaveCount(2);
+        // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
+        model.Selectors.Should().HaveCount(3);
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("news/author/{authorSlug}");
+        model.Selectors[2].AttributeRouteModel!.Template
+            .Should().Be("news/{lang:regex(^[a-z]{2}$)}/author/{authorSlug}");
     }
 
     [Fact]
@@ -380,10 +386,12 @@ public class PostnomicAspNetCoreExtensionsTests
         // Act
         convention.Apply(model);
 
-        // Assert — convention adds a new selector with the mapped route
-        model.Selectors.Should().HaveCount(2);
+        // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
+        model.Selectors.Should().HaveCount(3);
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("blog");
+        model.Selectors[2].AttributeRouteModel!.Template
+            .Should().Be("blog/{lang:regex(^[a-z]{2}$)}");
     }
 
     [Fact]
@@ -412,10 +420,12 @@ public class PostnomicAspNetCoreExtensionsTests
         // Act
         convention.Apply(model);
 
-        // Assert — convention adds a new selector with the mapped route
-        model.Selectors.Should().HaveCount(2);
+        // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
+        model.Selectors.Should().HaveCount(3);
         model.Selectors[1].AttributeRouteModel!.Template
             .Should().Be("blog/post/{postSlug}");
+        model.Selectors[2].AttributeRouteModel!.Template
+            .Should().Be("blog/{lang:regex(^[a-z]{2}$)}/post/{postSlug}");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
