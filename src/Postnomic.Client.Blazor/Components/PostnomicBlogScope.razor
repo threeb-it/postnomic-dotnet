@@ -1,6 +1,8 @@
 @using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Logging
 @using Microsoft.Extensions.Options
 @inject IServiceProvider ServiceProvider
+@inject ILogger<PostnomicBlogScope> Logger
 
 <CascadingValue Value="context" IsFixed="false">
     @ChildContent
@@ -25,7 +27,23 @@
     /// <inheritdoc />
     protected override void OnParametersSet()
     {
-        var service = ServiceProvider.GetRequiredKeyedService<IPostnomicBlogService>(BlogName);
+        // Resolve the keyed blog service without GetRequiredKeyedService so a missing registration
+        // produces an actionable message instead of the framework's opaque
+        // "No keyed service for type 'IPostnomicBlogService' ... has been registered" crash.
+        var service = ServiceProvider.GetKeyedService<IPostnomicBlogService>(BlogName);
+        if (service is null)
+        {
+            Logger.LogError(
+                "PostnomicBlogScope could not resolve a blog registered under the name '{BlogName}'. "
+                + "Register it with AddPostnomicBlog(\"{BlogName}\", ...) and ensure the "
+                + "PostnomicBlogScope BlogName parameter matches that name exactly.",
+                BlogName, BlogName);
+            throw new InvalidOperationException(
+                $"No Postnomic blog is registered under the name '{BlogName}'. Register it with "
+                + $"AddPostnomicBlog(\"{BlogName}\", options => ...) during service configuration, and "
+                + $"ensure the PostnomicBlogScope BlogName parameter matches that name exactly.");
+        }
+
         var monitor = ServiceProvider.GetRequiredService<IOptionsMonitor<PostnomicClientOptions>>();
         context = new PostnomicBlogContext
         {
