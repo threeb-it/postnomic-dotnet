@@ -34,15 +34,39 @@ public class PostnomicSeoBuilderTests
     public void ForPost_XDefaultUrl_IsTheDefaultLanguageAlternate_NotTheCurrentPageCanonical()
     {
         // AvailableLanguages = ["en", "de"] => "en" is the default language (first entry), so its
-        // alternate URL (bare, no lang segment) is what x-default should resolve to — even though
-        // this render is for the "de" variant, whose own canonical is the /de/... URL.
+        // alternate URL is what x-default should resolve to — even though this render is for the
+        // "de" variant, whose own canonical is the /de/... URL. Under Prefix there is no bare
+        // /blog/... route, so the default language's alternate is /en/blog/... (language-prefixed
+        // like every other alternate), not a bare URL.
         var model = PostnomicSeoBuilder.ForPost(
             "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
             lang: "de", postSlug: "hello-world", post: CreatePost(), blogInfo: null);
 
         model.CanonicalUrl.Should().Be("https://example.com/de/blog/post/hello-world");
-        model.XDefaultUrl.Should().Be("https://example.com/blog/post/hello-world");
+        model.XDefaultUrl.Should().Be("https://example.com/en/blog/post/hello-world");
         model.XDefaultUrl.Should().NotBe(model.CanonicalUrl);
+    }
+
+    [Fact]
+    public void ForPost_PrefixStyle_NoAlternateNorXDefaultIsABareUrl()
+    {
+        // Guard test (elimination of the "bare URL in Prefix mode -> 404" bug class): under
+        // Prefix, the ONLY registered routes are /{lang}/blog/... — a bare /blog/post/... 404s.
+        // Render both the de and en variants of a post with de+en available and assert none of the
+        // emitted hreflang alternate URLs, nor XDefaultUrl, is ever the bare canonical.
+        var bareUrl = "https://example.com/blog/post/hello-world";
+
+        foreach (var lang in new[] { "de", "en" })
+        {
+            var model = PostnomicSeoBuilder.ForPost(
+                "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+                lang: lang, postSlug: "hello-world", post: CreatePost(), blogInfo: null);
+
+            model.Alternates.Should().NotBeEmpty();
+            model.Alternates.Select(a => a.Url).Should().NotContain(bareUrl);
+            model.XDefaultUrl.Should().NotBe(bareUrl);
+            model.Alternates.Should().OnlyContain(a => a.Url.StartsWith($"https://example.com/{a.Lang}/blog/"));
+        }
     }
 
     [Fact]

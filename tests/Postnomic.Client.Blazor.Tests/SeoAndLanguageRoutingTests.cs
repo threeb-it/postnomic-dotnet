@@ -248,16 +248,18 @@ public class SeoAndLanguageRoutingTests : BunitContext
             builder.CloseComponent();
         }));
 
-        // Assert
+        // Assert — under Prefix there is no bare /blog/... route, so the "en" alternate must carry
+        // its own language segment rather than being bare, or it would 404.
         var alternate = cut.Find("link[hreflang='en']");
-        alternate.GetAttribute("href").Should().Be("http://localhost/blog/post/hello-world");
+        alternate.GetAttribute("href").Should().Be("http://localhost/en/blog/post/hello-world");
     }
 
     [Fact]
     public void PostPage_HeadContent_XDefaultIsTheDefaultLanguageUrl_NotTheCurrentPageCanonical()
     {
-        // Arrange — AvailableLanguages = ["en", "de"] per CreatePost default, so "en" (bare, no
-        // lang segment) is the default-language URL.
+        // Arrange — AvailableLanguages = ["en", "de"] per CreatePost default, so "en" is the
+        // default-language URL. Under Prefix routing only /{lang}/blog/... routes are registered
+        // (no bare /blog/... route), so that URL must be /en/blog/post/hello-world, not bare.
         UseOptions(PostnomicLanguageRouteStyle.Prefix);
         SetupPost(CreatePost());
 
@@ -274,7 +276,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
         // self-referential canonical.
         var xDefault = cut.Find("link[hreflang='x-default']");
         var canonical = cut.Find("link[rel='canonical']");
-        xDefault.GetAttribute("href").Should().Be("http://localhost/blog/post/hello-world");
+        xDefault.GetAttribute("href").Should().Be("http://localhost/en/blog/post/hello-world");
         xDefault.GetAttribute("href").Should().NotBe(canonical.GetAttribute("href"));
     }
 
@@ -299,9 +301,38 @@ public class SeoAndLanguageRoutingTests : BunitContext
         }));
 
         // Assert — same x-default value as the "de" variant test, even though this page's own
-        // canonical is the "en" (bare) URL rather than the "de" one.
+        // canonical is the "en" URL rather than the "de" one; under Prefix that "en" URL is itself
+        // language-prefixed (/en/blog/...), never bare.
         cut.Find("link[hreflang='x-default']").GetAttribute("href")
-            .Should().Be("http://localhost/blog/post/hello-world");
+            .Should().Be("http://localhost/en/blog/post/hello-world");
+    }
+
+    [Fact]
+    public void PostPage_HeadContent_PrefixStyle_NoHreflangAlternateNorXDefaultIsABareUrl()
+    {
+        // Guard test (elimination of the "bare URL in Prefix mode -> 404" bug class): under
+        // Prefix, only /{lang}/blog/... routes are registered — a bare /blog/post/hello-world
+        // 404s. Every rendered hreflang alternate (including x-default) must be language-prefixed.
+        UseOptions(PostnomicLanguageRouteStyle.Prefix);
+        SetupPost(CreatePost());
+
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.AddComponentParameter(2, nameof(PostPage.Language), "de");
+            builder.CloseComponent();
+        }));
+
+        const string bareUrl = "http://localhost/blog/post/hello-world";
+        var alternateHrefs = cut.FindAll("link[hreflang]")
+            .Select(el => el.GetAttribute("href"))
+            .ToList();
+
+        alternateHrefs.Should().NotBeEmpty();
+        alternateHrefs.Should().NotContain(bareUrl);
+        alternateHrefs.Should().OnlyContain(href => href != null
+            && System.Text.RegularExpressions.Regex.IsMatch(href, "^http://localhost/[a-z]{2}/blog/post/hello-world$"));
     }
 
     [Fact]

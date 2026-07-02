@@ -21,11 +21,23 @@ public static class PostnomicRouteBuilder
 
     /// <summary>
     /// Builds hreflang-style (language, URL) alternates for a single post across every language
-    /// it is available in. The first entry of <paramref name="availableLanguages"/> (falling back
-    /// to <paramref name="fallbackDefaultLanguage"/> when empty) is treated as the blog's default
-    /// language and maps to the canonical (no-language-segment) URL; every other language gets its
-    /// segment placed according to <paramref name="style"/>. Returns an empty list when
-    /// <paramref name="availableLanguages"/> is empty.
+    /// it is available in. Returns an empty list when <paramref name="availableLanguages"/> is
+    /// empty.
+    /// <para>
+    /// Under <see cref="PostnomicLanguageRouteStyle.Prefix"/>, the ONLY routes ever registered are
+    /// <c>/{lang}/...</c> — there is no bare, no-language-segment route, so EVERY alternate
+    /// (including the blog's default language) is built with its own language segment via
+    /// <see cref="BuildPost"/>. Mapping the default language to a bare URL here would emit a
+    /// hreflang alternate that 404s.
+    /// </para>
+    /// <para>
+    /// Under <see cref="PostnomicLanguageRouteStyle.Suffix"/>/<see cref="PostnomicLanguageRouteStyle.None"/>,
+    /// a bare route legitimately exists and belongs to the blog's default language, so the first
+    /// entry of <paramref name="availableLanguages"/> (falling back to
+    /// <paramref name="fallbackDefaultLanguage"/> when empty) continues to map to that bare
+    /// (no-language-segment) URL; every other language gets its segment placed according to
+    /// <paramref name="style"/>.
+    /// </para>
     /// </summary>
     public static IReadOnlyList<(string Language, string Url)> BuildPostAlternates(
         string basePath,
@@ -35,6 +47,13 @@ public static class PostnomicRouteBuilder
         string? fallbackDefaultLanguage = null)
     {
         if (availableLanguages.Count == 0) return [];
+
+        if (style == PostnomicLanguageRouteStyle.Prefix)
+        {
+            return availableLanguages
+                .Select(code => (code, BuildPost(basePath, style, code, postSlug)))
+                .ToList();
+        }
 
         var defaultLang = availableLanguages.FirstOrDefault() ?? fallbackDefaultLanguage;
         return availableLanguages

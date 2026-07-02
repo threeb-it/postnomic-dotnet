@@ -201,8 +201,10 @@ public class SeoRenderingTests : IAsyncLifetime
     public async Task GetPostPage_ForGermanAndEnglishLanguageRoutes_XDefaultIsTheSameDefaultLanguageUrl()
     {
         // AvailableLanguages = ["en", "de"] => "en" is the default language, so x-default must be
-        // the bare (no lang segment) English URL on BOTH the de and the en page — not each page's
-        // own canonical — otherwise Google sees a different x-default per page in the cluster.
+        // the /en/... English URL on BOTH the de and the en page — not each page's own canonical
+        // — otherwise Google sees a different x-default per page in the cluster. Under Prefix
+        // routing there is no bare /blog/... route (only /{lang}/blog/...), so x-default must
+        // carry the "en" language segment rather than being bare, or it would 404.
         var deResponse = await _client.GetAsync($"/de/blog/post/{Slug}");
         var deHtml = await deResponse.Content.ReadAsStringAsync();
         var enResponse = await _client.GetAsync($"/en/blog/post/{Slug}");
@@ -214,7 +216,26 @@ public class SeoRenderingTests : IAsyncLifetime
 
         deXDefault.Should().NotBeNullOrEmpty();
         deXDefault.Should().Be(enXDefault);
-        deXDefault.Should().MatchRegex($"https?://[^/]+/blog/post/{Slug}$");
+        deXDefault.Should().MatchRegex($"https?://[^/]+/en/blog/post/{Slug}$");
+    }
+
+    [Fact]
+    public async Task GetPostPage_PrefixStyle_NoHreflangAlternateNorXDefaultIsABareBlogUrl()
+    {
+        // Guard test (elimination of the "bare URL in Prefix mode -> 404" bug class): under Prefix
+        // routing, only /{lang}/blog/... routes are registered — a bare /blog/post/{slug} 404s.
+        // Every hreflang alternate (including x-default) rendered for either language variant of
+        // this post must therefore be language-prefixed.
+        var deResponse = await _client.GetAsync($"/de/blog/post/{Slug}");
+        var deHtml = await deResponse.Content.ReadAsStringAsync();
+
+        var hrefs = Regex.Matches(deHtml, "hreflang=\"[^\"]+\" href=\"([^\"]+)\"")
+            .Select(m => m.Groups[1].Value)
+            .ToList();
+
+        hrefs.Should().NotBeEmpty();
+        hrefs.Should().OnlyContain(href => Regex.IsMatch(href, "https?://[^/]+/[a-z]{2}/blog/post/" + Slug + "$"));
+        hrefs.Should().NotContain(href => Regex.IsMatch(href, "https?://[^/]+/blog/post/" + Slug + "$"));
     }
 
     [Fact]
