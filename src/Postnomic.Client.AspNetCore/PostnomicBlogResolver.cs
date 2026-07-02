@@ -20,7 +20,27 @@ public class PostnomicBlogResolverOptions
     /// with no entry here default to <see cref="PostnomicLanguageRouteStyle.Suffix"/>.
     /// </summary>
     public Dictionary<string, PostnomicLanguageRouteStyle> BasePathToLanguageRouteStyle { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Every blog registered via either overload of <c>AddPostnomicBlog</c>,
+    /// including the single, unnamed default-blog registration (whose
+    /// <see cref="PostnomicRegisteredBlog.Name"/> is <see langword="null"/>). Unlike
+    /// <see cref="BasePathToBlogName"/> — which only tracks named registrations, because a
+    /// <see langword="null"/> resolver result is ambiguous between "no blog matched" and "the
+    /// default blog matched" — this list is unambiguous and lets consumers such as
+    /// <c>MapPostnomicBlog</c> enumerate every registered blog, default included.
+    /// </summary>
+    public List<PostnomicRegisteredBlog> RegisteredBlogs { get; } = [];
 }
+
+/// <summary>
+/// Describes a single blog registered via <c>AddPostnomicBlog</c>: its base path, its
+/// <see cref="PostnomicLanguageRouteStyle"/>, and the keyed-service name used to resolve its
+/// <see cref="IPostnomicBlogService"/> — or <see langword="null"/> for the single, unnamed
+/// default-blog registration, whose <see cref="IPostnomicBlogService"/> is registered
+/// non-keyed.
+/// </summary>
+public sealed record PostnomicRegisteredBlog(string? Name, string BasePath, PostnomicLanguageRouteStyle Style);
 
 /// <summary>
 /// Resolves the named blog registration for a given HTTP request path.
