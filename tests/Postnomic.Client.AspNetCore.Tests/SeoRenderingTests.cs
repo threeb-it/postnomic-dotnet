@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -41,7 +42,10 @@ public class SeoRenderingTests : IAsyncLifetime
                 CoverImageUrl = "/images/cover.jpg",
                 AuthorName = "Jane Doe",
                 AuthorSlug = AuthorSlug,
-                PublishedAt = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                // Deliberately Unspecified-kind, mirroring what System.Text.Json produces for the
+                // API's zoneless "publishedAt" field — exercises the UTC-normalization fix (see
+                // GetPostPage_RendersUtcNormalizedPublishedTimestamps below) end-to-end.
+                PublishedAt = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Unspecified),
                 Language = "de",
                 AvailableLanguages = ["en", "de"],
                 Tags = [new PostnomicTag { Slug = "seo", Name = "SEO", PostCount = 1 }],
@@ -191,6 +195,40 @@ public class SeoRenderingTests : IAsyncLifetime
         var html = await response.Content.ReadAsStringAsync();
 
         html.Should().Contain("hreflang=\"en\"");
+    }
+
+    [Fact]
+    public async Task GetPostPage_ForGermanAndEnglishLanguageRoutes_XDefaultIsTheSameDefaultLanguageUrl()
+    {
+        // AvailableLanguages = ["en", "de"] => "en" is the default language, so x-default must be
+        // the bare (no lang segment) English URL on BOTH the de and the en page — not each page's
+        // own canonical — otherwise Google sees a different x-default per page in the cluster.
+        var deResponse = await _client.GetAsync($"/de/blog/post/{Slug}");
+        var deHtml = await deResponse.Content.ReadAsStringAsync();
+        var enResponse = await _client.GetAsync($"/en/blog/post/{Slug}");
+        var enHtml = await enResponse.Content.ReadAsStringAsync();
+
+        var xDefaultRegex = new Regex("hreflang=\"x-default\" href=\"([^\"]+)\"");
+        var deXDefault = xDefaultRegex.Match(deHtml).Groups[1].Value;
+        var enXDefault = xDefaultRegex.Match(enHtml).Groups[1].Value;
+
+        deXDefault.Should().NotBeNullOrEmpty();
+        deXDefault.Should().Be(enXDefault);
+        deXDefault.Should().MatchRegex($"https?://[^/]+/blog/post/{Slug}$");
+    }
+
+    [Fact]
+    public async Task GetPostPage_RendersUtcNormalizedPublishedTimestamps()
+    {
+        // The mocked post's PublishedAt is DateTimeKind.Unspecified (see InitializeAsync);
+        // article:published_time and the JSON-LD datePublished must still carry a UTC "Z"
+        // designator instead of a zoneless timestamp, consistent with the sitemap/RSS date
+        // normalization covered by FeedDateNormalizationTests.
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        html.Should().Contain("property=\"article:published_time\" content=\"2025-06-01T00:00:00.0000000Z\"");
+        html.Should().Contain("\"datePublished\":\"2025-06-01T00:00:00.0000000Z\"");
     }
 
     [Fact]

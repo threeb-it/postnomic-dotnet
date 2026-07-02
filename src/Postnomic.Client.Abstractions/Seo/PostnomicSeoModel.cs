@@ -45,6 +45,19 @@ public sealed record PostnomicSeoModel
     public IReadOnlyList<(string Lang, string Url)> Alternates { get; init; } = [];
 
     /// <summary>
+    /// The URL to use for the <c>hreflang="x-default"</c> alternate. Google expects exactly one
+    /// consistent x-default target across an entire language cluster (e.g. the de and en variants
+    /// of the same post), so this always resolves to the blog's/post's default-language URL
+    /// (<see cref="Alternates"/>'s first entry, which <c>PostnomicSeoBuilder</c> always builds
+    /// with the default language first) rather than the current page's own (per-language)
+    /// <see cref="CanonicalUrl"/> — using <see cref="CanonicalUrl"/> here would make x-default
+    /// differ between the de and en pages of the same cluster, which is incorrect. Falls back to
+    /// <see cref="CanonicalUrl"/> when there are no alternates (e.g. a page with only one
+    /// language).
+    /// </summary>
+    public string XDefaultUrl => Alternates.Count > 0 ? Alternates[0].Url : CanonicalUrl;
+
+    /// <summary>
     /// A JSON-LD document (already serialized, HTML-safe) to embed in an
     /// <c>application/ld+json</c> script tag. <see langword="null"/> when no structured data
     /// applies.

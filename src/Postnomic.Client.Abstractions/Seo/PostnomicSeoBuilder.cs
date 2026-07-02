@@ -95,6 +95,13 @@ public static class PostnomicSeoBuilder
 
         var description = BuildDescription(post.Excerpt, post.Content, post.Title);
 
+        // The Postnomic API returns publishedAt without a trailing "Z"/offset, so
+        // System.Text.Json deserializes it as DateTimeKind.Unspecified even though the value is
+        // always already UTC (mirrors the same normalization PostnomicFeeds applies to
+        // sitemap/RSS dates, so JSON-LD/OpenGraph timestamps agree with the feeds instead of
+        // rendering a zoneless value that .ToString("O") would emit without a "Z"/offset).
+        var publishedAtUtc = NormalizeToUtc(post.PublishedAt);
+
         var author = new JsonObject
         {
             ["@type"] = "Person",
@@ -106,7 +113,7 @@ public static class PostnomicSeoBuilder
             ["@type"] = "BlogPosting",
             ["headline"] = post.Title,
             ["description"] = description,
-            ["datePublished"] = post.PublishedAt.ToString("O"),
+            ["datePublished"] = publishedAtUtc.ToString("O"),
             ["inLanguage"] = post.Language,
             ["author"] = author,
             ["mainEntityOfPage"] = new JsonObject
@@ -133,7 +140,7 @@ public static class PostnomicSeoBuilder
             Locale = ToOgLocale(post.Language),
             Alternates = alternates,
             JsonLd = SerializeGraph(blogPosting, breadcrumb),
-            PublishedAt = post.PublishedAt,
+            PublishedAt = publishedAtUtc,
             AuthorName = post.AuthorName,
             Tags = post.Tags.Select(t => t.Name).ToList(),
         };
@@ -246,6 +253,23 @@ public static class PostnomicSeoBuilder
             _ => languageCode,
         };
     }
+
+    /// <summary>
+    /// Normalizes a post timestamp to UTC without shifting its wall-clock value when the
+    /// <see cref="DateTime.Kind"/> is <see cref="DateTimeKind.Unspecified"/>. The Postnomic API
+    /// returns <c>publishedAt</c> without a trailing "Z"/offset, so System.Text.Json
+    /// deserializes it as Unspecified even though the value is always already UTC; calling
+    /// <c>.ToUniversalTime()</c> directly on it would misinterpret it as local time and shift it
+    /// by the host machine's UTC offset. Already-Utc values pass through unchanged, and
+    /// already-Local values still go through <c>.ToUniversalTime()</c> as intended. Shared with
+    /// <c>Postnomic.Client.AspNetCore.Seo.PostnomicFeeds</c>, which applies the identical
+    /// normalization to sitemap <c>&lt;lastmod&gt;</c> and RSS <c>&lt;pubDate&gt;</c>, so every
+    /// emitted timestamp (feeds, JSON-LD, OpenGraph) is consistent regardless of host timezone.
+    /// </summary>
+    public static DateTime NormalizeToUtc(DateTime value) =>
+        value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            : value.ToUniversalTime();
 
     private static string BuildDescription(string? excerpt, string? content, string fallback)
     {

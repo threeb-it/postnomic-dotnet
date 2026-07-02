@@ -51,13 +51,14 @@ public class SeoAndLanguageRoutingTests : BunitContext
         IReadOnlyList<string>? availableLanguages = null,
         string? excerpt = "A short teaser.",
         string? coverImageUrl = null,
-        ICollection<PostnomicTag>? tags = null) => new()
+        ICollection<PostnomicTag>? tags = null,
+        DateTime? publishedAt = null) => new()
     {
         Slug = "hello-world",
         Title = title,
         AuthorName = author,
         AuthorSlug = authorSlug,
-        PublishedAt = new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
+        PublishedAt = publishedAt ?? new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
         Excerpt = excerpt,
         Content = "<p>Body content.</p>",
         CoverImageUrl = coverImageUrl,
@@ -250,6 +251,81 @@ public class SeoAndLanguageRoutingTests : BunitContext
         // Assert
         var alternate = cut.Find("link[hreflang='en']");
         alternate.GetAttribute("href").Should().Be("http://localhost/blog/post/hello-world");
+    }
+
+    [Fact]
+    public void PostPage_HeadContent_XDefaultIsTheDefaultLanguageUrl_NotTheCurrentPageCanonical()
+    {
+        // Arrange — AvailableLanguages = ["en", "de"] per CreatePost default, so "en" (bare, no
+        // lang segment) is the default-language URL.
+        UseOptions(PostnomicLanguageRouteStyle.Prefix);
+        SetupPost(CreatePost());
+
+        // Act
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.AddComponentParameter(2, nameof(PostPage.Language), "de");
+            builder.CloseComponent();
+        }));
+
+        // Assert — x-default points at the default-language (en) URL, not this de page's own
+        // self-referential canonical.
+        var xDefault = cut.Find("link[hreflang='x-default']");
+        var canonical = cut.Find("link[rel='canonical']");
+        xDefault.GetAttribute("href").Should().Be("http://localhost/blog/post/hello-world");
+        xDefault.GetAttribute("href").Should().NotBe(canonical.GetAttribute("href"));
+    }
+
+    [Fact]
+    public void PostPage_HeadContent_XDefault_OnEnglishVariant_IsTheSameDefaultLanguageUrl()
+    {
+        // Arrange — companion to the "de" variant test above. bUnit only allows one HeadOutlet
+        // subscriber per test context, so each language variant is rendered in its own test
+        // (fresh BunitContext) rather than both in a single test; both asserting the same known
+        // constant proves the de and en pages emit an identical x-default, which is the actual
+        // requirement (one consistent x-default across the whole language cluster).
+        UseOptions(PostnomicLanguageRouteStyle.Prefix);
+        SetupPost(CreatePost());
+
+        // Act
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.AddComponentParameter(2, nameof(PostPage.Language), "en");
+            builder.CloseComponent();
+        }));
+
+        // Assert — same x-default value as the "de" variant test, even though this page's own
+        // canonical is the "en" (bare) URL rather than the "de" one.
+        cut.Find("link[hreflang='x-default']").GetAttribute("href")
+            .Should().Be("http://localhost/blog/post/hello-world");
+    }
+
+    [Fact]
+    public void PostPage_HeadContent_RendersUtcNormalizedPublishedTimestamp_ForUnspecifiedKindDate()
+    {
+        // Arrange — Unspecified-kind, mirroring what System.Text.Json produces for the API's
+        // zoneless "publishedAt" field; must still render with a "Z" designator, host-tz
+        // independent (see PostnomicSeoBuilderTests for the equivalent unit-level coverage).
+        UseOptions(PostnomicLanguageRouteStyle.Prefix);
+        SetupPost(CreatePost(publishedAt: new DateTime(2026, 7, 2, 13, 30, 0, DateTimeKind.Unspecified)));
+
+        // Act
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.AddComponentParameter(2, nameof(PostPage.Language), "de");
+            builder.CloseComponent();
+        }));
+
+        // Assert
+        cut.Find("meta[property='article:published_time']").GetAttribute("content")
+            .Should().Be("2026-07-02T13:30:00.0000000Z");
+        cut.Markup.Should().Contain("\"datePublished\":\"2026-07-02T13:30:00.0000000Z\"");
     }
 
     [Fact]

@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.Http;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
+using Postnomic.Client.Abstractions.Seo;
 
 namespace Postnomic.Client.AspNetCore.Seo;
 
@@ -77,7 +78,7 @@ public static class PostnomicFeeds
         var urlset = new XElement(SitemapNs + "urlset", new XAttribute(XNamespace.Xmlns + "xhtml", XhtmlNs));
 
         // Blog index, so crawlers discover the listing page even when no post links back to it.
-        urlset.Add(BuildIndexUrlElement(request, basePath, style));
+        urlset.Add(BuildIndexUrlElement(request, basePath, style, DetermineDefaultLanguage(posts)));
 
         foreach (var post in posts)
             urlset.Add(BuildPostUrlElement(post, request, basePath, style));
@@ -94,7 +95,9 @@ public static class PostnomicFeeds
         string channelTitle,
         string? channelDescription)
     {
-        var channelLink = ToAbsoluteUrl(request, PostnomicRouteBuilder.BuildIndex(basePath, style, lang: null));
+        var channelLink = ToAbsoluteUrl(
+            request,
+            PostnomicRouteBuilder.BuildIndex(basePath, style, ResolveIndexLanguage(style, DetermineDefaultLanguage(posts))));
 
         var channel = new XElement("channel",
             new XElement("title", channelTitle),
@@ -117,11 +120,42 @@ public static class PostnomicFeeds
         return ToXmlString(rss);
     }
 
-    private static XElement BuildIndexUrlElement(HttpRequest request, string basePath, PostnomicLanguageRouteStyle style)
+    private static XElement BuildIndexUrlElement(
+        HttpRequest request, string basePath, PostnomicLanguageRouteStyle style, string? defaultLanguage)
     {
-        var loc = ToAbsoluteUrl(request, PostnomicRouteBuilder.BuildIndex(basePath, style, lang: null));
+        var loc = ToAbsoluteUrl(request, PostnomicRouteBuilder.BuildIndex(basePath, style, ResolveIndexLanguage(style, defaultLanguage)));
         return new XElement(SitemapNs + "url", new XElement(SitemapNs + "loc", loc));
     }
+
+    /// <summary>
+    /// Resolves the <c>lang</c> argument to pass to <see cref="PostnomicRouteBuilder.BuildIndex"/>
+    /// for the blog index URL advertised in the sitemap <c>&lt;loc&gt;</c> and RSS channel
+    /// <c>&lt;link&gt;</c>. Under <see cref="PostnomicLanguageRouteStyle.Prefix"/> there is no bare
+    /// <c>{basePath}</c> route (only <c>{basePath}/{lang}</c> is registered — see
+    /// <c>PostnomicBlogAreaRouteConvention</c>), so passing <see langword="null"/> there like the
+    /// other styles do would advertise a URL that 404s. Passing <paramref name="defaultLanguage"/>
+    /// instead yields the real <c>/{defaultLanguage}/{basePath}</c> route. Suffix/None keep
+    /// <see langword="null"/> (lang: null) since a bare <c>{basePath}</c> route IS valid there.
+    /// </summary>
+    private static string? ResolveIndexLanguage(PostnomicLanguageRouteStyle style, string? defaultLanguage)
+        => style == PostnomicLanguageRouteStyle.Prefix ? defaultLanguage : null;
+
+    /// <summary>
+    /// Determines the blog's "default" language from an already-fetched batch of posts, for use
+    /// when building the Prefix-style index URL (see <see cref="ResolveIndexLanguage(PostnomicLanguageRouteStyle, string?)"/>).
+    /// The SDK has no dedicated "blog default language" field, so this approximates it as the most
+    /// common <see cref="PostnomicPostSummary.Language"/> across the batch (ties broken by
+    /// whichever language appears first), which is more robust against a single mistranslated or
+    /// out-of-order post than always trusting <c>posts[0]</c>. Returns <see langword="null"/> when
+    /// <paramref name="posts"/> is empty (an empty blog has no language to infer; the Prefix index
+    /// URL falls back to a bare route in that edge case, same as before this fix).
+    /// </summary>
+    private static string? DetermineDefaultLanguage(ICollection<PostnomicPostSummary> posts) =>
+        posts
+            .GroupBy(p => p.Language, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.Key)
+            .FirstOrDefault();
 
     private static XElement BuildPostUrlElement(
         PostnomicPostSummary post, HttpRequest request, string basePath, PostnomicLanguageRouteStyle style)
@@ -131,7 +165,7 @@ public static class PostnomicFeeds
         var url = new XElement(SitemapNs + "url",
             new XElement(SitemapNs + "loc", loc),
             new XElement(SitemapNs + "lastmod",
-                NormalizeToUtc(post.PublishedAt).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)));
+                PostnomicSeoBuilder.NormalizeToUtc(post.PublishedAt).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)));
 
         foreach (var lang in post.AvailableLanguages)
         {
@@ -171,21 +205,7 @@ public static class PostnomicFeeds
     private static string ToAbsoluteUrl(HttpRequest request, string pathOrUrl) => PostnomicSeo.ToAbsoluteUrl(request, pathOrUrl);
 
     private static string ToRfc822(DateTime dateTime) =>
-        NormalizeToUtc(dateTime).ToString("r", CultureInfo.InvariantCulture);
-
-    /// <summary>
-    /// Normalizes a feed timestamp to UTC without shifting its wall-clock value when the
-    /// <see cref="DateTime.Kind"/> is <see cref="DateTimeKind.Unspecified"/>. The Postnomic API
-    /// returns <c>publishedAt</c> without a trailing "Z"/offset, so System.Text.Json
-    /// deserializes it as Unspecified even though the value is always already UTC; calling
-    /// <c>.ToUniversalTime()</c> directly on it would misinterpret it as local time and shift it
-    /// by the host machine's UTC offset. Already-Utc values pass through unchanged, and
-    /// already-Local values still go through <c>.ToUniversalTime()</c> as intended.
-    /// </summary>
-    private static DateTime NormalizeToUtc(DateTime value) =>
-        value.Kind == DateTimeKind.Unspecified
-            ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
-            : value.ToUniversalTime();
+        PostnomicSeoBuilder.NormalizeToUtc(dateTime).ToString("r", CultureInfo.InvariantCulture);
 
     private static string ToXmlString(XElement root)
     {
