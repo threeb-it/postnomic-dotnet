@@ -211,11 +211,11 @@ var posts = await blog.GetPostsAsync(language: "de");
 | `LanguageRouteStyle` | Index | Post |
 |---|---|---|
 | `Suffix` (default) | `/blog`, `/blog/{lang}` | `/blog/post/{slug}`, `/blog/{lang}/post/{slug}` |
-| `Prefix` | `/blog`, `/{lang}/blog` | `/blog/post/{slug}`, `/{lang}/blog/post/{slug}` |
+| `Prefix` | `/{lang}/blog` (only) | `/{lang}/blog/post/{slug}` (only) |
 | `None` | `/blog` (only) | `/blog/post/{slug}` (only) |
 
 - **`Suffix`** (default) preserves pre-1.2 behavior exactly: the default-language page is served bare, and every other language is available at a `{basePath}/{lang}` suffix.
-- **`Prefix`** puts `{lang}` before the base path (`/de/blog/...`). This style has **no bare fallback route for non-default languages** -- every non-default-language page is only reachable through its `/{lang}/` URL.
+- **`Prefix`** puts `{lang}` before the base path (`/de/blog/...`). Under `Prefix`, every URL is language-prefixed; there is no bare `/blog` route.
 - **`None`** never emits or accepts a language segment; the API's own language resolution (`?lang=` query -> `Accept-Language` header -> blog default) decides what's served at the single bare route.
 
 ```csharp
