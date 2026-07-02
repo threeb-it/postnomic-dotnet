@@ -42,8 +42,26 @@ builder.Services.AddPostnomicBlog(options =>
     options.ApiKey = "pk_live_...";
     options.BaseUrl = "https://api.postnomic.com";
 });
+builder.Services.AddRazorPages();
+
+var app = builder.Build();
+// ...
+app.MapRazorPages();
+app.MapPostnomicBlog(); // also serves /blog/sitemap.xml and /blog/rss.xml
+
+app.Run();
 
 // That's it -- your blog is live at /blog
+```
+
+Add one line to your host layout's `<head>` (e.g. `Pages/Shared/_Layout.cshtml`) so the SDK can
+inject its per-page canonical/OpenGraph/JSON-LD tags -- see [SEO](#seo) below:
+
+```cshtml
+<head>
+    ...
+    @await RenderSectionAsync("PostnomicHead", required: false)
+</head>
 ```
 
 ### Blazor (Server / WebAssembly)
@@ -104,6 +122,9 @@ builder.Services.AddPostnomicBlog(options =>
     // Optional: customize the blog URL path (default: /blog)
     options.BasePath = "/articles";
 
+    // Optional: where the language code appears in URLs for translated posts (default: Suffix)
+    options.LanguageRouteStyle = PostnomicLanguageRouteStyle.Suffix;
+
     // Optional: enable client-side caching
     options.Cache = new PostnomicCacheOptions
     {
@@ -113,6 +134,18 @@ builder.Services.AddPostnomicBlog(options =>
     };
 });
 ```
+
+### Options reference
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `BlogSlug` | `string` | `""` | Required. URL-friendly slug of the blog this client targets. |
+| `ApiKey` | `string` | `""` | Required. Sent as the `X-Api-Key` header on every request. |
+| `BaseUrl` | `string` | `""` | Required. Base URL of the Postnomic API (no trailing slash). |
+| `BasePath` | `string` | `/blog` | Base path the blog is served at (Razor Pages) or linked under (Blazor). |
+| `ShowBranding` | `bool` | `false` | Renders a "Powered by Postnomic" footer; server-enforced value from your plan takes precedence. |
+| `LanguageRouteStyle` | `PostnomicLanguageRouteStyle` | `Suffix` | Where the language code appears in generated URLs. See [Language route style](#language-route-style) below. |
+| `Cache` | `PostnomicCacheOptions?` | `null` | Optional client-side in-memory caching. |
 
 ### Multi-Blog Support
 
@@ -146,6 +179,8 @@ The SDK gives you access to the full Postnomic API:
 - **Popular Posts** -- trending content based on analytics
 - **Blog Info** -- blog metadata, layout, and configuration
 - **Multi-language posts** -- request a specific translation, get `/{lang}/` routes and hreflang metadata for free (see below)
+- **Automatic SEO** -- canonical, hreflang, OpenGraph, Twitter Card, and JSON-LD structured data on every blog page (see [SEO](#seo))
+- **Sitemap & RSS** -- `sitemap.xml` and `rss.xml` for every registered blog via `MapPostnomicBlog()` (see [Sitemap, RSS & robots.txt](#sitemap-rss--robotstxt))
 - **Client-Side Caching** -- optional in-memory cache with per-resource TTLs and explicit invalidation via `IPostnomicCacheControl`
 
 ## Multi-language posts
@@ -169,31 +204,88 @@ var posts = await blog.GetPostsAsync(language: "de");
 - `Language` -- the language actually served for this post (may differ from what you requested if no translation exists; the API falls back to the blog's default language rather than 404ing)
 - `AvailableLanguages` -- every language this post has content in
 
-### AspNetCore routes
+### Language route style
 
-`Postnomic.Client.AspNetCore` adds `/{lang}/` variants of the blog's routes alongside the canonical (default-language) ones, where `{lang}` is constrained to exactly two lowercase letters:
+`{lang}` is always constrained to exactly two lowercase letters (e.g. `de`, `en`). `PostnomicClientOptions.LanguageRouteStyle` (`Postnomic.Client.Abstractions.PostnomicLanguageRouteStyle`) controls where that segment appears in generated URLs -- for both `Postnomic.Client.AspNetCore` route templates and every link the SDK generates (`PostnomicRouteBuilder`, sitemap/RSS, hreflang alternates):
 
-- `/{basePath}` and `/{basePath}/{lang}` -- index
-- `/{basePath}/post/{postSlug}` and `/{basePath}/{lang}/post/{postSlug}` -- post detail
-- `/{basePath}/author/{authorSlug}` and `/{basePath}/{lang}/author/{authorSlug}` -- author page
+| `LanguageRouteStyle` | Index | Post |
+|---|---|---|
+| `Suffix` (default) | `/blog`, `/blog/{lang}` | `/blog/post/{slug}`, `/blog/{lang}/post/{slug}` |
+| `Prefix` | `/{lang}/blog` (only) | `/{lang}/blog/post/{slug}` (only) |
+| `None` | `/blog` (only) | `/blog/post/{slug}` (only) |
+
+- **`Suffix`** (default) preserves pre-1.2 behavior exactly: the default-language page is served bare, and every other language is available at a `{basePath}/{lang}` suffix.
+- **`Prefix`** puts `{lang}` before the base path (`/de/blog/...`). Under `Prefix`, every URL is language-prefixed; there is no bare `/blog` route.
+- **`None`** never emits or accepts a language segment; the API's own language resolution (`?lang=` query -> `Accept-Language` header -> blog default) decides what's served at the single bare route.
+
+```csharp
+// Program.cs -- Prefix mode: /de/blog, /de/blog/post/{slug}, etc.
+builder.Services.AddPostnomicBlog(options =>
+{
+    options.BlogSlug = "my-blog";
+    options.ApiKey = "pk_live_...";
+    options.BaseUrl = "https://api.postnomic.com";
+    options.LanguageRouteStyle = PostnomicLanguageRouteStyle.Prefix;
+});
+```
 
 ### Blazor components
 
-`PostPage` and `BlogPage` (`Postnomic.Client.Blazor`) both accept an optional `Language` parameter, which you can bind to your own routed `{lang}` segment.
+`PostPage`, `BlogPage`, and `AuthorPage` (`Postnomic.Client.Blazor`) all accept an optional `Language` parameter, which you bind to your own routed `{lang}` segment, plus honor the blog's configured `LanguageRouteStyle` when generating internal links (index, author, sidebar widgets).
 
-### SEO / hreflang
+## SEO
 
-The `Postnomic.Client.AspNetCore` post page model (`PostModel`) exposes `CanonicalUrl` and a list of `AlternateLanguageUrls` (`(string Language, string Url)` pairs). The SDK renders the post content but doesn't inject into your `<head>` -- render these yourself in your layout's `<head>`:
+Every Blog area page (`Postnomic.Client.AspNetCore`) and every Blazor page component (`Postnomic.Client.Blazor`) automatically emits a full SEO head for you, built by the shared `PostnomicSeoBuilder`:
+
+- **Canonical URL** -- self-referential per language (the `de` variant of a post canonicalizes to its own `/de/...` URL, not the default-language one)
+- **Meta description** -- from the post excerpt, falling back to a stripped/truncated content snippet
+- **`robots`** meta tag
+- **hreflang alternates** -- one `<link rel="alternate">` per language the post/blog is available in, plus `x-default`
+- **OpenGraph** -- `og:type`, `og:title`, `og:description`, `og:url`, `og:image`, `og:site_name`, `og:locale` (`de_DE`/`en_US`/...), and `article:published_time` / `article:author` / `article:tag` on post pages
+- **Twitter Card** -- `summary_large_image`
+- **JSON-LD** -- a `@graph` of `BlogPosting` (post pages), `Blog` + `ItemList` (index), or `ProfilePage` (author pages), plus a `BreadcrumbList` on every page type
+
+### ASP.NET Core (Razor Pages)
+
+The Blog area pages render their SEO tags into a Razor section named **`PostnomicHead`**. Your host layout must render that section inside `<head>`, or none of the tags above will appear on the page:
 
 ```cshtml
-<link rel="canonical" href="@Model.CanonicalUrl" />
-@foreach (var (language, url) in Model.AlternateLanguageUrls)
-{
-    <link rel="alternate" hreflang="@language" href="@url" />
-}
+@* Pages/Shared/_Layout.cshtml *@
+<head>
+    <meta charset="utf-8" />
+    ...
+    @await RenderSectionAsync("PostnomicHead", required: false)
+</head>
 ```
 
-`CanonicalUrl` and `AlternateLanguageUrls` are only defined on the post detail page model (`PostModel`) -- `Index`/`Author` don't expose them.
+`required: false` is important -- non-blog pages in your app don't define the section.
+
+The low-level `CanonicalUrl` / `AlternateLanguageUrls` properties on `PostModel` are still available (they're relative-path, not absolute, and predate the automatic SEO head) if you need to build your own custom tags, but for the standard tag set above you don't need to touch them.
+
+### Blazor
+
+Blazor needs no extra wiring beyond the `<HeadOutlet />` every Blazor app's root component already has -- `PostPage`/`BlogPage`/`AuthorPage` render their SEO tags via `<HeadContent>`, which `<HeadOutlet />` picks up automatically.
+
+## Sitemap, RSS & robots.txt
+
+Call `app.MapPostnomicBlog()` after `app.MapRazorPages()` to also serve, for every blog registered via `AddPostnomicBlog` (the default blog and every named one):
+
+- `GET {basePath}/sitemap.xml` -- every post plus the index page, with `xhtml:link` hreflang alternates per post
+- `GET {basePath}/rss.xml` -- the 20 most recent posts as an RSS 2.0 feed
+
+```csharp
+app.MapRazorPages();
+app.MapPostnomicBlog();
+```
+
+Optionally, call `app.MapPostnomicRobots()` to serve a `GET /robots.txt` that allows all crawling and lists a `Sitemap:` directive for every registered blog. This is opt-in: only call it if your host app doesn't already serve its own `/robots.txt` (mapping both registers two competing handlers for the same route).
+
+```csharp
+app.MapPostnomicBlog();
+app.MapPostnomicRobots();
+```
+
+These endpoints are ASP.NET Core-only (`Postnomic.Client.AspNetCore`); there is no Blazor equivalent.
 
 ## Requirements
 

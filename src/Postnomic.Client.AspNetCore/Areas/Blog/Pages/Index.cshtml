@@ -4,6 +4,12 @@
     var blogName = Model.BlogInfo?.Name ?? "Blog";
     var blogDescription = Model.BlogInfo?.Description;
     ViewData["Title"] = blogName;
+    var indexUrl = PostnomicRouteBuilder.BuildIndex(Model.BasePath, Model.RouteStyle, Model.Lang);
+    var seoModel = PostnomicSeo.ForIndex(Model.HttpContext.Request, Model);
+}
+
+@section PostnomicHead {
+    <partial name="_SeoHead" model="seoModel" />
 }
 
 <style>
@@ -65,7 +71,7 @@
                     <span> &mdash; author: <strong>@Model.Author</strong></span>
                 }
             </span>
-            <a href="@Model.BasePath" class="ms-auto btn btn-sm btn-outline-secondary">Clear filters</a>
+            <a href="@indexUrl" class="ms-auto btn btn-sm btn-outline-secondary">Clear filters</a>
         </div>
     }
 
@@ -80,7 +86,7 @@
                     <p class="fs-5">No posts found.</p>
                     @if (Model.HasActiveFilter)
                     {
-                        <a href="@Model.BasePath" class="btn btn-outline-primary">View all posts</a>
+                        <a href="@indexUrl" class="btn btn-outline-primary">View all posts</a>
                     }
                 </div>
             }
@@ -98,7 +104,7 @@
                         }
                         <div class="card-body">
                             <h2 class="card-title h4">
-                                <a href="@Model.BasePath/post/@post.Slug"
+                                <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                    class="text-decoration-none text-dark">@post.Title</a>
                             </h2>
 
@@ -106,7 +112,7 @@
                                 <span>By
                                     @if (!string.IsNullOrEmpty(post.AuthorSlug))
                                     {
-                                        <a href="@Model.BasePath/author/@post.AuthorSlug"
+                                        <a href="@PostnomicRouteBuilder.BuildAuthor(Model.BasePath, Model.RouteStyle, Model.Lang, post.AuthorSlug)"
                                            class="text-decoration-none"><strong>@post.AuthorName</strong></a>
                                     }
                                     else
@@ -126,7 +132,7 @@
                                 <div class="d-flex flex-wrap gap-1 mb-1">
                                     @foreach (var tag in post.Tags)
                                     {
-                                        <a href="@Model.BasePath?tag=@Uri.EscapeDataString(tag.Slug)"
+                                        <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)"
                                            class="badge bg-secondary text-decoration-none">@tag.Name</a>
                                     }
                                 </div>
@@ -138,7 +144,7 @@
                                 <div class="d-flex flex-wrap gap-1 mb-2">
                                     @foreach (var cat in post.Categories)
                                     {
-                                        <a href="@Model.BasePath?category=@Uri.EscapeDataString(cat.Slug)"
+                                        <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
                                            class="badge bg-primary text-decoration-none">@cat.Name</a>
                                     }
                                 </div>
@@ -149,7 +155,7 @@
                                 <p class="card-text text-muted">@post.Excerpt</p>
                             }
 
-                            <a href="@Model.BasePath/post/@post.Slug"
+                            <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                class="btn btn-sm btn-outline-primary mt-1">Read More &rarr;</a>
                         </div>
                     </article>
@@ -201,7 +207,7 @@
             <div class="card mb-4 shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Search</h5>
-                    <form method="get" action="@Model.BasePath">
+                    <form method="get" action="@indexUrl">
                         <input type="hidden" name="pageSize" value="@Model.PageSize" />
                         <div class="input-group">
                             <input type="search"
@@ -224,7 +230,7 @@
                         <div class="d-flex flex-wrap gap-2">
                             @foreach (var tag in Model.Tags)
                             {
-                                <a href="@Model.BasePath?tag=@Uri.EscapeDataString(tag.Slug)"
+                                <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)"
                                    class="badge bg-secondary text-decoration-none fs-6">
                                     @tag.Name
                                     <span class="ms-1 opacity-75">(@tag.PostCount)</span>
@@ -245,7 +251,7 @@
                             @foreach (var cat in Model.Categories)
                             {
                                 <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
-                                    <a href="@Model.BasePath?category=@Uri.EscapeDataString(cat.Slug)"
+                                    <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
                                        class="badge bg-primary text-decoration-none">@cat.Name</a>
                                     <span class="text-muted small">@cat.PostCount post@(cat.PostCount == 1 ? "" : "s")</span>
                                 </li>
@@ -265,7 +271,7 @@
                             @foreach (var author in Model.Authors)
                             {
                                 <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
-                                    <a href="@Model.BasePath?author=@Uri.EscapeDataString(author.Name)"
+                                    <a href="@indexUrl?author=@Uri.EscapeDataString(author.Name)"
                                        class="text-decoration-none">@author.Name</a>
                                     <span class="text-muted small">@author.PostCount post@(author.PostCount == 1 ? "" : "s")</span>
                                 </li>
@@ -285,7 +291,7 @@
                             @foreach (var post in Model.TopCommented)
                             {
                                 <li class="mb-1">
-                                    <a href="@Model.BasePath/post/@post.Slug"
+                                    <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                        class="text-decoration-none">@post.Title</a>
                                     <span class="text-muted small d-block">
                                         @post.Count comment@(post.Count == 1 ? "" : "s")
@@ -307,7 +313,7 @@
                             @foreach (var post in Model.MostRead)
                             {
                                 <li class="mb-1">
-                                    <a href="@Model.BasePath/post/@post.Slug"
+                                    <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                        class="text-decoration-none">@post.Title</a>
                                     <span class="text-muted small d-block">
                                         @post.Count view@(post.Count == 1 ? "" : "s")

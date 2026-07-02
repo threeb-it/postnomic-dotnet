@@ -5,6 +5,7 @@
 @implements IDisposable
 
 <PageTitle>@(post?.Title ?? "Post")</PageTitle>
+<PostnomicSeoHead Model="Seo" />
 
 <style>
     .blog-post-content img {
@@ -28,7 +29,7 @@
         <div class="row">
             <div class="col-lg-8">
                 <div class="mb-3">
-                    <a href="@BasePath" class="text-decoration-none">
+                    <a href="@PostnomicRouteBuilder.BuildIndex(BasePath, RouteStyle, Language)" class="text-decoration-none">
                         ← Back to blog
                     </a>
                 </div>
@@ -51,7 +52,7 @@
                             <i class="bi bi-person"></i>
                             @if (!string.IsNullOrEmpty(post.AuthorSlug))
                             {
-                                <a href="@($"{BasePath}/author/{post.AuthorSlug}")" class="text-decoration-none">@post.AuthorName</a>
+                                <a href="@PostnomicRouteBuilder.BuildAuthor(BasePath, RouteStyle, Language, post.AuthorSlug)" class="text-decoration-none">@post.AuthorName</a>
                             }
                             else
                             {
@@ -197,8 +198,8 @@
             @* ── Right sidebar ── *@
             <div class="col-lg-4">
                 <EstimatedReadTime PostContent="@post.Content" />
-                <TopCommentedPosts />
-                <MostReadPosts />
+                <TopCommentedPosts Language="@Language" />
+                <MostReadPosts Language="@Language" />
 
                 <PostnomicPromo Visible="ShowBranding" />
             </div>
@@ -235,9 +236,23 @@
 
     private IPostnomicBlogService BlogService => BlogContext?.BlogService ?? _injectedBlogService;
     private string BasePath => BlogContext?.Options.BasePath ?? _injectedClientOptions.Value.BasePath;
+
+    /// <summary>
+    /// The <see cref="PostnomicLanguageRouteStyle"/> configured for this blog. Used together with
+    /// <see cref="BasePath"/> and <see cref="Language"/> by <see cref="PostnomicRouteBuilder"/> to
+    /// generate correct links regardless of style.
+    /// </summary>
+    private PostnomicLanguageRouteStyle RouteStyle => BlogContext?.Options.LanguageRouteStyle
+        ?? _injectedClientOptions.Value.LanguageRouteStyle;
+
     private bool ShowBranding => blogInfo?.ShowBranding
         ?? BlogContext?.Options.ShowBranding
         ?? _injectedClientOptions.Value.ShowBranding;
+
+    /// <summary>The SEO data for this post, or <see langword="null"/> until the post has loaded.</summary>
+    private PostnomicSeoModel? Seo => post is null
+        ? null
+        : PostnomicSeoBuilder.ForPost(Navigation.BaseUri, BasePath, RouteStyle, Language, PostSlug, post, blogInfo);
 
     /// <inheritdoc />
     protected override async Task OnInitializedAsync()

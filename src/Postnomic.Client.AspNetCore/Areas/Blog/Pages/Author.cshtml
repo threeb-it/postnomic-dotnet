@@ -2,6 +2,12 @@
 @model Postnomic.Client.AspNetCore.Areas.Blog.Pages.AuthorModel
 @{
     ViewData["Title"] = Model.Profile.Name;
+    var indexUrl = PostnomicRouteBuilder.BuildIndex(Model.BasePath, Model.RouteStyle, Model.Lang);
+    var seoModel = PostnomicSeo.ForAuthor(Model.HttpContext.Request, Model);
+}
+
+@section PostnomicHead {
+    <partial name="_SeoHead" model="seoModel" />
 }
 
 <div class="container py-4">
@@ -26,7 +32,7 @@
                              alt="@Model.Profile.Name"
                              style="width: 150px; height: 150px; object-fit: cover;" />
                     }
-                    <h2 class="h4 fw-bold">@Model.Profile.Name</h2>
+                    <h1 class="h4 fw-bold">@Model.Profile.Name</h1>
 
                     @if (!string.IsNullOrEmpty(Model.Profile.Headline))
                     {
@@ -252,7 +258,7 @@
                         @foreach (var post in Model.Profile.RecentPosts)
                         {
                             <div class="border-bottom py-2">
-                                <a href="@Model.BasePath/post/@post.Slug"
+                                <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                    class="text-decoration-none fw-bold">@post.Title</a>
                                 <br />
                                 <span class="text-muted small">@post.PublishedAt.ToString("MMMM dd, yyyy")</span>
@@ -267,7 +273,7 @@
             }
 
             <div class="mb-3">
-                <a href="@Model.BasePath" class="btn btn-outline-secondary btn-sm">
+                <a href="@indexUrl" class="btn btn-outline-secondary btn-sm">
                     &larr; Back to Blog
                 </a>
             </div>

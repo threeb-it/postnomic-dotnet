@@ -46,6 +46,22 @@ public class AuthorModel(
     }
 
     /// <summary>
+    /// The <see cref="PostnomicLanguageRouteStyle"/> configured for the currently resolved blog.
+    /// Used together with <see cref="BasePath"/> and <see cref="Lang"/> by
+    /// <see cref="PostnomicRouteBuilder"/> to generate correct links regardless of style.
+    /// </summary>
+    public PostnomicLanguageRouteStyle RouteStyle
+    {
+        get
+        {
+            var blogName = blogResolver.ResolveBlogName(HttpContext.Request.Path.Value ?? "");
+            return blogName is not null
+                ? optionsMonitor.Get(blogName).LanguageRouteStyle
+                : defaultClientOptions.Value.LanguageRouteStyle;
+        }
+    }
+
+    /// <summary>
     /// Whether to show the Postnomic branding in the sidebar.
     /// Falls back to client options because the Author page does not fetch blog info.
     /// </summary>

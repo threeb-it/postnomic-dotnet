@@ -149,6 +149,22 @@ public class IndexModel(
     }
 
     /// <summary>
+    /// The <see cref="PostnomicLanguageRouteStyle"/> configured for the currently resolved blog.
+    /// Used together with <see cref="BasePath"/> and <see cref="Lang"/> by
+    /// <see cref="PostnomicRouteBuilder"/> to generate correct links regardless of style.
+    /// </summary>
+    public PostnomicLanguageRouteStyle RouteStyle
+    {
+        get
+        {
+            var blogName = blogResolver.ResolveBlogName(HttpContext.Request.Path.Value ?? "");
+            return blogName is not null
+                ? optionsMonitor.Get(blogName).LanguageRouteStyle
+                : defaultClientOptions.Value.LanguageRouteStyle;
+        }
+    }
+
+    /// <summary>
     /// Returns <see langword="true"/> when at least one filter (tag, category, author, or
     /// search) is currently active.
     /// </summary>
@@ -183,7 +199,7 @@ public class IndexModel(
         if (!string.IsNullOrWhiteSpace(Category)) parts.Add($"Category={Uri.EscapeDataString(Category)}");
         if (!string.IsNullOrWhiteSpace(Author)) parts.Add($"Author={Uri.EscapeDataString(Author)}");
         if (!string.IsNullOrWhiteSpace(Search)) parts.Add($"Search={Uri.EscapeDataString(Search)}");
-        return $"{BasePath}?{string.Join("&", parts)}";
+        return $"{PostnomicRouteBuilder.BuildIndex(BasePath, RouteStyle, Lang)}?{string.Join("&", parts)}";
     }
 
     private IPostnomicBlogService ResolveBlogService()

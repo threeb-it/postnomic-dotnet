@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Postnomic.Client.Abstractions;
 
 namespace Postnomic.Client.AspNetCore.Tests;
 
@@ -67,12 +68,58 @@ public class RouteTemplateValidityTests
         }
     }
 
+    [Theory]
+    [InlineData(PostnomicLanguageRouteStyle.Prefix)]
+    [InlineData(PostnomicLanguageRouteStyle.None)]
+    public void PostnomicBlogAreaRouteConvention_GeneratedTemplates_AreValidRoutePatterns_ForNonSuffixStyles(
+        PostnomicLanguageRouteStyle style)
+    {
+        // Arrange
+        var convention = ResolveConvention("/blog", style);
+
+        var models = new[]
+        {
+            BuildPageRouteModel("/Areas/Blog/Pages/Index.cshtml", "/Index"),
+            BuildPageRouteModel("/Areas/Blog/Pages/Post.cshtml", "/Post"),
+            BuildPageRouteModel("/Areas/Blog/Pages/Author.cshtml", "/Author"),
+        };
+
+        foreach (var model in models)
+        {
+            convention.Apply(model);
+        }
+
+        var templates = models
+            .SelectMany(m => m.Selectors)
+            .Where(s => s.AttributeRouteModel is not null)
+            .Select(s => s.AttributeRouteModel!.Template!)
+            .ToList();
+
+        templates.Should().NotBeEmpty();
+
+        // Act & Assert — every generated template must be a valid, registerable route pattern,
+        // including the Prefix style's leading {lang:regex(...)} segment.
+        foreach (var template in templates)
+        {
+            var act = () => RoutePatternFactory.Parse(template);
+            act.Should().NotThrow(
+                because: $"the generated template '{template}' (style: {style}) must be registerable by ASP.NET Core routing");
+        }
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static IPageRouteModelConvention ResolveConvention(string basePath)
+        => ResolveConvention(basePath, PostnomicLanguageRouteStyle.Suffix);
+
+    private static IPageRouteModelConvention ResolveConvention(string basePath, PostnomicLanguageRouteStyle style)
     {
         var services = new ServiceCollection();
-        services.AddPostnomicBlog(options => options.BasePath = basePath);
+        services.AddPostnomicBlog(options =>
+        {
+            options.BasePath = basePath;
+            options.LanguageRouteStyle = style;
+        });
         var provider = services.BuildServiceProvider();
 
         return provider

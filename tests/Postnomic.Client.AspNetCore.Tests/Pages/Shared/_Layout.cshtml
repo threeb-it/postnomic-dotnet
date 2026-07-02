@@ -1,0 +1,16 @@
+@{
+    // Minimal test host layout: renders the "PostnomicHead" section that the Blog area
+    // pages populate via PostnomicSeo/_SeoHead.cshtml. This proves the RCL's optional
+    // (required: false) section actually reaches a host layout's <head>.
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    @await RenderSectionAsync("PostnomicHead", required: false)
+</head>
+<body>
+    @RenderBody()
+</body>
+</html>

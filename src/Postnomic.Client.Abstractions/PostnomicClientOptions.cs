@@ -46,6 +46,10 @@ public class PostnomicClientOptions
     /// no caching is applied and every call hits the API directly.
     /// </summary>
     public PostnomicCacheOptions? Cache { get; set; }
+
+    /// <summary>Controls where the language code appears in generated blog URLs and routes.
+    /// Default <see cref="PostnomicLanguageRouteStyle.Suffix"/> preserves pre-1.2 behavior.</summary>
+    public PostnomicLanguageRouteStyle LanguageRouteStyle { get; set; } = PostnomicLanguageRouteStyle.Suffix;
 }
 
 /// <summary>
