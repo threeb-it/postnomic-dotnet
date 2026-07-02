@@ -218,8 +218,21 @@ public static class PostnomicSeoBuilder
     /// </summary>
     public static string ToAbsoluteUrl(string baseUri, string pathOrUrl)
     {
-        if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out _))
+        // NOTE: Do NOT use Uri.TryCreate(pathOrUrl, UriKind.Absolute, ...) here. On Unix/Linux
+        // (CI + production Azure Container Apps), .NET's URI parser treats a leading-slash
+        // root-relative path (e.g. "/de/blog/post/x") as an absolute "file:///..." URI, so the
+        // check would incorrectly report it as already-absolute and skip prepending the base —
+        // silently producing relative canonical/og:url/hreflang/sitemap/RSS URLs in production.
+        // On Windows the same string is NOT parsed as absolute, so the bug is Linux-only and
+        // invisible when developing/testing on Windows. Instead, explicitly recognize only the
+        // forms that are genuinely already-absolute on every OS: http(s) URLs and
+        // protocol-relative "//host/..." URLs.
+        if (pathOrUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || pathOrUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || pathOrUrl.StartsWith("//", StringComparison.Ordinal))
+        {
             return pathOrUrl;
+        }
 
         var trimmedBase = baseUri.TrimEnd('/');
         return pathOrUrl.StartsWith('/') ? $"{trimmedBase}{pathOrUrl}" : $"{trimmedBase}/{pathOrUrl}";

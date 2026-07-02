@@ -150,4 +150,84 @@ public class PostnomicSeoBuilderTests
 
         model.PublishedAt.Should().Be(utc);
     }
+
+    // ── ToAbsoluteUrl (Linux/Windows cross-platform regression guard) ──────────────────────────
+    //
+    // Uri.TryCreate(pathOrUrl, UriKind.Absolute, out _) is OS-DEPENDENT for a leading-slash
+    // root-relative path: on Windows "/de/blog/post/x" is NOT parsed as absolute (correctly
+    // falls through to base-prepending), but on Linux/Unix (CI + production Azure Container
+    // Apps) the very same string IS parsed as an absolute "file:///de/blog/post/x" URI, so the
+    // old check returned it unchanged — every canonical/og:url/hreflang/sitemap/RSS URL came out
+    // relative in production. These tests assert the CORRECT (always-absolute) behavior and are
+    // OS-independent themselves: they fail on the old code on Linux and pass on the fixed code on
+    // both Windows and Linux.
+
+    [Fact]
+    public void ToAbsoluteUrl_RootRelativePath_PrependsBase_OnEveryOs()
+    {
+        // Regression guard for the Linux-only bug: the OLD implementation
+        // (Uri.TryCreate(pathOrUrl, UriKind.Absolute, ...)) returns "/de/blog/post/x" UNCHANGED
+        // on Linux because a leading "/" parses there as an absolute "file://" URI — silently
+        // breaking every canonical/og:url/hreflang/sitemap/RSS URL in production.
+        var result = PostnomicSeoBuilder.ToAbsoluteUrl("https://example.com", "/de/blog/post/x");
+
+        result.Should().Be("https://example.com/de/blog/post/x");
+    }
+
+    [Fact]
+    public void ToAbsoluteUrl_AlreadyAbsoluteHttpsUrl_IsUnchanged()
+    {
+        // Cover images from the API are absolute http(s) URLs and must pass through untouched.
+        var result = PostnomicSeoBuilder.ToAbsoluteUrl(
+            "https://example.com", "https://cdn.example.com/img.jpg");
+
+        result.Should().Be("https://cdn.example.com/img.jpg");
+    }
+
+    [Fact]
+    public void ToAbsoluteUrl_AlreadyAbsoluteHttpUrl_IsUnchanged()
+    {
+        var result = PostnomicSeoBuilder.ToAbsoluteUrl(
+            "https://example.com", "http://cdn.example.com/img.jpg");
+
+        result.Should().Be("http://cdn.example.com/img.jpg");
+    }
+
+    [Fact]
+    public void ToAbsoluteUrl_ProtocolRelativeUrl_IsUnchanged()
+    {
+        var result = PostnomicSeoBuilder.ToAbsoluteUrl(
+            "https://example.com", "//cdn.example.com/img.jpg");
+
+        result.Should().Be("//cdn.example.com/img.jpg");
+    }
+
+    [Fact]
+    public void ToAbsoluteUrl_RelativePathWithoutLeadingSlash_PrependsBaseWithSlash()
+    {
+        var result = PostnomicSeoBuilder.ToAbsoluteUrl("https://example.com", "blog/post/x");
+
+        result.Should().Be("https://example.com/blog/post/x");
+    }
+
+    [Fact]
+    public void ToAbsoluteUrl_TrailingSlashOnBase_IsTrimmed()
+    {
+        var result = PostnomicSeoBuilder.ToAbsoluteUrl("https://example.com/", "/de/blog/post/x");
+
+        result.Should().Be("https://example.com/de/blog/post/x");
+    }
+
+    [Fact]
+    public void ForPost_CanonicalUrl_IsAbsolute_OnEveryOs()
+    {
+        // End-to-end guard via the public ForPost API (mirrors how CanonicalUrl/OgUrl/hreflang
+        // alternates are actually produced): the model's CanonicalUrl must always start with the
+        // base's scheme, never with a bare "/", regardless of host OS.
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world", post: CreatePost(), blogInfo: null);
+
+        model.CanonicalUrl.Should().StartWith("https://example.com/");
+    }
 }
