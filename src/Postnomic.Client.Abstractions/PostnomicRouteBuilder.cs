@@ -19,6 +19,33 @@ public static class PostnomicRouteBuilder
     public static string BuildAuthor(string basePath, PostnomicLanguageRouteStyle style, string? lang, string authorSlug)
         => Compose(basePath, style, lang, tail: $"/author/{authorSlug}");
 
+    /// <summary>
+    /// Builds hreflang-style (language, URL) alternates for a single post across every language
+    /// it is available in. The first entry of <paramref name="availableLanguages"/> (falling back
+    /// to <paramref name="fallbackDefaultLanguage"/> when empty) is treated as the blog's default
+    /// language and maps to the canonical (no-language-segment) URL; every other language gets its
+    /// segment placed according to <paramref name="style"/>. Returns an empty list when
+    /// <paramref name="availableLanguages"/> is empty.
+    /// </summary>
+    public static IReadOnlyList<(string Language, string Url)> BuildPostAlternates(
+        string basePath,
+        PostnomicLanguageRouteStyle style,
+        IReadOnlyList<string> availableLanguages,
+        string postSlug,
+        string? fallbackDefaultLanguage = null)
+    {
+        if (availableLanguages.Count == 0) return [];
+
+        var defaultLang = availableLanguages.FirstOrDefault() ?? fallbackDefaultLanguage;
+        return availableLanguages
+            .Select(code => (code, BuildPost(
+                basePath,
+                style,
+                string.Equals(code, defaultLang, StringComparison.OrdinalIgnoreCase) ? null : code,
+                postSlug)))
+            .ToList();
+    }
+
     private static string Compose(string basePath, PostnomicLanguageRouteStyle style, string? lang, string tail)
     {
         var bp = "/" + basePath.Trim('/');

@@ -4,6 +4,7 @@
 @inject IOptions<PostnomicClientOptions> _injectedClientOptions
 
 <PageTitle>@(blog?.Name ?? "Blog")</PageTitle>
+<PostnomicSeoHead Model="Seo" />
 
 <style>
     .blog-container img {
@@ -84,7 +85,7 @@
                             }
                             <div class="card-body">
                                 <h2 class="card-title h4">
-                                    <a href="@($"{BasePath}/post/{post.Slug}")"
+                                    <a href="@PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, Language, post.Slug)"
                                        class="text-decoration-none text-dark">
                                         @post.Title
                                     </a>
@@ -94,7 +95,7 @@
                                         <i class="bi bi-person"></i>
                                         @if (!string.IsNullOrEmpty(post.AuthorSlug))
                                         {
-                                            <a href="@($"{BasePath}/author/{post.AuthorSlug}")" class="text-decoration-none">@post.AuthorName</a>
+                                            <a href="@PostnomicRouteBuilder.BuildAuthor(BasePath, RouteStyle, Language, post.AuthorSlug)" class="text-decoration-none">@post.AuthorName</a>
                                         }
                                         else
                                         {
@@ -132,7 +133,7 @@
                                 {
                                     <p class="card-text">@post.Excerpt</p>
                                 }
-                                <a href="@($"{BasePath}/post/{post.Slug}")"
+                                <a href="@PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, Language, post.Slug)"
                                    class="btn btn-outline-primary btn-sm">
                                     Read More →
                                 </a>
@@ -228,6 +229,19 @@
 
     private IPostnomicBlogService BlogService => BlogContext?.BlogService ?? _injectedBlogService;
     private string BasePath => BlogContext?.Options.BasePath ?? _injectedClientOptions.Value.BasePath;
+
+    /// <summary>
+    /// The <see cref="PostnomicLanguageRouteStyle"/> configured for this blog. Used together with
+    /// <see cref="BasePath"/> and <see cref="Language"/> by <see cref="PostnomicRouteBuilder"/> to
+    /// generate correct links regardless of style.
+    /// </summary>
+    private PostnomicLanguageRouteStyle RouteStyle => BlogContext?.Options.LanguageRouteStyle
+        ?? _injectedClientOptions.Value.LanguageRouteStyle;
+
+    /// <summary>The SEO data for the blog index, or <see langword="null"/> until the blog has loaded.</summary>
+    private PostnomicSeoModel? Seo => blog is null
+        ? null
+        : PostnomicSeoBuilder.ForIndex(Navigation.BaseUri, BasePath, RouteStyle, Language, blog, pagedPosts?.Items ?? []);
 
     private bool IsMasonry => string.Equals(blog?.DefaultLayout, "Masonry", StringComparison.OrdinalIgnoreCase);
 

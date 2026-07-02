@@ -28,4 +28,51 @@ public class PostnomicRouteBuilderTests
     [InlineData(PostnomicLanguageRouteStyle.Suffix, "/blog/de", true)]
     public void MatchesBlog_works(PostnomicLanguageRouteStyle style, string path, bool expected)
         => PostnomicRouteBuilder.MatchesBlog(path, "/blog", style).Should().Be(expected);
+
+    [Fact]
+    public void BuildPostAlternates_NoAvailableLanguages_ReturnsEmpty()
+        => PostnomicRouteBuilder
+            .BuildPostAlternates("/blog", PostnomicLanguageRouteStyle.Prefix, [], "hello")
+            .Should().BeEmpty();
+
+    [Fact]
+    public void BuildPostAlternates_PrefixStyle_DefaultLanguageMapsToCanonicalUrl()
+    {
+        var alternates = PostnomicRouteBuilder.BuildPostAlternates(
+            "/blog", PostnomicLanguageRouteStyle.Prefix, ["en", "de"], "hello");
+
+        alternates.Should().BeEquivalentTo(new[]
+        {
+            ("en", "/blog/post/hello"),
+            ("de", "/de/blog/post/hello"),
+        });
+    }
+
+    [Fact]
+    public void BuildPostAlternates_SuffixStyle_DefaultLanguageMapsToCanonicalUrl()
+    {
+        var alternates = PostnomicRouteBuilder.BuildPostAlternates(
+            "/blog", PostnomicLanguageRouteStyle.Suffix, ["en", "de"], "hello");
+
+        alternates.Should().BeEquivalentTo(new[]
+        {
+            ("en", "/blog/post/hello"),
+            ("de", "/blog/de/post/hello"),
+        });
+    }
+
+    [Fact]
+    public void BuildPostAlternates_DefaultLanguageMatchIsCaseInsensitive()
+    {
+        // AvailableLanguages sometimes come back with different casing than what's compared
+        // against; the default-language match must not be case-sensitive.
+        var alternates = PostnomicRouteBuilder.BuildPostAlternates(
+            "/blog", PostnomicLanguageRouteStyle.Prefix, ["EN", "de"], "hello");
+
+        alternates.Should().BeEquivalentTo(new[]
+        {
+            ("EN", "/blog/post/hello"),
+            ("de", "/de/blog/post/hello"),
+        });
+    }
 }

@@ -2,9 +2,11 @@
 @using Postnomic.Client.Abstractions.Models
 @using Microsoft.Extensions.Options
 @inject IPostnomicBlogService _injectedBlogService
+@inject NavigationManager Navigation
 @inject IOptions<PostnomicClientOptions> _injectedClientOptions
 
 <PageTitle>@(profile?.Name ?? "Author")</PageTitle>
+<PostnomicSeoHead Model="Seo" />
 
 <div class="author-profile-container">
     @if (profile is null)
@@ -36,7 +38,7 @@
                                  alt="@profile.Name"
                                  style="width: 150px; height: 150px; object-fit: cover;" />
                         }
-                        <h2 class="h4 fw-bold">@profile.Name</h2>
+                        <h1 class="h4 fw-bold">@profile.Name</h1>
 
                         @if (!string.IsNullOrEmpty(profile.Headline))
                         {
@@ -250,7 +252,7 @@
                             @foreach (var post in profile.RecentPosts)
                             {
                                 <div class="border-bottom py-2">
-                                    <a href="@($"{BasePath}/post/{post.Slug}")" class="text-decoration-none fw-bold">
+                                    <a href="@PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, Language, post.Slug)" class="text-decoration-none fw-bold">
                                         @post.Title
                                     </a>
                                     <br />
@@ -266,7 +268,7 @@
                 }
 
                 <div class="mb-3">
-                    <a href="@BasePath" class="text-decoration-none">
+                    <a href="@PostnomicRouteBuilder.BuildIndex(BasePath, RouteStyle, Language)" class="text-decoration-none">
                         ← Back to blog
                     </a>
                 </div>
@@ -279,6 +281,16 @@
     [Parameter]
     public string AuthorSlug { get; set; } = "";
 
+    /// <summary>
+    /// Optional ISO-639-1 language code (e.g. "de") for generating language-aware links back to
+    /// the blog and to recent posts. The author-profile endpoint has no language argument, so
+    /// this is not forwarded to <see cref="IPostnomicBlogService.GetAuthorProfileAsync"/> — it
+    /// only affects link generation via <see cref="PostnomicRouteBuilder"/>. The host application
+    /// supplies this from its own route (e.g. <c>/blog/{Language}/author/{AuthorSlug}</c>).
+    /// </summary>
+    [Parameter]
+    public string? Language { get; set; }
+
     private PostnomicAuthorProfile? profile;
 
     [CascadingParameter]
@@ -286,6 +298,19 @@
 
     private IPostnomicBlogService BlogService => BlogContext?.BlogService ?? _injectedBlogService;
     private string BasePath => BlogContext?.Options.BasePath ?? _injectedClientOptions.Value.BasePath;
+
+    /// <summary>
+    /// The <see cref="PostnomicLanguageRouteStyle"/> configured for this blog. Used together with
+    /// <see cref="BasePath"/> and <see cref="Language"/> by <see cref="PostnomicRouteBuilder"/> to
+    /// generate correct links regardless of style.
+    /// </summary>
+    private PostnomicLanguageRouteStyle RouteStyle => BlogContext?.Options.LanguageRouteStyle
+        ?? _injectedClientOptions.Value.LanguageRouteStyle;
+
+    /// <summary>The SEO data for this author, or <see langword="null"/> until the profile has loaded.</summary>
+    private PostnomicSeoModel? Seo => profile is null
+        ? null
+        : PostnomicSeoBuilder.ForAuthor(Navigation.BaseUri, BasePath, RouteStyle, Language, AuthorSlug, profile);
 
     protected override async Task OnInitializedAsync()
     {

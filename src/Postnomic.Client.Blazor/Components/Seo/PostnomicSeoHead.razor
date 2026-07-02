@@ -1,0 +1,77 @@
+@* Renders canonical/hreflang/OpenGraph/Twitter/JSON-LD tags for a blog page via Blazor's native
+   <HeadContent>/<HeadOutlet> mechanism. Mirrors Postnomic.Client.AspNetCore's _SeoHead.cshtml
+   partial (same PostnomicSeoModel, same tags) so both hosting models emit identical SEO output.
+   Host apps need no extra wiring beyond the <HeadOutlet /> every Blazor app's root already has. *@
+
+@if (Model is not null)
+{
+    <HeadContent>
+        <link rel="canonical" href="@Model.CanonicalUrl" />
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <meta name="description" content="@Model.Description" />
+        }
+        <meta name="robots" content="@Model.Robots" />
+
+        @foreach (var alternate in Model.Alternates)
+        {
+            <link rel="alternate" hreflang="@alternate.Lang" href="@alternate.Url" />
+        }
+        <link rel="alternate" hreflang="x-default" href="@Model.CanonicalUrl" />
+
+        <meta property="og:type" content="@Model.OgType" />
+        <meta property="og:title" content="@Model.Title" />
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <meta property="og:description" content="@Model.Description" />
+        }
+        <meta property="og:url" content="@Model.CanonicalUrl" />
+        @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+        {
+            <meta property="og:image" content="@Model.ImageUrl" />
+        }
+        <meta property="og:site_name" content="@Model.SiteName" />
+        <meta property="og:locale" content="@Model.Locale" />
+
+        @if (string.Equals(Model.OgType, "article", StringComparison.Ordinal))
+        {
+            @if (Model.PublishedAt is { } publishedAt)
+            {
+                <meta property="article:published_time" content="@publishedAt.ToString("O")" />
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.AuthorName))
+            {
+                <meta property="article:author" content="@Model.AuthorName" />
+            }
+            @foreach (var tag in Model.Tags)
+            {
+                <meta property="article:tag" content="@tag" />
+            }
+        }
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="@Model.Title" />
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <meta name="twitter:description" content="@Model.Description" />
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+        {
+            <meta name="twitter:image" content="@Model.ImageUrl" />
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.JsonLd))
+        {
+            <script type="application/ld+json">@((MarkupString)Model.JsonLd)</script>
+        }
+    </HeadContent>
+}
+
+@code {
+    /// <summary>
+    /// The SEO data to render. When <see langword="null"/> (e.g. before the page's data has
+    /// finished loading), nothing is rendered.
+    /// </summary>
+    [Parameter]
+    public PostnomicSeoModel? Model { get; set; }
+}

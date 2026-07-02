@@ -123,8 +123,9 @@ public class AuthorPageTests : BunitContext
         // Act
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
-        // Assert — name appears in the h2.h4 heading
-        cut.Find("h2.h4").TextContent.Should().Contain("Jane Doe");
+        // Assert — name appears in the h1.h4 heading (a single h1 per page for correct SEO
+        // heading hierarchy; see SeoAndLanguageRoutingTests.AuthorPage_RendersExactlyOneH1ForAuthorName)
+        cut.Find("h1.h4").TextContent.Should().Contain("Jane Doe");
     }
 
     [Fact]
