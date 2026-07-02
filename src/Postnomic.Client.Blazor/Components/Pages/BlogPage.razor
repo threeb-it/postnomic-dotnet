@@ -205,6 +205,14 @@
 </div>
 
 @code {
+    /// <summary>
+    /// Optional ISO-639-1 language code (e.g. "de") used to fetch translated posts. Null serves
+    /// the blog's default language. The host application supplies this from its own route
+    /// (e.g. <c>/blog/{Language}</c>).
+    /// </summary>
+    [Parameter]
+    public string? Language { get; set; }
+
     private PostnomicBlogInfo? blog;
     private PostnomicPagedResult<PostnomicPostSummary>? pagedPosts;
     private int currentPage = 1;
@@ -289,7 +297,8 @@
                 tag: filterTag,
                 category: filterCategory,
                 author: filterAuthor,
-                search: filterSearch);
+                search: filterSearch,
+                language: Language);
         }
         catch
         {

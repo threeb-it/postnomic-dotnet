@@ -211,6 +211,14 @@
     [Parameter]
     public string PostSlug { get; set; } = "";
 
+    /// <summary>
+    /// Optional ISO-639-1 language code (e.g. "de") used to fetch a translated version of the
+    /// post. Null serves the blog's default language. The host application supplies this from
+    /// its own route (e.g. <c>/blog/{Language}/post/{PostSlug}</c>).
+    /// </summary>
+    [Parameter]
+    public string? Language { get; set; }
+
     private PostnomicPostDetail? post;
     private PostnomicBlogInfo? blogInfo;
     private CommentFormModel newComment = new();
@@ -287,7 +295,7 @@
     {
         try
         {
-            var postTask = BlogService.GetPostAsync(PostSlug);
+            var postTask = BlogService.GetPostAsync(PostSlug, language: Language);
             var blogInfoTask = BlogService.GetBlogAsync();
             await Task.WhenAll(postTask, blogInfoTask);
             post = await postTask;

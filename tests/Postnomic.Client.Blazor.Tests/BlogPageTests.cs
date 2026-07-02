@@ -382,4 +382,30 @@ public class BlogPageTests : BunitContext
         var links = cut.FindAll("a[href]");
         links.Should().Contain(a => a.GetAttribute("href") == "/articles/post/my-post");
     }
+
+    // ── Language parameter ───────────────────────────────────────────────────
+
+    [Fact]
+    public void BlogPage_WithLanguage_ForwardsLanguageToGetPostsAsync()
+    {
+        // Arrange
+        SetupBlogInfo();
+        SetupPosts();
+
+        // Act
+        Render<BlogPage>(p => p.Add(x => x.Language, "de"));
+
+        // Assert
+        _blogServiceMock.Verify(
+            s => s.GetPostsAsync(
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                "de",
+                It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+    }
 }

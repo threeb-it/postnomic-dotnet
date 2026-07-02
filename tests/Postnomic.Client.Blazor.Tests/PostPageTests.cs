@@ -279,4 +279,23 @@ public class PostPageTests : BunitContext
         var backLink = cut.FindAll("a[href='/articles']");
         backLink.Should().NotBeEmpty();
     }
+
+    // ── Language parameter ───────────────────────────────────────────────────
+
+    [Fact]
+    public void PostPage_WithLanguage_ForwardsLanguageToGetPostAsync()
+    {
+        // Arrange
+        SetupPost(CreateDetail());
+
+        // Act
+        Render<PostPage>(p => p
+            .Add(x => x.PostSlug, "any-post")
+            .Add(x => x.Language, "de"));
+
+        // Assert
+        _blogServiceMock.Verify(
+            s => s.GetPostAsync("any-post", "de", It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+    }
 }
