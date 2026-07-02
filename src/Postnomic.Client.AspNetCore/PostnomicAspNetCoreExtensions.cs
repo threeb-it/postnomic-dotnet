@@ -45,7 +45,7 @@ public static class PostnomicAspNetCoreExtensions
 
         services.PostConfigure<RazorPagesOptions>(razorOptions =>
         {
-            razorOptions.Conventions.Add(new PostnomicBlogAreaRouteConvention(tempOptions.BasePath));
+            razorOptions.Conventions.Add(new PostnomicBlogAreaRouteConvention(tempOptions.BasePath, tempOptions.LanguageRouteStyle));
         });
 
         return services;
@@ -81,11 +81,12 @@ public static class PostnomicAspNetCoreExtensions
         services.Configure<PostnomicBlogResolverOptions>(opts =>
         {
             opts.BasePathToBlogName[tempOptions.BasePath] = name;
+            opts.BasePathToLanguageRouteStyle[tempOptions.BasePath] = tempOptions.LanguageRouteStyle;
         });
 
         services.PostConfigure<RazorPagesOptions>(razorOptions =>
         {
-            razorOptions.Conventions.Add(new PostnomicBlogAreaRouteConvention(tempOptions.BasePath));
+            razorOptions.Conventions.Add(new PostnomicBlogAreaRouteConvention(tempOptions.BasePath, tempOptions.LanguageRouteStyle));
         });
 
         return services;

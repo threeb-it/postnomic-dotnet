@@ -38,12 +38,16 @@ public static class PostnomicRouteBuilder
     /// </summary>
     public static string? ExtractLang(string requestPath, string basePath, PostnomicLanguageRouteStyle style)
     {
-        var segs = requestPath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-        var bp = basePath.Trim('/');
+        var segs = Segments(requestPath);
+        var bpSegs = Segments(basePath);
         return style switch
         {
-            PostnomicLanguageRouteStyle.Prefix when segs.Length >= 2 && segs[1] == bp && IsLang(segs[0]) => segs[0],
-            PostnomicLanguageRouteStyle.Suffix when segs.Length >= 2 && segs[0] == bp && IsLang(segs[1]) => segs[1],
+            PostnomicLanguageRouteStyle.Prefix
+                when segs.Length > bpSegs.Length && IsLang(segs[0]) && MatchesSegments(segs, 1, bpSegs)
+                => segs[0],
+            PostnomicLanguageRouteStyle.Suffix
+                when segs.Length > bpSegs.Length && MatchesSegments(segs, 0, bpSegs) && IsLang(segs[bpSegs.Length])
+                => segs[bpSegs.Length],
             _ => null,
         };
     }
@@ -55,14 +59,34 @@ public static class PostnomicRouteBuilder
     /// </summary>
     public static bool MatchesBlog(string requestPath, string basePath, PostnomicLanguageRouteStyle style)
     {
-        var segs = requestPath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-        var bp = basePath.Trim('/');
+        var segs = Segments(requestPath);
+        var bpSegs = Segments(basePath);
         return style switch
         {
-            PostnomicLanguageRouteStyle.Prefix => (segs.Length >= 1 && segs[0] == bp)
-                || (segs.Length >= 2 && IsLang(segs[0]) && segs[1] == bp),
-            _ => segs.Length >= 1 && segs[0] == bp,
+            PostnomicLanguageRouteStyle.Prefix => MatchesSegments(segs, 0, bpSegs)
+                || (segs.Length >= 1 && IsLang(segs[0]) && MatchesSegments(segs, 1, bpSegs)),
+            _ => MatchesSegments(segs, 0, bpSegs),
         };
+    }
+
+    private static string[] Segments(string path)
+    {
+        var withoutQuery = path.Split('?', 2)[0];
+        return withoutQuery.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    private static bool MatchesSegments(string[] segs, int offset, string[] baseSegs)
+    {
+        if (baseSegs.Length == 0 || segs.Length < offset + baseSegs.Length)
+            return false;
+
+        for (var i = 0; i < baseSegs.Length; i++)
+        {
+            if (!string.Equals(segs[offset + i], baseSegs[i], StringComparison.OrdinalIgnoreCase))
+                return false;
+        }
+
+        return true;
     }
 
     private static bool IsLang(string s) => s.Length == 2 && char.IsLetter(s[0]) && char.IsLetter(s[1]);

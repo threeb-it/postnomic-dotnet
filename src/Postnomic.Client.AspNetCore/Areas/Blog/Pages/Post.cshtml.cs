@@ -146,6 +146,22 @@ public class PostModel(
     }
 
     /// <summary>
+    /// The <see cref="PostnomicLanguageRouteStyle"/> configured for the currently resolved blog.
+    /// Used together with <see cref="BasePath"/> and <see cref="Lang"/> by
+    /// <see cref="PostnomicRouteBuilder"/> to generate correct links regardless of style.
+    /// </summary>
+    public PostnomicLanguageRouteStyle RouteStyle
+    {
+        get
+        {
+            var blogName = blogResolver.ResolveBlogName(HttpContext.Request.Path.Value ?? "");
+            return blogName is not null
+                ? optionsMonitor.Get(blogName).LanguageRouteStyle
+                : defaultClientOptions.Value.LanguageRouteStyle;
+        }
+    }
+
+    /// <summary>
     /// Whether to show the Postnomic branding footer below the post content.
     /// Server-enforced value from the API takes precedence over client configuration.
     /// </summary>
@@ -165,12 +181,13 @@ public class PostModel(
     }
 
     /// <summary>The canonical (default-language) URL for this post: {BasePath}/post/{slug}.</summary>
-    public string CanonicalUrl => $"{BasePath.TrimEnd('/')}/post/{PostSlug}";
+    public string CanonicalUrl => PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, lang: null, PostSlug);
 
     /// <summary>
     /// hreflang alternates: one (languageCode, url) per available language. The blog default
     /// language (AvailableLanguages first, else Post.Language) maps to the canonical URL; others
-    /// get the /{lang}/ prefix. Empty when the post has no AvailableLanguages.
+    /// get the language segment placed according to <see cref="RouteStyle"/>. Empty when the
+    /// post has no AvailableLanguages.
     /// </summary>
     public IReadOnlyList<(string Language, string Url)> AlternateLanguageUrls
     {
@@ -179,11 +196,12 @@ public class PostModel(
             var langs = Post?.AvailableLanguages ?? [];
             if (langs.Count == 0) return [];
             var defaultLang = langs.FirstOrDefault() ?? Post!.Language;
-            var basePath = BasePath.TrimEnd('/');
             return langs.Select(code => (code,
-                string.Equals(code, defaultLang, StringComparison.OrdinalIgnoreCase)
-                    ? $"{basePath}/post/{PostSlug}"
-                    : $"{basePath}/{code}/post/{PostSlug}")).ToList();
+                PostnomicRouteBuilder.BuildPost(
+                    BasePath,
+                    RouteStyle,
+                    string.Equals(code, defaultLang, StringComparison.OrdinalIgnoreCase) ? null : code,
+                    PostSlug))).ToList();
         }
     }
 

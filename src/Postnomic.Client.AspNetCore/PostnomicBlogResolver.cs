@@ -12,6 +12,14 @@ public class PostnomicBlogResolverOptions
     /// Maps each registered base path (e.g. <c>"/blog/free"</c>) to its blog name key.
     /// </summary>
     public Dictionary<string, string> BasePathToBlogName { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Maps each registered base path to the <see cref="PostnomicLanguageRouteStyle"/> configured
+    /// for that blog, so the resolver can correctly match requests that carry a language segment
+    /// (e.g. a <see cref="PostnomicLanguageRouteStyle.Prefix"/>-style <c>/de/blog</c>). Base paths
+    /// with no entry here default to <see cref="PostnomicLanguageRouteStyle.Suffix"/>.
+    /// </summary>
+    public Dictionary<string, PostnomicLanguageRouteStyle> BasePathToLanguageRouteStyle { get; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 /// <summary>
@@ -35,18 +43,14 @@ internal sealed class PostnomicBlogResolver(IOptions<PostnomicBlogResolverOption
 
         foreach (var (basePath, name) in options.Value.BasePathToBlogName)
         {
-            var normalizedBasePath = "/" + basePath.Trim('/');
+            var style = options.Value.BasePathToLanguageRouteStyle
+                .GetValueOrDefault(basePath, PostnomicLanguageRouteStyle.Suffix);
 
-            if (!requestPath.StartsWith(normalizedBasePath, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            // Ensure we match at a segment boundary (not a partial segment like /blog/free matching /blog/freebird)
-            if (requestPath.Length > normalizedBasePath.Length &&
-                requestPath[normalizedBasePath.Length] != '/' &&
-                requestPath[normalizedBasePath.Length] != '?')
+            if (!PostnomicRouteBuilder.MatchesBlog(requestPath, basePath, style))
                 continue;
 
             // Longest-prefix match wins
+            var normalizedBasePath = "/" + basePath.Trim('/');
             if (normalizedBasePath.Length > bestLength)
             {
                 bestLength = normalizedBasePath.Length;

@@ -2,6 +2,7 @@
 @model Postnomic.Client.AspNetCore.Areas.Blog.Pages.PostModel
 @{
     ViewData["Title"] = Model.Post.Title;
+    var indexUrl = PostnomicRouteBuilder.BuildIndex(Model.BasePath, Model.RouteStyle, Model.Lang);
 }
 
 <style>
@@ -39,7 +40,7 @@
                 <span>By
                     @if (!string.IsNullOrEmpty(Model.Post.AuthorSlug))
                     {
-                        <a href="@Model.BasePath/author/@Model.Post.AuthorSlug"
+                        <a href="@PostnomicRouteBuilder.BuildAuthor(Model.BasePath, Model.RouteStyle, Model.Lang, Model.Post.AuthorSlug)"
                            class="text-decoration-none"><strong>@Model.Post.AuthorName</strong></a>
                     }
                     else
@@ -62,7 +63,7 @@
                 <div class="d-flex flex-wrap gap-1 mb-1">
                     @foreach (var tag in Model.Post.Tags)
                     {
-                        <a href="@Model.BasePath?tag=@Uri.EscapeDataString(tag.Slug)"
+                        <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)"
                            class="badge bg-secondary text-decoration-none">@tag.Name</a>
                     }
                 </div>
@@ -74,7 +75,7 @@
                 <div class="d-flex flex-wrap gap-1 mb-3">
                     @foreach (var cat in Model.Post.Categories)
                     {
-                        <a href="@Model.BasePath?category=@Uri.EscapeDataString(cat.Slug)"
+                        <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
                            class="badge bg-primary text-decoration-none">@cat.Name</a>
                     }
                 </div>
@@ -299,7 +300,7 @@
 
             @* Back to blog *@
             <div class="mb-3">
-                <a href="@Model.BasePath" class="btn btn-outline-secondary btn-sm">
+                <a href="@indexUrl" class="btn btn-outline-secondary btn-sm">
                     &larr; Back to Blog
                 </a>
             </div>
@@ -325,7 +326,7 @@
                             @foreach (var post in Model.TopCommented)
                             {
                                 <li class="mb-1">
-                                    <a href="@Model.BasePath/post/@post.Slug"
+                                    <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                        class="text-decoration-none">@post.Title</a>
                                     <span class="text-muted small d-block">
                                         @post.Count comment@(post.Count == 1 ? "" : "s")
@@ -347,7 +348,7 @@
                             @foreach (var post in Model.MostRead)
                             {
                                 <li class="mb-1">
-                                    <a href="@Model.BasePath/post/@post.Slug"
+                                    <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                        class="text-decoration-none">@post.Title</a>
                                     <span class="text-muted small d-block">
                                         @post.Count view@(post.Count == 1 ? "" : "s")

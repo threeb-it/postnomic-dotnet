@@ -258,4 +258,78 @@ public class PostnomicBlogResolverTests
         // Assert
         result.Should().Be("free");
     }
+
+    // ── LanguageRouteStyle.Prefix — lang leads the base path ──────────────────
+
+    [Fact]
+    public void ResolveBlogName_MatchesLangPrefixedPath_WhenStyleIsPrefix()
+    {
+        // Arrange
+        var resolver = CreateResolverWithStyle("/blog", "default", PostnomicLanguageRouteStyle.Prefix);
+
+        // Act
+        var result = resolver.ResolveBlogName("/de/blog");
+
+        // Assert
+        result.Should().Be("default");
+    }
+
+    [Fact]
+    public void ResolveBlogName_MatchesLangPrefixedSubPage_WhenStyleIsPrefix()
+    {
+        // Arrange
+        var resolver = CreateResolverWithStyle("/blog", "default", PostnomicLanguageRouteStyle.Prefix);
+
+        // Act
+        var result = resolver.ResolveBlogName("/de/blog/post/hello-world");
+
+        // Assert
+        result.Should().Be("default");
+    }
+
+    [Fact]
+    public void ResolveBlogName_MatchesMultiSegmentBasePath_WhenStyleIsPrefix()
+    {
+        // Arrange — named blogs commonly use multi-segment base paths (e.g. /blog/free)
+        var resolver = CreateResolverWithStyle("/blog/free", "free", PostnomicLanguageRouteStyle.Prefix);
+
+        // Act
+        var result = resolver.ResolveBlogName("/de/blog/free/post/hello");
+
+        // Assert
+        result.Should().Be("free");
+    }
+
+    [Fact]
+    public void ResolveBlogName_ReturnsNull_WhenPrefixStyleLangSegmentIsMissingAndNoBarePathRegistered()
+    {
+        // Arrange — a completely unrelated path must still not match
+        var resolver = CreateResolverWithStyle("/blog", "default", PostnomicLanguageRouteStyle.Prefix);
+
+        // Act
+        var result = resolver.ResolveBlogName("/about");
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    // ── Helpers — style-aware resolver construction ────────────────────────────
+
+    private static IPostnomicBlogResolver CreateResolverWithStyle(
+        string basePath, string name, PostnomicLanguageRouteStyle style)
+    {
+        var services = new ServiceCollection();
+
+        services.AddPostnomicBlog(name, options =>
+        {
+            options.BaseUrl = "https://api.postnomic.com";
+            options.ApiKey = $"pk_{name}";
+            options.BlogSlug = name;
+            options.BasePath = basePath;
+            options.LanguageRouteStyle = style;
+        });
+
+        var provider = services.BuildServiceProvider();
+        return provider.GetRequiredService<IPostnomicBlogResolver>();
+    }
 }

@@ -2,6 +2,7 @@
 @model Postnomic.Client.AspNetCore.Areas.Blog.Pages.AuthorModel
 @{
     ViewData["Title"] = Model.Profile.Name;
+    var indexUrl = PostnomicRouteBuilder.BuildIndex(Model.BasePath, Model.RouteStyle, Model.Lang);
 }
 
 <div class="container py-4">
@@ -252,7 +253,7 @@
                         @foreach (var post in Model.Profile.RecentPosts)
                         {
                             <div class="border-bottom py-2">
-                                <a href="@Model.BasePath/post/@post.Slug"
+                                <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                    class="text-decoration-none fw-bold">@post.Title</a>
                                 <br />
                                 <span class="text-muted small">@post.PublishedAt.ToString("MMMM dd, yyyy")</span>
@@ -267,7 +268,7 @@
             }
 
             <div class="mb-3">
-                <a href="@Model.BasePath" class="btn btn-outline-secondary btn-sm">
+                <a href="@indexUrl" class="btn btn-outline-secondary btn-sm">
                     &larr; Back to Blog
                 </a>
             </div>
