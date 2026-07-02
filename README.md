@@ -145,7 +145,55 @@ The SDK gives you access to the full Postnomic API:
 - **Authors** -- profiles with bio, social links, certifications, education
 - **Popular Posts** -- trending content based on analytics
 - **Blog Info** -- blog metadata, layout, and configuration
+- **Multi-language posts** -- request a specific translation, get `/{lang}/` routes and hreflang metadata for free (see below)
 - **Client-Side Caching** -- optional in-memory cache with per-resource TTLs and explicit invalidation via `IPostnomicCacheControl`
+
+## Multi-language posts
+
+If a blog has posts translated into multiple languages, the SDK lets you request a specific language and exposes what's available so you can build language switchers and SEO metadata.
+
+### Requesting a language
+
+`GetPostsAsync` and `GetPostAsync` both take an optional trailing `language` argument -- an ISO-639-1 code (e.g. `"de"`). It's sent to the API as `?lang=`, and it's part of the cache key when client-side caching is enabled. Leave it `null` to get the blog's default language (or let the API resolve it from the `Accept-Language` header).
+
+```csharp
+// Explicit language
+var post = await blog.GetPostAsync("intro-to-docker", language: "de");
+
+// Post list in a specific language
+var posts = await blog.GetPostsAsync(language: "de");
+```
+
+`PostnomicPostSummary` and `PostnomicPostDetail` both expose:
+
+- `Language` -- the language actually served for this post (may differ from what you requested if no translation exists; the API falls back to the blog's default language rather than 404ing)
+- `AvailableLanguages` -- every language this post has content in
+
+### AspNetCore routes
+
+`Postnomic.Client.AspNetCore` adds `/{lang}/` variants of the blog's routes alongside the canonical (default-language) ones, where `{lang}` is constrained to exactly two lowercase letters:
+
+- `/{basePath}` and `/{basePath}/{lang}` -- index
+- `/{basePath}/post/{postSlug}` and `/{basePath}/{lang}/post/{postSlug}` -- post detail
+- `/{basePath}/author/{authorSlug}` and `/{basePath}/{lang}/author/{authorSlug}` -- author page
+
+### Blazor components
+
+`PostPage` and `BlogPage` (`Postnomic.Client.Blazor`) both accept an optional `Language` parameter, which you can bind to your own routed `{lang}` segment.
+
+### SEO / hreflang
+
+The `Postnomic.Client.AspNetCore` post page model (`PostModel`) exposes `CanonicalUrl` and a list of `AlternateLanguageUrls` (`(string Language, string Url)` pairs). The SDK renders the post content but doesn't inject into your `<head>` -- render these yourself in your layout's `<head>`:
+
+```cshtml
+<link rel="canonical" href="@Model.CanonicalUrl" />
+@foreach (var (language, url) in Model.AlternateLanguageUrls)
+{
+    <link rel="alternate" hreflang="@language" href="@url" />
+}
+```
+
+`CanonicalUrl` and `AlternateLanguageUrls` are only defined on the post detail page model (`PostModel`) -- `Index`/`Author` don't expose them.
 
 ## Requirements
 
