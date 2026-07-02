@@ -131,7 +131,7 @@ public static class PostnomicFeeds
         var url = new XElement(SitemapNs + "url",
             new XElement(SitemapNs + "loc", loc),
             new XElement(SitemapNs + "lastmod",
-                post.PublishedAt.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)));
+                NormalizeToUtc(post.PublishedAt).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)));
 
         foreach (var lang in post.AvailableLanguages)
         {
@@ -171,7 +171,21 @@ public static class PostnomicFeeds
     private static string ToAbsoluteUrl(HttpRequest request, string pathOrUrl) => PostnomicSeo.ToAbsoluteUrl(request, pathOrUrl);
 
     private static string ToRfc822(DateTime dateTime) =>
-        dateTime.ToUniversalTime().ToString("r", CultureInfo.InvariantCulture);
+        NormalizeToUtc(dateTime).ToString("r", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Normalizes a feed timestamp to UTC without shifting its wall-clock value when the
+    /// <see cref="DateTime.Kind"/> is <see cref="DateTimeKind.Unspecified"/>. The Postnomic API
+    /// returns <c>publishedAt</c> without a trailing "Z"/offset, so System.Text.Json
+    /// deserializes it as Unspecified even though the value is always already UTC; calling
+    /// <c>.ToUniversalTime()</c> directly on it would misinterpret it as local time and shift it
+    /// by the host machine's UTC offset. Already-Utc values pass through unchanged, and
+    /// already-Local values still go through <c>.ToUniversalTime()</c> as intended.
+    /// </summary>
+    private static DateTime NormalizeToUtc(DateTime value) =>
+        value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            : value.ToUniversalTime();
 
     private static string ToXmlString(XElement root)
     {
