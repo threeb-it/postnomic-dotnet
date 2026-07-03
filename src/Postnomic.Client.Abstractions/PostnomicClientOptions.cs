@@ -50,6 +50,13 @@ public class PostnomicClientOptions
     /// <summary>Controls where the language code appears in generated blog URLs and routes.
     /// Default <see cref="PostnomicLanguageRouteStyle.Suffix"/> preserves pre-1.2 behavior.</summary>
     public PostnomicLanguageRouteStyle LanguageRouteStyle { get; set; } = PostnomicLanguageRouteStyle.Suffix;
+
+    /// <summary>
+    /// Selects the CSS class vocabulary emitted by Postnomic-rendered markup.
+    /// Default <see cref="PostnomicMarkupStyle.Bootstrap"/> preserves pre-theming behavior byte-for-byte;
+    /// opt into <see cref="PostnomicMarkupStyle.Semantic"/> to theme the blog via CSS variables.
+    /// </summary>
+    public PostnomicMarkupStyle MarkupStyle { get; set; } = PostnomicMarkupStyle.Bootstrap;
 }
 
 /// <summary>
