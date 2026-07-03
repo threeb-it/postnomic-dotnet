@@ -200,10 +200,18 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
 
         // Fix 3 coverage: _Comment.cshtml renders the localized author fallback (the mocked
         // comment has AuthorName = null) and a culture-formatted "long date + short time" ("f")
-        // timestamp for the German culture.
+        // timestamp. We assert on the long-date ("D") portion computed with the SAME culture the
+        // request resolves to (de) rather than the full "f" string: per the .NET spec "f" == "D"
+        // + " " + short time, so the "D" output is the exact, ASCII-only prefix of what the view
+        // renders. This keeps the assertion OS/ICU-robust — the short-time portion of "f" for some
+        // cultures uses a narrow no-break space (U+202F) before AM/PM on Linux ICU, which Razor's
+        // HtmlEncoder then emits as the entity "&#x202F;", so a full-"f" compare mismatches the
+        // rendered HTML cross-OS even when computed the same way.
+        var deCulture = CultureInfo.GetCultureInfo("de");
         html.Should().Contain(">Anonym<");
         html.Should().NotContain(">Anonymous<");
-        html.Should().Contain(AnonymousCommentCreatedAt.ToString("f", CultureInfo.GetCultureInfo("de")));
+        html.Should().Contain(AnonymousCommentCreatedAt.ToString("D", deCulture));
+        html.Should().Contain("Juni"); // German month name; distinct from English "June"
     }
 
     [Fact]
@@ -218,10 +226,13 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         html.Should().NotContain("Meistgelesen");
 
         // Fix 3 coverage: same anonymous comment, rendered with the English author fallback and
-        // a culture-formatted "long date + short time" ("f") timestamp for the English culture.
+        // the long-date ("D") portion of the culture-formatted timestamp for the English culture
+        // (see the German test above for why "D" rather than the full "f" string — OS/ICU-robust).
+        var enCulture = CultureInfo.GetCultureInfo("en");
         html.Should().Contain(">Anonymous<");
         html.Should().NotContain(">Anonym<");
-        html.Should().Contain(AnonymousCommentCreatedAt.ToString("f", CultureInfo.GetCultureInfo("en")));
+        html.Should().Contain(AnonymousCommentCreatedAt.ToString("D", enCulture));
+        html.Should().Contain("June"); // English month name; distinct from German "Juni"
     }
 
     [Fact]
