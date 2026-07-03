@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="By" xml:space="preserve"><value>Von</value></data>
+  <data name="CommentCountOne" xml:space="preserve"><value>{0} Kommentar</value></data>
+  <data name="CommentCountMany" xml:space="preserve"><value>{0} Kommentare</value></data>
+  <data name="MinRead" xml:space="preserve"><value>~{0} Min. Lesezeit</value></data>
+  <data name="MinReadShort" xml:space="preserve"><value>Min. Lesezeit</value></data>
+  <data name="NoContent" xml:space="preserve"><value>Kein Inhalt verf&#252;gbar.</value></data>
+  <data name="Comments" xml:space="preserve"><value>Kommentare</value></data>
+  <data name="NoCommentsYet" xml:space="preserve"><value>Noch keine Kommentare. Teilen Sie als Erste(r) Ihre Gedanken!</value></data>
+  <data name="LeaveComment" xml:space="preserve"><value>Kommentar hinterlassen</value></data>
+  <data name="ModerationNotice" xml:space="preserve"><value>Ihr Kommentar wird vor der Ver&#246;ffentlichung gepr&#252;ft.</value></data>
+  <data name="FieldComment" xml:space="preserve"><value>Kommentar</value></data>
+  <data name="FieldSubject" xml:space="preserve"><value>Betreff</value></data>
+  <data name="FieldFirstName" xml:space="preserve"><value>Vorname</value></data>
+  <data name="FieldLastName" xml:space="preserve"><value>Nachname</value></data>
+  <data name="FieldEmail" xml:space="preserve"><value>E-Mail-Adresse</value></data>
+  <data name="FieldPhone" xml:space="preserve"><value>Telefonnummer</value></data>
+  <data name="Optional" xml:space="preserve"><value>(optional)</value></data>
+  <data name="CommentBodyPlaceholder" xml:space="preserve"><value>Schreiben Sie hier Ihren Kommentar&#8230;</value></data>
+  <data name="SubmitComment" xml:space="preserve"><value>Kommentar absenden</value></data>
+  <data name="CommentsClosed" xml:space="preserve"><value>Kommentare sind f&#252;r diesen Beitrag geschlossen.</value></data>
+  <data name="BackToBlog" xml:space="preserve"><value>&#8592; Zur&#252;ck zum Blog</value></data>
+  <data name="TopCommented" xml:space="preserve"><value>Meistkommentiert</value></data>
+  <data name="MostRead" xml:space="preserve"><value>Meistgelesen</value></data>
+  <data name="ViewCountOne" xml:space="preserve"><value>{0} Aufruf</value></data>
+  <data name="ViewCountMany" xml:space="preserve"><value>{0} Aufrufe</value></data>
+</root>

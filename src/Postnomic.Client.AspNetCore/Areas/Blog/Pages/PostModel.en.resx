@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="CommentSubmitValidationError" xml:space="preserve"><value>Please correct the errors below and try again.</value></data>
+  <data name="CommentSubmitError" xml:space="preserve"><value>Your comment could not be submitted. Please try again later.</value></data>
+  <data name="CommentSubmitModerated" xml:space="preserve"><value>Thank you! Your comment has been submitted and is awaiting moderation.</value></data>
+  <data name="CommentSubmitSuccess" xml:space="preserve"><value>Thank you! Your comment has been published.</value></data>
+  <data name="FieldSubjectRequired" xml:space="preserve"><value>Subject is required.</value></data>
+  <data name="FieldFirstNameRequired" xml:space="preserve"><value>First name is required.</value></data>
+  <data name="FieldLastNameRequired" xml:space="preserve"><value>Last name is required.</value></data>
+  <data name="FieldEmailRequired" xml:space="preserve"><value>Email address is required.</value></data>
+  <data name="FieldPhoneRequired" xml:space="preserve"><value>Phone number is required.</value></data>
+</root>

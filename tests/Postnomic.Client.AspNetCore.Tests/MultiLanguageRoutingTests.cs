@@ -13,6 +13,7 @@ using Moq;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
 using Postnomic.Client.AspNetCore.Areas.Blog.Pages;
+using Postnomic.Client.AspNetCore.Tests.TestSupport;
 
 namespace Postnomic.Client.AspNetCore.Tests;
 
@@ -205,7 +206,8 @@ public class MultiLanguageRoutingTests
             Mock.Of<IServiceProvider>(),
             resolver.Object,
             Options.Create(new PostnomicClientOptions { BasePath = "/blog" }),
-            Mock.Of<IOptionsMonitor<PostnomicClientOptions>>());
+            Mock.Of<IOptionsMonitor<PostnomicClientOptions>>(),
+            TestStringLocalizers.Post());
 
         var httpContext = new DefaultHttpContext();
         var actionContext = new ActionContext(

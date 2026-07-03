@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
@@ -17,7 +18,8 @@ public class PostModel(
     IServiceProvider serviceProvider,
     IPostnomicBlogResolver blogResolver,
     IOptions<PostnomicClientOptions> defaultClientOptions,
-    IOptionsMonitor<PostnomicClientOptions> optionsMonitor) : PageModel
+    IOptionsMonitor<PostnomicClientOptions> optionsMonitor,
+    IStringLocalizer<PostModel> localizer) : PageModel
 {
     // ── Route parameter ───────────────────────────────────────────────────────
 
@@ -95,7 +97,7 @@ public class PostModel(
 
         if (!ModelState.IsValid)
         {
-            CommentSubmitErrorMessage = "Please correct the errors below and try again.";
+            CommentSubmitErrorMessage = localizer["CommentSubmitValidationError"];
             return Page();
         }
 
@@ -115,14 +117,14 @@ public class PostModel(
 
         if (comment is null)
         {
-            CommentSubmitErrorMessage = "Your comment could not be submitted. Please try again later.";
+            CommentSubmitErrorMessage = localizer["CommentSubmitError"];
         }
         else
         {
             CommentInput = new CommentInputModel();
             CommentSubmitSuccessMessage = Post.CommentRequireModeration
-                ? "Thank you! Your comment has been submitted and is awaiting moderation."
-                : "Thank you! Your comment has been published.";
+                ? localizer["CommentSubmitModerated"]
+                : localizer["CommentSubmitSuccess"];
         }
 
         return Page();
@@ -256,19 +258,19 @@ public class PostModel(
         if (Post is null) return;
 
         if (Post.CommentRequireSubject && string.IsNullOrWhiteSpace(CommentInput.Subject))
-            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Subject)}", "Subject is required.");
+            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Subject)}", localizer["FieldSubjectRequired"]);
 
         if (Post.CommentRequireFirstname && string.IsNullOrWhiteSpace(CommentInput.Firstname))
-            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Firstname)}", "First name is required.");
+            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Firstname)}", localizer["FieldFirstNameRequired"]);
 
         if (Post.CommentRequireLastname && string.IsNullOrWhiteSpace(CommentInput.Lastname))
-            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Lastname)}", "Last name is required.");
+            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Lastname)}", localizer["FieldLastNameRequired"]);
 
         if (Post.CommentRequireEmail && string.IsNullOrWhiteSpace(CommentInput.Email))
-            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Email)}", "Email address is required.");
+            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Email)}", localizer["FieldEmailRequired"]);
 
         if (Post.CommentRequirePhone && string.IsNullOrWhiteSpace(CommentInput.Phone))
-            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Phone)}", "Phone number is required.");
+            ModelState.AddModelError($"{nameof(CommentInput)}.{nameof(CommentInput.Phone)}", localizer["FieldPhoneRequired"]);
     }
 
     private static int CalculateReadTime(string? html)

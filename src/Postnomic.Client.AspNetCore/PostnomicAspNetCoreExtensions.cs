@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Postnomic.Client;
 using Postnomic.Client.Abstractions;
+using Postnomic.Client.AspNetCore.Localization;
 using Postnomic.Client.AspNetCore.Seo;
 
 namespace Postnomic.Client.AspNetCore;
@@ -25,7 +27,9 @@ public static class PostnomicAspNetCoreExtensions
     /// This method registers <see cref="IPostnomicBlogService"/> and configures the named
     /// <see cref="System.Net.Http.HttpClient"/> used to communicate with the Postnomic API.
     /// The host application must also call <c>services.AddRazorPages()</c> (or
-    /// <c>services.AddControllersWithViews()</c>) so that the Area pages are discovered.
+    /// <c>services.AddControllersWithViews()</c>) so that the Area pages are discovered, and
+    /// <c>services.AddLocalization()</c> plus <c>.AddViewLocalization()</c> so the Area's
+    /// English/German UI chrome can resolve (see the package README's Localization section).
     /// The Blog area pages are served at <see cref="PostnomicClientOptions.BasePath"/>
     /// (default: <c>/blog</c>).
     /// </remarks>
@@ -46,6 +50,17 @@ public static class PostnomicAspNetCoreExtensions
         services.AddPostnomicClient(configure);
 
         services.TryAddSingleton<IPostnomicBlogResolver, PostnomicBlogResolver>();
+
+        // Blog Area views resolve their UI strings via IViewLocalizer. The stock ViewLocalizer
+        // searches the host application's assembly for resources, which never finds the resx
+        // files shipped inside this Razor Class Library; this replacement targets the Blog
+        // Area's own assembly instead (see PostnomicViewLocalizer for details) while leaving
+        // localization of the host's own views untouched. The host app must still call
+        // services.AddLocalization() and .AddViewLocalization() for this to take effect.
+        // Uses Replace (not TryAdd) so this wins regardless of whether the host calls
+        // AddViewLocalization() (which registers the stock ViewLocalizer via TryAdd) before or
+        // after AddPostnomicBlog().
+        services.Replace(ServiceDescriptor.Transient<IViewLocalizer, PostnomicViewLocalizer>());
 
         // Track this as a registered blog (Name = null denotes the single, unnamed default
         // registration, whose IPostnomicBlogService is resolved non-keyed) so MapPostnomicBlog
@@ -89,6 +104,17 @@ public static class PostnomicAspNetCoreExtensions
         services.AddPostnomicClient(name, configure);
 
         services.TryAddSingleton<IPostnomicBlogResolver, PostnomicBlogResolver>();
+
+        // Blog Area views resolve their UI strings via IViewLocalizer. The stock ViewLocalizer
+        // searches the host application's assembly for resources, which never finds the resx
+        // files shipped inside this Razor Class Library; this replacement targets the Blog
+        // Area's own assembly instead (see PostnomicViewLocalizer for details) while leaving
+        // localization of the host's own views untouched. The host app must still call
+        // services.AddLocalization() and .AddViewLocalization() for this to take effect.
+        // Uses Replace (not TryAdd) so this wins regardless of whether the host calls
+        // AddViewLocalization() (which registers the stock ViewLocalizer via TryAdd) before or
+        // after AddPostnomicBlog().
+        services.Replace(ServiceDescriptor.Transient<IViewLocalizer, PostnomicViewLocalizer>());
 
         services.Configure<PostnomicBlogResolverOptions>(opts =>
         {

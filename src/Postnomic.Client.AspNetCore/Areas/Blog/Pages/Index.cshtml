@@ -59,25 +59,25 @@
     {
         <div class="@(Model.Semantic ? Model.Cls.FilterBanner : "alert alert-info d-flex align-items-center gap-2 mb-3")" role="alert">
             <span>
-                Showing filtered results
+                @Localizer["FilterShowing"]
                 @if (!string.IsNullOrWhiteSpace(Model.Search))
                 {
-                    <span> &mdash; search: <strong>@Model.Search</strong></span>
+                    <span> &mdash; @Localizer["FilterSearch"]: <strong>@Model.Search</strong></span>
                 }
                 @if (!string.IsNullOrWhiteSpace(Model.Tag))
                 {
-                    <span> &mdash; tag: <strong>@Model.Tag</strong></span>
+                    <span> &mdash; @Localizer["FilterTag"]: <strong>@Model.Tag</strong></span>
                 }
                 @if (!string.IsNullOrWhiteSpace(Model.Category))
                 {
-                    <span> &mdash; category: <strong>@Model.Category</strong></span>
+                    <span> &mdash; @Localizer["FilterCategory"]: <strong>@Model.Category</strong></span>
                 }
                 @if (!string.IsNullOrWhiteSpace(Model.Author))
                 {
-                    <span> &mdash; author: <strong>@Model.Author</strong></span>
+                    <span> &mdash; @Localizer["FilterAuthor"]: <strong>@Model.Author</strong></span>
                 }
             </span>
-            <a href="@indexUrl" class="@(Model.Semantic ? Model.Cls.BtnSm : "ms-auto btn btn-sm btn-outline-secondary")">Clear filters</a>
+            <a href="@indexUrl" class="@(Model.Semantic ? Model.Cls.BtnSm : "ms-auto btn btn-sm btn-outline-secondary")">@Localizer["FilterClear"]</a>
         </div>
     }
 
@@ -89,10 +89,10 @@
             @if (Model.Posts.Items.Count == 0)
             {
                 <div class="@(Model.Semantic ? Model.Cls.Empty : "text-center py-5 text-muted")">
-                    <p class="fs-5">No posts found.</p>
+                    <p class="fs-5">@Localizer["NoPosts"]</p>
                     @if (Model.HasActiveFilter)
                     {
-                        <a href="@indexUrl" class="@(Model.Semantic ? Model.Cls.BtnPrimary : "btn btn-outline-primary")">View all posts</a>
+                        <a href="@indexUrl" class="@(Model.Semantic ? Model.Cls.BtnPrimary : "btn btn-outline-primary")">@Localizer["ViewAllPosts"]</a>
                     }
                 </div>
             }
@@ -115,7 +115,7 @@
                             </h2>
 
                             <div class="@(Model.Semantic ? Model.Cls.PostMeta : "d-flex flex-wrap gap-2 align-items-center text-muted small mb-2")">
-                                <span>By
+                                <span>@Localizer["By"]
                                     @if (!string.IsNullOrEmpty(post.AuthorSlug))
                                     {
                                         <a href="@PostnomicRouteBuilder.BuildAuthor(Model.BasePath, Model.RouteStyle, Model.Lang, post.AuthorSlug)"
@@ -127,9 +127,9 @@
                                     }
                                 </span>
                                 <span>&middot;</span>
-                                <span>@post.PublishedAt.ToString("MMMM d, yyyy")</span>
+                                <span>@post.PublishedAt.ToString("d", CultureInfo.CurrentCulture)</span>
                                 <span>&middot;</span>
-                                <span>@post.CommentCount comment@(post.CommentCount == 1 ? "" : "s")</span>
+                                <span>@Localizer[post.CommentCount == 1 ? "CommentCountOne" : "CommentCountMany", post.CommentCount]</span>
                             </div>
 
                             @* Tags *@
@@ -162,7 +162,7 @@
                             }
 
                             <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
-                               class="@(Model.Semantic ? Model.Cls.BtnOutline : "btn btn-sm btn-outline-primary mt-1")">Read More &rarr;</a>
+                               class="@(Model.Semantic ? Model.Cls.BtnOutline : "btn btn-sm btn-outline-primary mt-1")">@Localizer["ReadMore"] &rarr;</a>
                         </div>
                     </article>
                 }
@@ -176,7 +176,7 @@
                             <li class="@Model.Cls.Page @(Model.PageNumber <= 1 ? Model.Cls.PageDisabled : "")">
                                 <a class="@(Model.Semantic ? "" : "page-link")"
                                    href="@Model.PageUrl(Model.PageNumber - 1)"
-                                   aria-label="Previous">
+                                   aria-label="@Localizer["PaginationPrevious"]">
                                     <span aria-hidden="true">&laquo;</span>
                                 </a>
                             </li>
@@ -192,14 +192,13 @@
                             <li class="@Model.Cls.Page @(Model.PageNumber >= Model.Posts.TotalPages ? Model.Cls.PageDisabled : "")">
                                 <a class="@(Model.Semantic ? "" : "page-link")"
                                    href="@Model.PageUrl(Model.PageNumber + 1)"
-                                   aria-label="Next">
+                                   aria-label="@Localizer["PaginationNext"]">
                                     <span aria-hidden="true">&raquo;</span>
                                 </a>
                             </li>
                         </ul>
                         <p class="text-center text-muted small">
-                            Showing page @Model.PageNumber of @Model.Posts.TotalPages
-                            (@Model.Posts.TotalCount post@(Model.Posts.TotalCount == 1 ? "" : "s") total)
+                            @Localizer["PaginationShowing", Model.PageNumber, Model.Posts.TotalPages, Model.Posts.TotalCount]
                         </p>
                     </nav>
                 }
@@ -212,7 +211,7 @@
             @* Search *@
             <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
                 <div class="@(Model.Semantic ? "" : "card-body")">
-                    <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Search</h5>
+                    <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Search"]</h5>
                     <form method="get" action="@indexUrl">
                         <input type="hidden" name="pageSize" value="@Model.PageSize" />
                         <div class="@(Model.Semantic ? Model.Cls.SearchBox : "input-group")">
@@ -220,8 +219,8 @@
                                    name="search"
                                    value="@Model.Search"
                                    class="@Model.Cls.Field"
-                                   placeholder="Search posts&hellip;" />
-                            <button type="submit" class="@Model.Cls.BtnPrimary">Go</button>
+                                   placeholder="@Localizer["SearchPlaceholder"]" />
+                            <button type="submit" class="@Model.Cls.BtnPrimary">@Localizer["SearchGo"]</button>
                         </div>
                     </form>
                 </div>
@@ -232,7 +231,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
                     <div class="@(Model.Semantic ? "" : "card-body")">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Tags</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Tags"]</h5>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach (var tag in Model.Tags)
                             {
@@ -252,14 +251,14 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
                     <div class="@(Model.Semantic ? "" : "card-body")">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Categories</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Categories"]</h5>
                         <ul class="list-unstyled mb-0">
                             @foreach (var cat in Model.Categories)
                             {
                                 <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
                                     <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
                                        class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary text-decoration-none")">@cat.Name</a>
-                                    <span class="text-muted small">@cat.PostCount post@(cat.PostCount == 1 ? "" : "s")</span>
+                                    <span class="text-muted small">@Localizer[cat.PostCount == 1 ? "PostCountOne" : "PostCountMany", cat.PostCount]</span>
                                 </li>
                             }
                         </ul>
@@ -272,14 +271,14 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
                     <div class="@(Model.Semantic ? "" : "card-body")">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Authors</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Authors"]</h5>
                         <ul class="list-unstyled mb-0">
                             @foreach (var author in Model.Authors)
                             {
                                 <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
                                     <a href="@indexUrl?author=@Uri.EscapeDataString(author.Name)"
                                        class="text-decoration-none">@author.Name</a>
-                                    <span class="text-muted small">@author.PostCount post@(author.PostCount == 1 ? "" : "s")</span>
+                                    <span class="text-muted small">@Localizer[author.PostCount == 1 ? "PostCountOne" : "PostCountMany", author.PostCount]</span>
                                 </li>
                             }
                         </ul>
@@ -292,7 +291,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
                     <div class="@(Model.Semantic ? "" : "card-body")">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Top Commented</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["TopCommented"]</h5>
                         <ol class="mb-0 ps-3">
                             @foreach (var post in Model.TopCommented)
                             {
@@ -300,7 +299,7 @@
                                     <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                        class="text-decoration-none">@post.Title</a>
                                     <span class="text-muted small d-block">
-                                        @post.Count comment@(post.Count == 1 ? "" : "s")
+                                        @Localizer[post.Count == 1 ? "CommentCountOne" : "CommentCountMany", post.Count]
                                     </span>
                                 </li>
                             }
@@ -314,7 +313,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
                     <div class="@(Model.Semantic ? "" : "card-body")">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Most Read</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["MostRead"]</h5>
                         <ol class="mb-0 ps-3">
                             @foreach (var post in Model.MostRead)
                             {
@@ -322,7 +321,7 @@
                                     <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                        class="text-decoration-none">@post.Title</a>
                                     <span class="text-muted small d-block">
-                                        @post.Count view@(post.Count == 1 ? "" : "s")
+                                        @Localizer[post.Count == 1 ? "ViewCountOne" : "ViewCountMany", post.Count]
                                     </span>
                                 </li>
                             }

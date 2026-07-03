@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="FilterShowing" xml:space="preserve"><value>Showing filtered results</value></data>
+  <data name="FilterSearch" xml:space="preserve"><value>search</value></data>
+  <data name="FilterTag" xml:space="preserve"><value>tag</value></data>
+  <data name="FilterCategory" xml:space="preserve"><value>category</value></data>
+  <data name="FilterAuthor" xml:space="preserve"><value>author</value></data>
+  <data name="FilterClear" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="NoPosts" xml:space="preserve"><value>No posts found.</value></data>
+  <data name="ViewAllPosts" xml:space="preserve"><value>View all posts</value></data>
+  <data name="By" xml:space="preserve"><value>By</value></data>
+  <data name="CommentCountOne" xml:space="preserve"><value>{0} comment</value></data>
+  <data name="CommentCountMany" xml:space="preserve"><value>{0} comments</value></data>
+  <data name="ReadMore" xml:space="preserve"><value>Read More</value></data>
+  <data name="Search" xml:space="preserve"><value>Search</value></data>
+  <data name="SearchGo" xml:space="preserve"><value>Go</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search posts&#8230;</value></data>
+  <data name="Tags" xml:space="preserve"><value>Tags</value></data>
+  <data name="Categories" xml:space="preserve"><value>Categories</value></data>
+  <data name="Authors" xml:space="preserve"><value>Authors</value></data>
+  <data name="TopCommented" xml:space="preserve"><value>Top Commented</value></data>
+  <data name="MostRead" xml:space="preserve"><value>Most Read</value></data>
+  <data name="PostCountOne" xml:space="preserve"><value>{0} post</value></data>
+  <data name="PostCountMany" xml:space="preserve"><value>{0} posts</value></data>
+  <data name="ViewCountOne" xml:space="preserve"><value>{0} view</value></data>
+  <data name="ViewCountMany" xml:space="preserve"><value>{0} views</value></data>
+  <data name="PaginationShowing" xml:space="preserve"><value>Showing page {0} of {1} ({2} posts total)</value></data>
+  <data name="PaginationPrevious" xml:space="preserve"><value>Previous</value></data>
+  <data name="PaginationNext" xml:space="preserve"><value>Next</value></data>
+</root>

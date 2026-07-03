@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="By" xml:space="preserve"><value>By</value></data>
+  <data name="CommentCountOne" xml:space="preserve"><value>{0} comment</value></data>
+  <data name="CommentCountMany" xml:space="preserve"><value>{0} comments</value></data>
+  <data name="MinRead" xml:space="preserve"><value>~{0} min read</value></data>
+  <data name="MinReadShort" xml:space="preserve"><value>min read</value></data>
+  <data name="NoContent" xml:space="preserve"><value>No content available.</value></data>
+  <data name="Comments" xml:space="preserve"><value>Comments</value></data>
+  <data name="NoCommentsYet" xml:space="preserve"><value>No comments yet. Be the first to share your thoughts!</value></data>
+  <data name="LeaveComment" xml:space="preserve"><value>Leave a Comment</value></data>
+  <data name="ModerationNotice" xml:space="preserve"><value>Your comment will be reviewed before it appears publicly.</value></data>
+  <data name="FieldComment" xml:space="preserve"><value>Comment</value></data>
+  <data name="FieldSubject" xml:space="preserve"><value>Subject</value></data>
+  <data name="FieldFirstName" xml:space="preserve"><value>First Name</value></data>
+  <data name="FieldLastName" xml:space="preserve"><value>Last Name</value></data>
+  <data name="FieldEmail" xml:space="preserve"><value>Email Address</value></data>
+  <data name="FieldPhone" xml:space="preserve"><value>Phone Number</value></data>
+  <data name="Optional" xml:space="preserve"><value>(optional)</value></data>
+  <data name="CommentBodyPlaceholder" xml:space="preserve"><value>Write your comment here&#8230;</value></data>
+  <data name="SubmitComment" xml:space="preserve"><value>Submit Comment</value></data>
+  <data name="CommentsClosed" xml:space="preserve"><value>Comments are closed for this post.</value></data>
+  <data name="BackToBlog" xml:space="preserve"><value>&#8592; Back to Blog</value></data>
+  <data name="TopCommented" xml:space="preserve"><value>Top Commented</value></data>
+  <data name="MostRead" xml:space="preserve"><value>Most Read</value></data>
+  <data name="ViewCountOne" xml:space="preserve"><value>{0} view</value></data>
+  <data name="ViewCountMany" xml:space="preserve"><value>{0} views</value></data>
+</root>

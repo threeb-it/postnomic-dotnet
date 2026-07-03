@@ -152,7 +152,8 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
 
                 webHost.ConfigureServices(services =>
                 {
-                    services.AddRazorPages();
+                    services.AddLocalization();
+                    services.AddRazorPages().AddViewLocalization();
 
                     services.AddPostnomicBlog(options =>
                     {

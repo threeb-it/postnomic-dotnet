@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="FilterShowing" xml:space="preserve"><value>Gefilterte Ergebnisse</value></data>
+  <data name="FilterSearch" xml:space="preserve"><value>Suche</value></data>
+  <data name="FilterTag" xml:space="preserve"><value>Tag</value></data>
+  <data name="FilterCategory" xml:space="preserve"><value>Kategorie</value></data>
+  <data name="FilterAuthor" xml:space="preserve"><value>Autor</value></data>
+  <data name="FilterClear" xml:space="preserve"><value>Filter zur&#252;cksetzen</value></data>
+  <data name="NoPosts" xml:space="preserve"><value>Keine Beitr&#228;ge gefunden.</value></data>
+  <data name="ViewAllPosts" xml:space="preserve"><value>Alle Beitr&#228;ge anzeigen</value></data>
+  <data name="By" xml:space="preserve"><value>Von</value></data>
+  <data name="CommentCountOne" xml:space="preserve"><value>{0} Kommentar</value></data>
+  <data name="CommentCountMany" xml:space="preserve"><value>{0} Kommentare</value></data>
+  <data name="ReadMore" xml:space="preserve"><value>Weiterlesen</value></data>
+  <data name="Search" xml:space="preserve"><value>Suche</value></data>
+  <data name="SearchGo" xml:space="preserve"><value>Los</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Beitr&#228;ge durchsuchen&#8230;</value></data>
+  <data name="Tags" xml:space="preserve"><value>Tags</value></data>
+  <data name="Categories" xml:space="preserve"><value>Kategorien</value></data>
+  <data name="Authors" xml:space="preserve"><value>Autoren</value></data>
+  <data name="TopCommented" xml:space="preserve"><value>Meistkommentiert</value></data>
+  <data name="MostRead" xml:space="preserve"><value>Meistgelesen</value></data>
+  <data name="PostCountOne" xml:space="preserve"><value>{0} Beitrag</value></data>
+  <data name="PostCountMany" xml:space="preserve"><value>{0} Beitr&#228;ge</value></data>
+  <data name="ViewCountOne" xml:space="preserve"><value>{0} Aufruf</value></data>
+  <data name="ViewCountMany" xml:space="preserve"><value>{0} Aufrufe</value></data>
+  <data name="PaginationShowing" xml:space="preserve"><value>Seite {0} von {1} ({2} Beitr&#228;ge insgesamt)</value></data>
+  <data name="PaginationPrevious" xml:space="preserve"><value>Zur&#252;ck</value></data>
+  <data name="PaginationNext" xml:space="preserve"><value>Weiter</value></data>
+</root>
