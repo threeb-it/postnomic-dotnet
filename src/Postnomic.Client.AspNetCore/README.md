@@ -194,21 +194,23 @@ builder.Services.AddPostnomicBlog("enterprise", options =>
 
 - .NET 10.0 or later
 - `services.AddRazorPages()` (or `AddControllersWithViews()`) called in the host app
-- `services.AddLocalization()` and `.AddViewLocalization()` called in the host app -- the Blog
-  Area's UI chrome (labels, buttons, pagination, comment form, etc.) is localized to English and
-  German via `IViewLocalizer` / `IStringLocalizer<T>`, keyed off `CultureInfo.CurrentUICulture`;
-  without these two calls the Area's Razor Pages will throw at render time
 - A `PostnomicHead` section rendered in the host layout's `<head>` (see above)
+
+Localization is wired up automatically by `AddPostnomicBlog` -- the host app does **not** need to
+call `services.AddLocalization()` or `.AddViewLocalization()` itself (see Localization below).
 
 ## Localization
 
 The Blog Area's chrome (buttons, labels, pagination text, the comment form, etc.) ships with
 English and German resx translations, resolved per-request from `CultureInfo.CurrentUICulture` --
-typically driven by ASP.NET Core's own `RequestLocalizationMiddleware`:
+typically driven by ASP.NET Core's own `RequestLocalizationMiddleware`. `AddPostnomicBlog`
+registers everything the Area's views need (`IStringLocalizerFactory`, `IHtmlLocalizerFactory`,
+and a Blog-Area-aware `IViewLocalizer`) via idempotent `TryAdd`-style registrations, so it composes
+safely whether or not the host also calls `AddLocalization()` / `.AddViewLocalization()` for its
+own views. To make the culture selectable per-request, configure
+`RequestLocalizationOptions` and call `UseRequestLocalization()` as usual:
 
 ```csharp
-builder.Services.AddLocalization();
-builder.Services.AddRazorPages().AddViewLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     options.SetDefaultCulture("en");

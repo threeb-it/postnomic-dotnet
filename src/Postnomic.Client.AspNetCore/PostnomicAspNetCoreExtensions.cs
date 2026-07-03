@@ -25,11 +25,12 @@ public static class PostnomicAspNetCoreExtensions
     /// </summary>
     /// <remarks>
     /// This method registers <see cref="IPostnomicBlogService"/> and configures the named
-    /// <see cref="System.Net.Http.HttpClient"/> used to communicate with the Postnomic API.
-    /// The host application must also call <c>services.AddRazorPages()</c> (or
-    /// <c>services.AddControllersWithViews()</c>) so that the Area pages are discovered, and
-    /// <c>services.AddLocalization()</c> plus <c>.AddViewLocalization()</c> so the Area's
-    /// English/German UI chrome can resolve (see the package README's Localization section).
+    /// <see cref="System.Net.Http.HttpClient"/> used to communicate with the Postnomic API. It
+    /// also registers everything the Blog Area's views need to render their English/German UI
+    /// chrome (see the package README's Localization section) -- the host application does not
+    /// need to call <c>services.AddLocalization()</c> or <c>.AddViewLocalization()</c> itself.
+    /// The host application must still call <c>services.AddRazorPages()</c> (or
+    /// <c>services.AddControllersWithViews()</c>) so that the Area pages are discovered.
     /// The Blog area pages are served at <see cref="PostnomicClientOptions.BasePath"/>
     /// (default: <c>/blog</c>).
     /// </remarks>
@@ -51,16 +52,7 @@ public static class PostnomicAspNetCoreExtensions
 
         services.TryAddSingleton<IPostnomicBlogResolver, PostnomicBlogResolver>();
 
-        // Blog Area views resolve their UI strings via IViewLocalizer. The stock ViewLocalizer
-        // searches the host application's assembly for resources, which never finds the resx
-        // files shipped inside this Razor Class Library; this replacement targets the Blog
-        // Area's own assembly instead (see PostnomicViewLocalizer for details) while leaving
-        // localization of the host's own views untouched. The host app must still call
-        // services.AddLocalization() and .AddViewLocalization() for this to take effect.
-        // Uses Replace (not TryAdd) so this wins regardless of whether the host calls
-        // AddViewLocalization() (which registers the stock ViewLocalizer via TryAdd) before or
-        // after AddPostnomicBlog().
-        services.Replace(ServiceDescriptor.Transient<IViewLocalizer, PostnomicViewLocalizer>());
+        AddBlogAreaLocalizationServices(services);
 
         // Track this as a registered blog (Name = null denotes the single, unnamed default
         // registration, whose IPostnomicBlogService is resolved non-keyed) so MapPostnomicBlog
@@ -84,6 +76,11 @@ public static class PostnomicAspNetCoreExtensions
     /// several blogs in a single ASP.NET Core application. Each blog's routes are served at its
     /// configured <see cref="PostnomicClientOptions.BasePath"/>.
     /// </summary>
+    /// <remarks>
+    /// Like the single-blog overload, this registers everything the Blog Area's views need to
+    /// render their English/German UI chrome -- the host application does not need to call
+    /// <c>services.AddLocalization()</c> or <c>.AddViewLocalization()</c> itself.
+    /// </remarks>
     /// <param name="services">The service collection to add services to.</param>
     /// <param name="name">
     /// A unique name for this blog (e.g. <c>"free"</c>, <c>"enterprise"</c>).
@@ -105,16 +102,7 @@ public static class PostnomicAspNetCoreExtensions
 
         services.TryAddSingleton<IPostnomicBlogResolver, PostnomicBlogResolver>();
 
-        // Blog Area views resolve their UI strings via IViewLocalizer. The stock ViewLocalizer
-        // searches the host application's assembly for resources, which never finds the resx
-        // files shipped inside this Razor Class Library; this replacement targets the Blog
-        // Area's own assembly instead (see PostnomicViewLocalizer for details) while leaving
-        // localization of the host's own views untouched. The host app must still call
-        // services.AddLocalization() and .AddViewLocalization() for this to take effect.
-        // Uses Replace (not TryAdd) so this wins regardless of whether the host calls
-        // AddViewLocalization() (which registers the stock ViewLocalizer via TryAdd) before or
-        // after AddPostnomicBlog().
-        services.Replace(ServiceDescriptor.Transient<IViewLocalizer, PostnomicViewLocalizer>());
+        AddBlogAreaLocalizationServices(services);
 
         services.Configure<PostnomicBlogResolverOptions>(opts =>
         {
@@ -211,6 +199,40 @@ public static class PostnomicAspNetCoreExtensions
         });
 
         return endpoints;
+    }
+
+    /// <summary>
+    /// Registers the localization services the Blog Area's views need, so that hosts calling
+    /// <c>AddPostnomicBlog</c> do not also have to call <c>services.AddLocalization()</c> /
+    /// <c>.AddViewLocalization()</c> themselves. All registrations use <c>TryAdd</c>-style
+    /// idempotent methods (or <see cref="ServiceCollectionDescriptorExtensions.Replace"/> for the
+    /// <see cref="IViewLocalizer"/> override) so this composes safely regardless of whether the
+    /// host also calls <c>AddLocalization</c>/<c>AddViewLocalization</c>, and regardless of call
+    /// order.
+    /// </summary>
+    private static void AddBlogAreaLocalizationServices(IServiceCollection services)
+    {
+        // Registers IStringLocalizerFactory / IStringLocalizer<T> (used directly by page models
+        // such as PostModel) via TryAdd, so calling this repeatedly (once per AddPostnomicBlog
+        // call) or alongside a host's own AddLocalization() call is a no-op after the first.
+        services.AddLocalization();
+
+        // IHtmlLocalizerFactory / IHtmlLocalizer<T> are normally registered by MVC's
+        // AddViewLocalization(); PostnomicViewLocalizer depends on IHtmlLocalizerFactory directly,
+        // so register the same defaults here via TryAdd rather than requiring the host to call
+        // AddViewLocalization() itself.
+        services.TryAddSingleton<IHtmlLocalizerFactory, HtmlLocalizerFactory>();
+        services.TryAddTransient(typeof(IHtmlLocalizer<>), typeof(HtmlLocalizer<>));
+
+        // Blog Area views resolve their UI strings via IViewLocalizer. The stock ViewLocalizer
+        // searches the host application's assembly for resources, which never finds the resx
+        // files shipped inside this Razor Class Library; this replacement targets the Blog
+        // Area's own assembly instead (see PostnomicViewLocalizer for details) while leaving
+        // localization of the host's own views untouched.
+        // Uses Replace (not TryAdd) so this wins regardless of whether the host calls
+        // AddViewLocalization() (which registers the stock ViewLocalizer via TryAdd) before or
+        // after AddPostnomicBlog().
+        services.Replace(ServiceDescriptor.Transient<IViewLocalizer, PostnomicViewLocalizer>());
     }
 
     private static IReadOnlyList<PostnomicRegisteredBlog> GetRegisteredBlogs(IEndpointRouteBuilder endpoints)
