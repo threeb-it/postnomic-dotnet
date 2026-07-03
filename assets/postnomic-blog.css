@@ -1,0 +1,390 @@
+/*
+ * Postnomic SDK — shared default stylesheet
+ * ------------------------------------------
+ * Styles every `pn-*` class emitted by PostnomicCssClasses (Semantic mode)
+ * using ONLY the `--pn-*` custom properties declared below. Hosts opt in to
+ * theming by overriding `--pn-*` on `.pn-blog` (or any ancestor) — no class
+ * overrides required.
+ *
+ * Served as:
+ *   _content/Postnomic.Client.Blazor/postnomic-blog.css
+ *   _content/Postnomic.Client.AspNetCore/postnomic-blog.css
+ */
+
+.pn-blog {
+    --pn-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --pn-font-heading: var(--pn-font);
+    --pn-max-width: 1200px;
+    --pn-surface: #ffffff;
+    --pn-surface-variant: #f6f7f9;
+    --pn-text: #1a1a1a;
+    --pn-text-muted: #6b7280;
+    --pn-primary: #2a5bd7;
+    --pn-on-primary: #ffffff;
+    --pn-border: #e5e7eb;
+    --pn-link: var(--pn-primary);
+    --pn-radius: 8px;
+    --pn-radius-lg: 14px;
+    --pn-space-xs: 4px;
+    --pn-space-sm: 8px;
+    --pn-space-md: 16px;
+    --pn-space-lg: 24px;
+    --pn-space-xl: 40px;
+
+    max-width: var(--pn-max-width);
+    margin: 0 auto;
+    padding: 0 var(--pn-space-md);
+    font-family: var(--pn-font);
+    color: var(--pn-text);
+}
+
+.pn-blog a {
+    color: var(--pn-link);
+}
+
+/* ---------------------------------------------------------------------
+ * Header
+ * ------------------------------------------------------------------- */
+
+.pn-header {
+    text-align: center;
+    padding: var(--pn-space-xl) 0;
+    margin-bottom: var(--pn-space-lg);
+    border-bottom: 1px solid var(--pn-border);
+}
+
+.pn-title {
+    font-family: var(--pn-font-heading);
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 var(--pn-space-sm);
+    color: var(--pn-text);
+}
+
+.pn-lead {
+    font-size: 1.125rem;
+    color: var(--pn-text-muted);
+    margin: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Layout — 2-column (main + sidebar), collapses to 1 column at <=768px
+ * ------------------------------------------------------------------- */
+
+.pn-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: var(--pn-space-lg);
+}
+
+.pn-main {
+    min-width: 0;
+}
+
+.pn-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pn-space-md);
+}
+
+@media (max-width: 768px) {
+    .pn-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------------------------------------------------------------------
+ * Post card
+ * ------------------------------------------------------------------- */
+
+.pn-card {
+    background: var(--pn-surface);
+    border: 1px solid var(--pn-border);
+    border-radius: var(--pn-radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--pn-space-lg);
+}
+
+.pn-card__media {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.pn-card__body {
+    padding: var(--pn-space-md);
+}
+
+.pn-post-title {
+    font-family: var(--pn-font-heading);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 var(--pn-space-xs);
+    color: var(--pn-text);
+}
+
+.pn-post-meta {
+    font-size: 0.875rem;
+    color: var(--pn-text-muted);
+    margin: 0 0 var(--pn-space-sm);
+}
+
+.pn-excerpt {
+    color: var(--pn-text);
+    margin: 0 0 var(--pn-space-sm);
+}
+
+/* ---------------------------------------------------------------------
+ * Tags
+ * ------------------------------------------------------------------- */
+
+.pn-tag {
+    display: inline-block;
+    padding: var(--pn-space-xs) var(--pn-space-sm);
+    margin: 0 var(--pn-space-xs) var(--pn-space-xs) 0;
+    border-radius: var(--pn-radius);
+    background: var(--pn-surface-variant);
+    color: var(--pn-text-muted);
+    font-size: 0.8125rem;
+    text-decoration: none;
+}
+
+.pn-tag--category {
+    background: var(--pn-primary);
+    color: var(--pn-on-primary);
+}
+
+/* ---------------------------------------------------------------------
+ * Buttons
+ * ------------------------------------------------------------------- */
+
+.pn-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--pn-space-xs);
+    padding: var(--pn-space-sm) var(--pn-space-md);
+    border-radius: var(--pn-radius);
+    border: 1px solid transparent;
+    background: var(--pn-surface-variant);
+    color: var(--pn-text);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.pn-btn--primary {
+    background: var(--pn-primary);
+    border-color: var(--pn-primary);
+    color: var(--pn-on-primary);
+}
+
+.pn-btn--outline {
+    background: transparent;
+    border-color: var(--pn-border);
+    color: var(--pn-primary);
+}
+
+.pn-btn--sm {
+    padding: var(--pn-space-xs) var(--pn-space-sm);
+    font-size: 0.875rem;
+}
+
+/* ---------------------------------------------------------------------
+ * Pagination
+ * ------------------------------------------------------------------- */
+
+.pn-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pn-space-xs);
+    list-style: none;
+    padding: 0;
+    margin: var(--pn-space-lg) 0;
+}
+
+.pn-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 var(--pn-space-sm);
+    border: 1px solid var(--pn-border);
+    border-radius: var(--pn-radius);
+    color: var(--pn-text);
+    text-decoration: none;
+}
+
+.pn-page--active {
+    background: var(--pn-primary);
+    border-color: var(--pn-primary);
+    color: var(--pn-on-primary);
+}
+
+.pn-page--disabled {
+    color: var(--pn-text-muted);
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* ---------------------------------------------------------------------
+ * Filter banner / empty / loading states
+ * ------------------------------------------------------------------- */
+
+.pn-filter-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--pn-space-md);
+    padding: var(--pn-space-sm) var(--pn-space-md);
+    margin-bottom: var(--pn-space-md);
+    border-radius: var(--pn-radius);
+    background: var(--pn-surface-variant);
+    color: var(--pn-text);
+}
+
+.pn-empty,
+.pn-loading {
+    text-align: center;
+    padding: var(--pn-space-xl) var(--pn-space-md);
+    color: var(--pn-text-muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Masonry grid — collapses to a single column at <=768px
+ * ------------------------------------------------------------------- */
+
+.pn-masonry {
+    column-count: 2;
+    column-gap: var(--pn-space-lg);
+}
+
+.pn-masonry > * {
+    break-inside: avoid;
+    margin-bottom: var(--pn-space-lg);
+}
+
+@media (max-width: 768px) {
+    .pn-masonry {
+        column-count: 1;
+    }
+}
+
+/* ---------------------------------------------------------------------
+ * Sidebar widgets
+ * ------------------------------------------------------------------- */
+
+.pn-widget {
+    background: var(--pn-surface);
+    border: 1px solid var(--pn-border);
+    border-radius: var(--pn-radius-lg);
+    padding: var(--pn-space-md);
+}
+
+.pn-widget__title {
+    font-family: var(--pn-font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 var(--pn-space-sm);
+    color: var(--pn-text);
+}
+
+.pn-searchbox {
+    display: flex;
+    gap: var(--pn-space-xs);
+}
+
+/* ---------------------------------------------------------------------
+ * Comments
+ * ------------------------------------------------------------------- */
+
+.pn-comment {
+    padding: var(--pn-space-sm) 0;
+    border-bottom: 1px solid var(--pn-border);
+}
+
+.pn-comment:last-child {
+    border-bottom: none;
+}
+
+.pn-comment-form {
+    margin-top: var(--pn-space-md);
+}
+
+.pn-field {
+    display: block;
+    width: 100%;
+    padding: var(--pn-space-sm);
+    border: 1px solid var(--pn-border);
+    border-radius: var(--pn-radius);
+    background: var(--pn-surface);
+    color: var(--pn-text);
+    font: inherit;
+}
+
+/* ---------------------------------------------------------------------
+ * Post content — long-form typography
+ * ------------------------------------------------------------------- */
+
+.pn-post-content {
+    color: var(--pn-text);
+    line-height: 1.7;
+}
+
+.pn-post-content h2,
+.pn-post-content h3,
+.pn-post-content h4 {
+    font-family: var(--pn-font-heading);
+    font-weight: 700;
+    color: var(--pn-text);
+    margin: var(--pn-space-lg) 0 var(--pn-space-sm);
+}
+
+.pn-post-content p {
+    margin: 0 0 var(--pn-space-md);
+}
+
+.pn-post-content ul,
+.pn-post-content ol {
+    margin: 0 0 var(--pn-space-md);
+    padding-left: var(--pn-space-lg);
+}
+
+.pn-post-content blockquote {
+    margin: 0 0 var(--pn-space-md);
+    padding: var(--pn-space-sm) var(--pn-space-md);
+    border-left: 4px solid var(--pn-primary);
+    background: var(--pn-surface-variant);
+    color: var(--pn-text-muted);
+}
+
+.pn-post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--pn-radius);
+}
+
+.pn-post-content pre,
+.pn-post-content code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    background: var(--pn-surface-variant);
+    border-radius: var(--pn-radius);
+}
+
+.pn-post-content code {
+    padding: 0.125rem 0.375rem;
+}
+
+.pn-post-content pre {
+    padding: var(--pn-space-md);
+    overflow-x: auto;
+    margin: 0 0 var(--pn-space-md);
+}
+
+.pn-post-content pre code {
+    background: none;
+    padding: 0;
+}
