@@ -45,7 +45,7 @@
                             @Model.Profile.JobTitle
                             @if (!string.IsNullOrEmpty(Model.Profile.JobTitle) && !string.IsNullOrEmpty(Model.Profile.Company))
                             {
-                                <text> at </text>
+                                <text> @Localizer["JobTitleAt"] </text>
                             }
                             @if (!string.IsNullOrEmpty(Model.Profile.Company))
                             {
@@ -63,12 +63,12 @@
                     {
                         <p>
                             <a href="@Model.Profile.WebsiteUrl" target="_blank" rel="noopener noreferrer"
-                               class="@(Model.Semantic ? "" : "text-decoration-none")">🌐 Website</a>
+                               class="@(Model.Semantic ? "" : "text-decoration-none")">🌐 @Localizer["Website"]</a>
                         </p>
                     }
 
                     <p class="@(Model.Semantic ? "" : "mb-0")">
-                        <span class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary")">@Model.Profile.PostCount post@(Model.Profile.PostCount == 1 ? "" : "s")</span>
+                        <span class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary")">@Localizer[Model.Profile.PostCount == 1 ? "PostCountOne" : "PostCountMany", Model.Profile.PostCount]</span>
                     </p>
                 </div>
             </div>
@@ -77,7 +77,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Widget : "card shadow-sm mt-3")">
                     <div class="@(Model.Semantic ? "" : "card-body")">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Connect</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Connect"]</h5>
                         <div class="@(Model.Semantic ? "" : "d-flex flex-wrap gap-2")">
                             @foreach (var link in Model.Profile.SocialLinks)
                             {
@@ -93,7 +93,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Widget : "card shadow-sm mt-3")">
                     <div class="@(Model.Semantic ? "" : "card-body")">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Skills</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Skills"]</h5>
                         <div class="@(Model.Semantic ? "" : "d-flex flex-wrap gap-1")">
                             @foreach (var skill in Model.Profile.Skills)
                             {
@@ -108,7 +108,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Widget : "card shadow-sm mt-3")">
                     <div class="@(Model.Semantic ? "" : "card-body")">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Languages</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Languages"]</h5>
                         <ul class="@(Model.Semantic ? "" : "list-unstyled mb-0")">
                             @foreach (var lang in Model.Profile.Languages)
                             {
@@ -129,7 +129,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Widget : "card shadow-sm mt-3")">
                     <div class="@(Model.Semantic ? "" : "card-body")">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Interests</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Interests"]</h5>
                         <div class="@(Model.Semantic ? "" : "d-flex flex-wrap gap-1")">
                             @foreach (var interest in Model.Profile.Interests)
                             {
@@ -169,7 +169,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm mb-4")">
                     <div class="@Model.Cls.CardBody">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">About</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["About"]</h5>
                         @Html.Raw(Model.Profile.Bio)
                     </div>
                 </div>
@@ -179,7 +179,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm mb-4")">
                     <div class="@Model.Cls.CardBody">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Certifications</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Certifications"]</h5>
                         @foreach (var cert in Model.Profile.Certifications)
                         {
                             <div class="border-bottom py-2">
@@ -191,10 +191,10 @@
                                 @if (cert.IssueDate.HasValue)
                                 {
                                     <br /><span class="text-muted small">
-                                        Issued @cert.IssueDate.Value.ToString("MMM yyyy")
+                                        @Localizer["Issued"] @cert.IssueDate.Value.ToString("MMM yyyy", CultureInfo.CurrentCulture)
                                         @if (cert.ExpirationDate.HasValue)
                                         {
-                                            <text> · Expires @cert.ExpirationDate.Value.ToString("MMM yyyy")</text>
+                                            <text> · @Localizer["Expires"] @cert.ExpirationDate.Value.ToString("MMM yyyy", CultureInfo.CurrentCulture)</text>
                                         }
                                     </span>
                                 }
@@ -202,7 +202,7 @@
                                 {
                                     <br />
                                     <a href="@cert.CredentialUrl" target="_blank" rel="noopener noreferrer"
-                                       class="small text-decoration-none">View credential</a>
+                                       class="small text-decoration-none">@Localizer["ViewCredential"]</a>
                                 }
                             </div>
                         }
@@ -214,7 +214,7 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm mb-4")">
                     <div class="@Model.Cls.CardBody">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Education</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Education"]</h5>
                         @foreach (var edu in Model.Profile.Education)
                         {
                             <div class="border-bottom py-2">
@@ -233,14 +233,14 @@
                                 @if (edu.StartDate.HasValue)
                                 {
                                     <br /><span class="text-muted small">
-                                        @edu.StartDate.Value.ToString("yyyy")
+                                        @edu.StartDate.Value.ToString("yyyy", CultureInfo.CurrentCulture)
                                         @if (edu.EndDate.HasValue)
                                         {
-                                            <text> – @edu.EndDate.Value.ToString("yyyy")</text>
+                                            <text> – @edu.EndDate.Value.ToString("yyyy", CultureInfo.CurrentCulture)</text>
                                         }
                                         else
                                         {
-                                            <text> – Present</text>
+                                            <text> – @Localizer["Present"]</text>
                                         }
                                     </span>
                                 }
@@ -254,14 +254,14 @@
             {
                 <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm mb-4")">
                     <div class="@Model.Cls.CardBody">
-                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Recent Posts</h5>
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["RecentPosts"]</h5>
                         @foreach (var post in Model.Profile.RecentPosts)
                         {
                             <div class="border-bottom py-2">
                                 <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                    class="text-decoration-none fw-bold">@post.Title</a>
                                 <br />
-                                <span class="text-muted small">@post.PublishedAt.ToString("MMMM dd, yyyy")</span>
+                                <span class="text-muted small">@post.PublishedAt.ToString("D", CultureInfo.CurrentCulture)</span>
                                 @if (!string.IsNullOrEmpty(post.Excerpt))
                                 {
                                     <p class="text-muted small mt-1 mb-0">@post.Excerpt</p>
@@ -274,7 +274,7 @@
 
             <div class="mb-3">
                 <a href="@indexUrl" class="@(Model.Semantic ? Model.Cls.BtnSm : "btn btn-outline-secondary btn-sm")">
-                    &larr; Back to Blog
+                    @Localizer["BackToBlog"]
                 </a>
             </div>
         </div>

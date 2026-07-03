@@ -20,4 +20,21 @@ public sealed class BlogAreaLocalizationTests
         var value = rm.GetString("ReadMore", CultureInfo.GetCultureInfo(culture));
         Assert.Equal(expected, value);
     }
+
+    /// <summary>
+    /// Fix 1 coverage: <c>Author.cshtml</c>'s resx (previously nonexistent -- the view had no
+    /// resx-backed strings at all) resolves per culture just like Index's.
+    /// </summary>
+    [Theory]
+    [InlineData("de", "Vernetzen")]
+    [InlineData("en", "Connect")]
+    public void AuthorResx_ResolvesConnect_PerCulture(string culture, string expected)
+    {
+        var rm = new ResourceManager(
+            "Postnomic.Client.AspNetCore.Areas.Blog.Pages.Author",
+            typeof(PostnomicAspNetCoreExtensions).Assembly);
+
+        var value = rm.GetString("Connect", CultureInfo.GetCultureInfo(culture));
+        Assert.Equal(expected, value);
+    }
 }

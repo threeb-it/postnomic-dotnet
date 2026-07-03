@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Connect" xml:space="preserve"><value>Connect</value></data>
+  <data name="Skills" xml:space="preserve"><value>Skills</value></data>
+  <data name="Languages" xml:space="preserve"><value>Languages</value></data>
+  <data name="Interests" xml:space="preserve"><value>Interests</value></data>
+  <data name="About" xml:space="preserve"><value>About</value></data>
+  <data name="Certifications" xml:space="preserve"><value>Certifications</value></data>
+  <data name="Education" xml:space="preserve"><value>Education</value></data>
+  <data name="RecentPosts" xml:space="preserve"><value>Recent Posts</value></data>
+  <data name="Website" xml:space="preserve"><value>Website</value></data>
+  <data name="JobTitleAt" xml:space="preserve"><value>at</value></data>
+  <data name="Present" xml:space="preserve"><value>Present</value></data>
+  <data name="Issued" xml:space="preserve"><value>Issued</value></data>
+  <data name="Expires" xml:space="preserve"><value>Expires</value></data>
+  <data name="ViewCredential" xml:space="preserve"><value>View credential</value></data>
+  <data name="PostCountOne" xml:space="preserve"><value>{0} post</value></data>
+  <data name="PostCountMany" xml:space="preserve"><value>{0} posts</value></data>
+  <data name="BackToBlog" xml:space="preserve"><value>&#8592; Back to Blog</value></data>
+</root>
