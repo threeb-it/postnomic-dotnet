@@ -21,6 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Postnomic.Client.Blazor.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="..\..\assets\postnomic-blog.css" Link="wwwroot\postnomic-blog.css" />
   </ItemGroup>
 

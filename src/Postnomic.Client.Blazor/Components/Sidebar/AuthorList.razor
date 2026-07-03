@@ -25,7 +25,7 @@
                                 @onclick="() => OnAuthorSelectedAsync(author.Name)">
                             @* Bootstrap's "me-1" utility supplies the icon/name gap, so no literal space follows it (matches the pre-refactor markup exactly); the Semantic svg has no such margin, so its string literal bakes in a trailing space instead. *@
                             @((MarkupString)(MarkupStyle == PostnomicMarkupStyle.Semantic
-                                ? "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" /></svg> "
+                                ? PostnomicIcons.Markup("bi bi-person-circle") + " "
                                 : "<i class=\"bi bi-person-circle me-1\"></i>"))@author.Name
                         </button>
                         <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Tag : "badge bg-info rounded-pill")">@author.PostCount</span>
@@ -67,7 +67,7 @@
 
     private MarkupString Icon(string bootstrapIconClass) => (MarkupString)(
         MarkupStyle == PostnomicMarkupStyle.Semantic
-            ? "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" /></svg>"
+            ? PostnomicIcons.Markup(bootstrapIconClass)
             : $"<i class=\"{bootstrapIconClass}\"></i>");
 
     private IPostnomicBlogService BlogService => BlogContext?.BlogService ?? _injectedBlogService;
