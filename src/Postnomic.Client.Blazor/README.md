@@ -106,6 +106,72 @@ builder.Services.AddPostnomicBlog(options =>
 See the [root README](../../README.md#language-route-style) for the full `LanguageRouteStyle`
 URL-shape table (`Suffix`/`Prefix`/`None`).
 
+## Theming / MarkupStyle
+
+`PostnomicClientOptions.MarkupStyle` (default `Bootstrap`) applies to every Blazor component the
+same way it does to `Postnomic.Client.AspNetCore` -- set it to `PostnomicMarkupStyle.Semantic` to
+render framework-free `pn-*` classes instead of Bootstrap utility classes, and include the shipped
+stylesheet in your root component's `<head>`:
+
+```csharp
+builder.Services.AddPostnomicBlog(options =>
+{
+    options.BlogSlug = "my-blog";
+    options.ApiKey = "pk_live_...";
+    options.BaseUrl = "https://api.postnomic.com";
+    options.MarkupStyle = PostnomicMarkupStyle.Semantic;
+});
+```
+
+```razor
+@* Components/App.razor *@
+<head>
+    ...
+    <link rel="stylesheet" href="_content/Postnomic.Client.Blazor/postnomic-blog.css" />
+</head>
+```
+
+See the [root README](../../README.md#theming--markupstyle) for the full `--pn-*` variable
+reference and a `.pn-blog { --pn-primary: ...; }` override example -- rebrand the blog entirely
+through CSS variables, no component/class overrides needed.
+
+## Sitemap & RSS (`PostnomicFeedBuilder`)
+
+Unlike `Postnomic.Client.AspNetCore`, this package has no `MapPostnomicBlog()` endpoint mapper --
+there's no Razor Pages Area routing here to hang a `sitemap.xml`/`rss.xml` GET off of. Use the
+host-agnostic `PostnomicFeedBuilder` (`Postnomic.Client.Abstractions.Seo`) directly from a minimal
+API endpoint in your `Program.cs` instead. It takes an already-resolved `absoluteBaseUrl` string
+rather than an ASP.NET Core `HttpRequest`, so it works from any hosting model with no ambient
+request to derive scheme+host from -- Blazor Server, WebAssembly-hosted, or otherwise:
+
+```csharp
+// Program.cs
+using Microsoft.Extensions.Options;
+using Postnomic.Client.Abstractions;
+using Postnomic.Client.Abstractions.Seo;
+
+app.MapGet("/blog/sitemap.xml", async (IPostnomicBlogService blog, IOptions<PostnomicClientOptions> options) =>
+{
+    var xml = await PostnomicFeedBuilder.BuildSitemapAsync(
+        blog, "https://www.example.com", options.Value.BasePath, options.Value.LanguageRouteStyle);
+    return Results.Content(xml, "application/xml");
+});
+
+app.MapGet("/blog/rss.xml", async (IPostnomicBlogService blog, IOptions<PostnomicClientOptions> options) =>
+{
+    var blogInfo = await blog.GetBlogAsync();
+    var xml = await PostnomicFeedBuilder.BuildRssAsync(
+        blog, "https://www.example.com", options.Value.BasePath, options.Value.LanguageRouteStyle,
+        channelTitle: blogInfo?.Name ?? "Blog", channelDescription: blogInfo?.Description);
+    return Results.Content(xml, "application/rss+xml");
+});
+```
+
+Swap in your app's real public origin for the `absoluteBaseUrl` argument (don't hardcode
+`https://www.example.com`) -- both methods emit the same XML shape as
+`Postnomic.Client.AspNetCore`'s `MapPostnomicBlog()`, so a host migrating between the two hosting
+models gets byte-identical feeds.
+
 ## Components
 
 | Component | Purpose |

@@ -140,6 +140,35 @@ The `PostModel` page also still exposes `CanonicalUrl` and `AlternateLanguageUrl
 low-level) if you need to build additional custom tags -- but the automatic head above already
 covers the standard set.
 
+## Theming / MarkupStyle
+
+`PostnomicClientOptions.MarkupStyle` (default `Bootstrap`) selects the CSS class vocabulary the
+Blog area pages emit. Set it to `PostnomicMarkupStyle.Semantic` to render framework-free `pn-*`
+classes instead of Bootstrap utility classes, and include the shipped stylesheet in your layout's
+`<head>`:
+
+```csharp
+builder.Services.AddPostnomicBlog(options =>
+{
+    options.BlogSlug = "my-blog";
+    options.ApiKey = "pk_live_...";
+    options.BaseUrl = "https://api.postnomic.com";
+    options.MarkupStyle = PostnomicMarkupStyle.Semantic;
+});
+```
+
+```cshtml
+@* Pages/Shared/_Layout.cshtml *@
+<head>
+    ...
+    <link rel="stylesheet" href="_content/Postnomic.Client.AspNetCore/postnomic-blog.css" />
+</head>
+```
+
+See the [root README](../../README.md#theming--markupstyle) for the full `--pn-*` variable
+reference and a `.pn-blog { --pn-primary: ...; }` override example -- rebrand the blog entirely
+through CSS variables, no page/class overrides needed.
+
 ## Multi-Blog Support
 
 Call `AddPostnomicBlog(name, configure)` once per blog with distinct `BasePath` values; each gets

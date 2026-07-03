@@ -145,6 +145,7 @@ builder.Services.AddPostnomicBlog(options =>
 | `BasePath` | `string` | `/blog` | Base path the blog is served at (Razor Pages) or linked under (Blazor). |
 | `ShowBranding` | `bool` | `false` | Renders a "Powered by Postnomic" footer; server-enforced value from your plan takes precedence. |
 | `LanguageRouteStyle` | `PostnomicLanguageRouteStyle` | `Suffix` | Where the language code appears in generated URLs. See [Language route style](#language-route-style) below. |
+| `MarkupStyle` | `PostnomicMarkupStyle` | `Bootstrap` | CSS class vocabulary emitted by Postnomic-rendered markup. See [Theming / MarkupStyle](#theming--markupstyle) below. |
 | `Cache` | `PostnomicCacheOptions?` | `null` | Optional client-side in-memory caching. |
 
 ### Multi-Blog Support
@@ -182,6 +183,7 @@ The SDK gives you access to the full Postnomic API:
 - **Automatic SEO** -- canonical, hreflang, OpenGraph, Twitter Card, and JSON-LD structured data on every blog page (see [SEO](#seo))
 - **Sitemap & RSS** -- `sitemap.xml` and `rss.xml` for every registered blog via `MapPostnomicBlog()` (see [Sitemap, RSS & robots.txt](#sitemap-rss--robotstxt))
 - **Client-Side Caching** -- optional in-memory cache with per-resource TTLs and explicit invalidation via `IPostnomicCacheControl`
+- **Theming** -- opt into framework-free `pn-*` classes and a shipped `--pn-*` variable-driven stylesheet instead of Bootstrap (see [Theming / MarkupStyle](#theming--markupstyle))
 
 ## Multi-language posts
 
@@ -265,6 +267,70 @@ The low-level `CanonicalUrl` / `AlternateLanguageUrls` properties on `PostModel`
 ### Blazor
 
 Blazor needs no extra wiring beyond the `<HeadOutlet />` every Blazor app's root component already has -- `PostPage`/`BlogPage`/`AuthorPage` render their SEO tags via `<HeadContent>`, which `<HeadOutlet />` picks up automatically.
+
+## Theming / MarkupStyle
+
+By default, every Postnomic-rendered page (`Postnomic.Client.AspNetCore` Razor Pages and every
+`Postnomic.Client.Blazor` component) emits **Bootstrap** utility classes (`card`, `row`, `btn
+btn-primary`, ...) -- this is `PostnomicMarkupStyle.Bootstrap`, the default, and it preserves
+pre-1.3 output byte-for-byte for existing consumers.
+
+Opt into **`PostnomicMarkupStyle.Semantic`** to render framework-free `pn-*` classes instead,
+themed entirely through CSS custom properties:
+
+```csharp
+builder.Services.AddPostnomicBlog(options =>
+{
+    options.BlogSlug = "my-blog";
+    options.ApiKey = "pk_live_...";
+    options.BaseUrl = "https://api.postnomic.com";
+    options.MarkupStyle = PostnomicMarkupStyle.Semantic;
+});
+```
+
+Both packages ship a ready-to-use stylesheet that styles every `pn-*` class purely from `--pn-*`
+variables. Include it once in your host layout's `<head>` (pick the package you actually
+reference -- only load one):
+
+```html
+<link rel="stylesheet" href="_content/Postnomic.Client.AspNetCore/postnomic-blog.css" />
+<!-- or, in a Blazor app: -->
+<link rel="stylesheet" href="_content/Postnomic.Client.Blazor/postnomic-blog.css" />
+```
+
+Rebrand the blog by overriding `--pn-*` variables under `.pn-blog` (the outermost container in
+Semantic mode) in your own stylesheet, loaded *after* `postnomic-blog.css`:
+
+```css
+.pn-blog {
+    --pn-primary: var(--brand);
+    --pn-on-primary: #ffffff;
+    --pn-font-heading: "Poppins", sans-serif;
+    --pn-radius-lg: 4px;
+}
+```
+
+Every variable the stylesheet declares (with its shipped default, on `.pn-blog`):
+
+| Variable | Purpose |
+|---|---|
+| `--pn-font` | Base font stack |
+| `--pn-font-heading` | Heading font stack (titles) |
+| `--pn-max-width` | Max width of the blog container |
+| `--pn-surface` | Card/widget background |
+| `--pn-surface-variant` | Secondary surface (tag pills, filter banner, code blocks) |
+| `--pn-text` | Primary text color |
+| `--pn-text-muted` | Secondary/muted text color |
+| `--pn-primary` | Brand/accent color (primary buttons, active pagination, category tags) |
+| `--pn-on-primary` | Text/icon color on top of `--pn-primary` |
+| `--pn-border` | Border color used throughout |
+| `--pn-link` | Link color (defaults to `--pn-primary`) |
+| `--pn-radius` | Small corner radius (buttons, tags, fields) |
+| `--pn-radius-lg` | Large corner radius (cards, widgets) |
+| `--pn-space-xs` / `--pn-space-sm` / `--pn-space-md` / `--pn-space-lg` / `--pn-space-xl` | Spacing scale used for gaps, padding, and margins |
+
+`PostnomicMarkupStyle.Bootstrap` mode does **not** load or need `postnomic-blog.css` -- keep
+styling it with your own Bootstrap theme/overrides as before.
 
 ## Sitemap, RSS & robots.txt
 
