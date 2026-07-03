@@ -14,29 +14,29 @@
 
 @if (!Model.Semantic)
 {
-    <style>
-        .postnomic-post-thumbnail {
-            max-height: 300px;
-            width: 100%;
-            object-fit: cover;
-        }
+<style>
+    .postnomic-post-thumbnail {
+        max-height: 300px;
+        width: 100%;
+        object-fit: cover;
+    }
 
+    .postnomic-masonry {
+        column-count: 2;
+        column-gap: 1.5rem;
+    }
+
+    .postnomic-masonry > article {
+        break-inside: avoid;
+        margin-bottom: 1.5rem;
+    }
+
+    @@media (max-width: 768px) {
         .postnomic-masonry {
-            column-count: 2;
-            column-gap: 1.5rem;
+            column-count: 1;
         }
-
-        .postnomic-masonry > article {
-            break-inside: avoid;
-            margin-bottom: 1.5rem;
-        }
-
-        @@media (max-width: 768px) {
-            .postnomic-masonry {
-                column-count: 1;
-            }
-        }
-    </style>
+    }
+</style>
 }
 
 <div class="@(Model.Semantic ? Model.Cls.BlogRoot : "container py-4")">
@@ -50,7 +50,7 @@
         }
         @if (!Model.Semantic)
         {
-            <hr />
+        <hr />
         }
     </div>
 
