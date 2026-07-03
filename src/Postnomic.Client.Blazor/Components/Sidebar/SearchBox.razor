@@ -1,24 +1,25 @@
 @inject IPostnomicBlogService _injectedBlogService
+@inject IOptions<PostnomicClientOptions> _injectedClientOptions
 
-<div class="card mb-4">
-    <div class="card-body">
-        <h5 class="card-title fw-bold mb-3">
-            <i class="bi bi-search"></i> Search
+<div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Widget : "card mb-4")">
+    <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-body")">
+        <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title fw-bold mb-3")">
+            @Icon("bi bi-search") Search
         </h5>
-        <div class="input-group">
+        <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.SearchBox : "input-group")">
             <input type="text"
-                   class="form-control"
+                   class="@Cls.Field"
                    placeholder="Search posts…"
                    @bind="searchTerm"
                    @bind:event="oninput"
                    @onkeydown="HandleKeyDownAsync" />
-            <button class="btn btn-outline-primary" @onclick="SubmitSearchAsync">
-                <i class="bi bi-search"></i>
+            <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.BtnOutline : "btn btn-outline-primary")" @onclick="SubmitSearchAsync">
+                @Icon("bi bi-search")
             </button>
         </div>
         @if (!string.IsNullOrEmpty(ActiveSearchTerm))
         {
-            <button class="btn btn-link btn-sm text-decoration-none mt-2 p-0"
+            <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.BtnSm : "btn btn-link btn-sm text-decoration-none mt-2 p-0")"
                     @onclick="ClearSearchAsync">
                 &#10005; Clear filter
             </button>
@@ -40,6 +41,18 @@
     /// </summary>
     [Parameter]
     public EventCallback<string?> OnFilterChanged { get; set; }
+
+    [CascadingParameter]
+    private PostnomicBlogContext? BlogContext { get; set; }
+
+    private PostnomicMarkupStyle MarkupStyle =>
+        BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
+    private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    private MarkupString Icon(string bootstrapIconClass) => (MarkupString)(
+        MarkupStyle == PostnomicMarkupStyle.Semantic
+            ? "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" /></svg>"
+            : $"<i class=\"{bootstrapIconClass}\"></i>");
 
     private string? searchTerm;
 

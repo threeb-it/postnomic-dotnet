@@ -1,10 +1,10 @@
 @inject IPostnomicBlogService _injectedBlogService
 @inject IOptions<PostnomicClientOptions> _injectedClientOptions
 
-<div class="card mb-4">
-    <div class="card-body">
-        <h5 class="card-title fw-bold mb-3">
-            <i class="bi bi-chat-dots"></i> Top Commented Posts
+<div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Widget : "card mb-4")">
+    <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-body")">
+        <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title fw-bold mb-3")">
+            @Icon("bi bi-chat-dots") Top Commented Posts
         </h5>
         @if (posts is null)
         {
@@ -16,16 +16,16 @@
         }
         else
         {
-            <ul class="list-group list-group-flush">
+            <ul class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "list-group list-group-flush")">
                 @foreach (var post in posts)
                 {
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                    <li class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "list-group-item px-0 d-flex justify-content-between align-items-start")">
                         <a href="@PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, Language, post.Slug)"
-                           class="text-decoration-none text-dark fw-semibold">
+                           class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none text-dark fw-semibold")">
                             @post.Title
                         </a>
-                        <span class="badge bg-warning text-dark rounded-pill ms-2">
-                            @post.Count <i class="bi bi-chat-fill"></i>
+                        <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Tag : "badge bg-warning text-dark rounded-pill ms-2")">
+                            @post.Count @Icon("bi bi-chat-fill")
                         </span>
                     </li>
                 }
@@ -57,6 +57,15 @@
     /// </summary>
     private PostnomicLanguageRouteStyle RouteStyle => BlogContext?.Options.LanguageRouteStyle
         ?? _injectedClientOptions.Value.LanguageRouteStyle;
+
+    private PostnomicMarkupStyle MarkupStyle =>
+        BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
+    private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    private MarkupString Icon(string bootstrapIconClass) => (MarkupString)(
+        MarkupStyle == PostnomicMarkupStyle.Semantic
+            ? "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" /></svg>"
+            : $"<i class=\"{bootstrapIconClass}\"></i>");
 
     private List<PostnomicPopularPost>? posts;
 

@@ -7,6 +7,8 @@
 <PageTitle>@(post?.Title ?? "Post")</PageTitle>
 <PostnomicSeoHead Model="Seo" />
 
+@if (MarkupStyle != PostnomicMarkupStyle.Semantic)
+{
 <style>
     .blog-post-content img {
         max-width: 100%;
@@ -16,20 +18,21 @@
         margin-right: auto;
     }
 </style>
+}
 
-<div class="blog-container">
+<div class="@Cls.BlogRoot">
     @if (post is null)
     {
-        <div class="text-center py-5">
+        <div class="@Cls.Loading">
             <p><em>Loading…</em></p>
         </div>
     }
     else
     {
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="mb-3">
-                    <a href="@PostnomicRouteBuilder.BuildIndex(BasePath, RouteStyle, Language)" class="text-decoration-none">
+        <div class="@Cls.Layout">
+            <div class="@Cls.Main">
+                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">
+                    <a href="@PostnomicRouteBuilder.BuildIndex(BasePath, RouteStyle, Language)" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">
                         ← Back to blog
                     </a>
                 </div>
@@ -37,74 +40,74 @@
                 <article>
                     @if (!string.IsNullOrEmpty(post.CoverImageUrl))
                     {
-                        <div class="text-center mb-4">
+                        <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-center mb-4")">
                             <img src="@post.CoverImageUrl"
-                                 class="img-fluid rounded shadow-sm"
+                                 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.CardMedia : "img-fluid rounded shadow-sm")"
                                  alt="@post.Title"
                                  style="max-width: 100%; max-height: 450px; object-fit: cover;" />
                         </div>
                     }
 
-                    <h1 class="display-6 fw-bold mb-3">@post.Title</h1>
+                    <h1 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.PostTitle : "display-6 fw-bold mb-3")">@post.Title</h1>
 
-                    <div class="text-muted mb-3 border-bottom pb-3">
+                    <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.PostMeta : "text-muted mb-3 border-bottom pb-3")">
                         <span>
-                            <i class="bi bi-person"></i>
+                            @Icon("bi bi-person")
                             @if (!string.IsNullOrEmpty(post.AuthorSlug))
                             {
-                                <a href="@PostnomicRouteBuilder.BuildAuthor(BasePath, RouteStyle, Language, post.AuthorSlug)" class="text-decoration-none">@post.AuthorName</a>
+                                <a href="@PostnomicRouteBuilder.BuildAuthor(BasePath, RouteStyle, Language, post.AuthorSlug)" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">@post.AuthorName</a>
                             }
                             else
                             {
                                 @post.AuthorName
                             }
                         </span>
-                        <span class="mx-2">·</span>
+                        <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mx-2")">·</span>
                         <span>
-                            <i class="bi bi-calendar"></i> @post.PublishedAt.ToString("MMMM dd, yyyy")
+                            @Icon("bi bi-calendar") @post.PublishedAt.ToString("MMMM dd, yyyy")
                         </span>
                     </div>
 
                     @if (post.Tags.Count > 0)
                     {
-                        <div class="mb-3">
+                        <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">
                             @foreach (var tag in post.Tags)
                             {
-                                <span class="badge bg-secondary me-1">@tag.Name</span>
+                                <span class="@Cls.Tag">@tag.Name</span>
                             }
                         </div>
                     }
 
                     @if (post.Categories.Count > 0)
                     {
-                        <div class="mb-3">
+                        <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">
                             @foreach (var category in post.Categories)
                             {
-                                <span class="badge bg-primary me-1">@category.Name</span>
+                                <span class="@Cls.TagCategory">@category.Name</span>
                             }
                         </div>
                     }
 
-                    <div class="blog-post-content mb-5" style="overflow-wrap: break-word; word-break: break-word;">
+                    <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.PostContent : "blog-post-content mb-5")" style="overflow-wrap: break-word; word-break: break-word;">
                         @((MarkupString)(post.Content ?? ""))
                     </div>
                 </article>
 
                 @if (ShowBranding)
                 {
-                    <div class="postnomic-branding alert alert-light border text-center py-3 mt-4" role="complementary">
+                    <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "postnomic-branding alert alert-light border text-center py-3 mt-4")" role="complementary">
                         <small class="text-muted">
-                            Powered by <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer" class="fw-semibold text-decoration-none">Postnomic</a>
+                            Powered by <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "fw-semibold text-decoration-none")">Postnomic</a>
                             — The developer-first headless blog platform.
-                            <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Upgrade to remove this banner</a>
+                            <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">Upgrade to remove this banner</a>
                         </small>
                     </div>
                 }
 
                 <hr />
 
-                <section class="comments-section mt-4 mb-5">
-                    <h3 class="mb-4">
+                <section class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "comments-section mt-4 mb-5")">
+                    <h3 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-4")">
                         Comments (@post.Comments.Count)
                     </h3>
 
@@ -126,77 +129,77 @@
 
                     @if (post.CommentsEnabled)
                     {
-                        <hr class="my-4" />
-                        <h4 class="mb-3">Leave a comment</h4>
+                        <hr class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "my-4")" />
+                        <h4 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">Leave a comment</h4>
 
                         @if (!string.IsNullOrEmpty(commentSuccessMessage))
                         {
-                            <div class="alert alert-success">@commentSuccessMessage</div>
+                            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-alert pn-alert--success" : "alert alert-success")">@commentSuccessMessage</div>
                         }
                         @if (!string.IsNullOrEmpty(commentErrorMessage))
                         {
-                            <div class="alert alert-danger">@commentErrorMessage</div>
+                            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-alert pn-alert--danger" : "alert alert-danger")">@commentErrorMessage</div>
                         }
 
                         <EditForm Model="newComment" OnValidSubmit="SubmitCommentAsync" FormName="newTopLevelComment">
                             <DataAnnotationsValidator />
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">
-                                        First name @if (post.CommentRequireFirstname) { <span class="text-danger">*</span> }
+                            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-form-row" : "row")">
+                                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-3")">
+                                    <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
+                                        First name @if (post.CommentRequireFirstname) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                                     </label>
-                                    <InputText @bind-Value="newComment.AuthorFirstname" class="form-control" />
+                                    <InputText @bind-Value="newComment.AuthorFirstname" class="@Cls.Field" />
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">
-                                        Last name @if (post.CommentRequireLastname) { <span class="text-danger">*</span> }
+                                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-3")">
+                                    <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
+                                        Last name @if (post.CommentRequireLastname) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                                     </label>
-                                    <InputText @bind-Value="newComment.AuthorLastname" class="form-control" />
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">
-                                        Email @if (post.CommentRequireEmail) { <span class="text-danger">*</span> }
-                                    </label>
-                                    <InputText @bind-Value="newComment.AuthorEmail" class="form-control" type="email" />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">
-                                        Phone @if (post.CommentRequirePhone) { <span class="text-danger">*</span> }
-                                    </label>
-                                    <InputText @bind-Value="newComment.AuthorPhone" class="form-control" type="tel" />
+                                    <InputText @bind-Value="newComment.AuthorLastname" class="@Cls.Field" />
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">
-                                    Subject @if (post.CommentRequireSubject) { <span class="text-danger">*</span> }
+                            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-form-row" : "row")">
+                                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-3")">
+                                    <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
+                                        Email @if (post.CommentRequireEmail) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
+                                    </label>
+                                    <InputText @bind-Value="newComment.AuthorEmail" class="@Cls.Field" type="email" />
+                                </div>
+                                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-3")">
+                                    <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
+                                        Phone @if (post.CommentRequirePhone) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
+                                    </label>
+                                    <InputText @bind-Value="newComment.AuthorPhone" class="@Cls.Field" type="tel" />
+                                </div>
+                            </div>
+
+                            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">
+                                <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
+                                    Subject @if (post.CommentRequireSubject) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                                 </label>
-                                <InputText @bind-Value="newComment.Subject" class="form-control" />
+                                <InputText @bind-Value="newComment.Subject" class="@Cls.Field" />
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Comment <span class="text-danger">*</span></label>
-                                <InputTextArea @bind-Value="newComment.Body" class="form-control" rows="4" />
+                            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">
+                                <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">Comment <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span></label>
+                                <InputTextArea @bind-Value="newComment.Body" class="@Cls.Field" rows="4" />
                             </div>
 
-                            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                            <button type="submit" class="@Cls.BtnPrimary" disabled="@isSubmitting">
                                 @(isSubmitting ? "Submitting…" : "Post comment")
                             </button>
                         </EditForm>
                     }
                     else
                     {
-                        <p class="text-muted fst-italic mt-3">Comments are closed for this post.</p>
+                        <p class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "text-muted" : "text-muted fst-italic mt-3")">Comments are closed for this post.</p>
                     }
                 </section>
             </div>
 
             @* ── Right sidebar ── *@
-            <div class="col-lg-4">
+            <div class="@Cls.Sidebar">
                 <EstimatedReadTime PostContent="@post.Content" />
                 <TopCommentedPosts Language="@Language" />
                 <MostReadPosts Language="@Language" />
@@ -244,6 +247,15 @@
     /// </summary>
     private PostnomicLanguageRouteStyle RouteStyle => BlogContext?.Options.LanguageRouteStyle
         ?? _injectedClientOptions.Value.LanguageRouteStyle;
+
+    private PostnomicMarkupStyle MarkupStyle =>
+        BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
+    private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    private MarkupString Icon(string bootstrapIconClass) => (MarkupString)(
+        MarkupStyle == PostnomicMarkupStyle.Semantic
+            ? "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" /></svg>"
+            : $"<i class=\"{bootstrapIconClass}\"></i>");
 
     private bool ShowBranding => blogInfo?.ShowBranding
         ?? BlogContext?.Options.ShowBranding

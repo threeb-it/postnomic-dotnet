@@ -6,6 +6,8 @@
 <PageTitle>@(blog?.Name ?? "Blog")</PageTitle>
 <PostnomicSeoHead Model="Seo" />
 
+@if (MarkupStyle != PostnomicMarkupStyle.Semantic)
+{
 <style>
     .blog-container img {
         max-width: 100%;
@@ -28,15 +30,16 @@
         }
     }
 </style>
+}
 
-<div class="blog-container">
-    <div class="blog-header text-center py-4 mb-4 border-bottom">
+<div class="@Cls.BlogRoot">
+    <div class="@Cls.Header">
         @if (blog is not null)
         {
-            <h1 class="display-5 fw-bold">@blog.Name</h1>
+            <h1 class="@Cls.Title">@blog.Name</h1>
             @if (!string.IsNullOrEmpty(blog.Description))
             {
-                <p class="lead text-muted">@blog.Description</p>
+                <p class="@Cls.Lead">@blog.Description</p>
             }
         }
         else
@@ -45,16 +48,16 @@
         }
     </div>
 
-    <div class="row">
+    <div class="@Cls.Layout">
         @* ── Main content column ── *@
-        <div class="col-lg-8">
+        <div class="@Cls.Main">
             @if (HasActiveFilter)
             {
-                <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+                <div class="@Cls.FilterBanner">
                     <span>
-                        <i class="bi bi-funnel"></i> Filtered by: <strong>@ActiveFilterLabel</strong>
+                        @Icon("bi bi-funnel") Filtered by: <strong>@ActiveFilterLabel</strong>
                     </span>
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="ClearAllFiltersAsync">
+                    <button class="@Cls.BtnSm" @onclick="ClearAllFiltersAsync">
                         &#10005; Clear all
                     </button>
                 </div>
@@ -64,77 +67,77 @@
             {
                 @if (pagedPosts.Items.Count == 0)
                 {
-                    <div class="text-center text-muted py-5">
+                    <div class="@Cls.Empty">
                         <p>No posts found.</p>
                     </div>
                 }
                 else
                 {
-                    <div class="@(IsMasonry ? "postnomic-masonry" : "")">
+                    <div class="@(IsMasonry ? Cls.Masonry : "")">
                     @foreach (var post in pagedPosts.Items)
                     {
-                        <article class="card mb-4 shadow-sm">
+                        <article class="@Cls.Card">
                             @if (!string.IsNullOrEmpty(post.ThumbnailImageUrl))
                             {
-                                <div class="text-center overflow-hidden">
+                                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-center overflow-hidden")">
                                     <img src="@post.ThumbnailImageUrl"
-                                         class="card-img-top"
+                                         class="@Cls.CardMedia"
                                          alt="@post.Title"
                                          style="max-width: 100%; max-height: 300px; object-fit: cover;" />
                                 </div>
                             }
-                            <div class="card-body">
-                                <h2 class="card-title h4">
+                            <div class="@Cls.CardBody">
+                                <h2 class="@Cls.PostTitle">
                                     <a href="@PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, Language, post.Slug)"
-                                       class="text-decoration-none text-dark">
+                                       class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none text-dark")">
                                         @post.Title
                                     </a>
                                 </h2>
-                                <div class="text-muted small mb-2">
+                                <div class="@Cls.PostMeta">
                                     <span>
-                                        <i class="bi bi-person"></i>
+                                        @Icon("bi bi-person")
                                         @if (!string.IsNullOrEmpty(post.AuthorSlug))
                                         {
-                                            <a href="@PostnomicRouteBuilder.BuildAuthor(BasePath, RouteStyle, Language, post.AuthorSlug)" class="text-decoration-none">@post.AuthorName</a>
+                                            <a href="@PostnomicRouteBuilder.BuildAuthor(BasePath, RouteStyle, Language, post.AuthorSlug)" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">@post.AuthorName</a>
                                         }
                                         else
                                         {
                                             @post.AuthorName
                                         }
                                     </span>
-                                    <span class="mx-2">·</span>
+                                    <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mx-2")">·</span>
                                     <span>
-                                        <i class="bi bi-calendar"></i> @post.PublishedAt.ToString("MMMM dd, yyyy")
+                                        @Icon("bi bi-calendar") @post.PublishedAt.ToString("MMMM dd, yyyy")
                                     </span>
-                                    <span class="mx-2">·</span>
+                                    <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mx-2")">·</span>
                                     <span>
-                                        <i class="bi bi-chat"></i> @post.CommentCount @(post.CommentCount == 1 ? "comment" : "comments")
+                                        @Icon("bi bi-chat") @post.CommentCount @(post.CommentCount == 1 ? "comment" : "comments")
                                     </span>
                                 </div>
                                 @if (post.Tags.Count > 0)
                                 {
-                                    <div class="mb-2">
+                                    <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-2")">
                                         @foreach (var tag in post.Tags)
                                         {
-                                            <span class="badge bg-secondary me-1">@tag.Name</span>
+                                            <span class="@Cls.Tag">@tag.Name</span>
                                         }
                                     </div>
                                 }
                                 @if (post.Categories.Count > 0)
                                 {
-                                    <div class="mb-2">
+                                    <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-2")">
                                         @foreach (var category in post.Categories)
                                         {
-                                            <span class="badge bg-primary me-1">@category.Name</span>
+                                            <span class="@Cls.TagCategory">@category.Name</span>
                                         }
                                     </div>
                                 }
                                 @if (!string.IsNullOrEmpty(post.Excerpt))
                                 {
-                                    <p class="card-text">@post.Excerpt</p>
+                                    <p class="@Cls.Excerpt">@post.Excerpt</p>
                                 }
                                 <a href="@PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, Language, post.Slug)"
-                                   class="btn btn-outline-primary btn-sm">
+                                   class="@Cls.BtnOutline">
                                     Read More →
                                 </a>
                             </div>
@@ -144,10 +147,10 @@
 
                     @if (pagedPosts.TotalPages > 1)
                     {
-                        <nav aria-label="Blog pagination" class="d-flex justify-content-center mb-4">
-                            <ul class="pagination">
-                                <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
-                                    <button class="page-link"
+                        <nav aria-label="Blog pagination" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "d-flex justify-content-center mb-4")">
+                            <ul class="@Cls.Pagination">
+                                <li class="@Cls.Page @(currentPage <= 1 ? Cls.PageDisabled : "")">
+                                    <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "page-link")"
                                             @onclick="() => GoToPageAsync(currentPage - 1)"
                                             disabled="@(currentPage <= 1)">
                                         ← Previous
@@ -156,14 +159,14 @@
                                 @for (int i = 1; i <= pagedPosts.TotalPages; i++)
                                 {
                                     var pageNum = i;
-                                    <li class="page-item @(pageNum == currentPage ? "active" : "")">
-                                        <button class="page-link" @onclick="() => GoToPageAsync(pageNum)">
+                                    <li class="@Cls.Page @(pageNum == currentPage ? Cls.PageActive : "")">
+                                        <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "page-link")" @onclick="() => GoToPageAsync(pageNum)">
                                             @pageNum
                                         </button>
                                     </li>
                                 }
-                                <li class="page-item @(currentPage >= pagedPosts.TotalPages ? "disabled" : "")">
-                                    <button class="page-link"
+                                <li class="@Cls.Page @(currentPage >= pagedPosts.TotalPages ? Cls.PageDisabled : "")">
+                                    <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "page-link")"
                                             @onclick="() => GoToPageAsync(currentPage + 1)"
                                             disabled="@(currentPage >= pagedPosts.TotalPages)">
                                         Next →
@@ -176,14 +179,14 @@
             }
             else
             {
-                <div class="text-center py-5">
+                <div class="@Cls.Loading">
                     <p><em>Loading posts…</em></p>
                 </div>
             }
         </div>
 
         @* ── Right sidebar ── *@
-        <div class="col-lg-4">
+        <div class="@Cls.Sidebar">
             <SearchBox ActiveSearchTerm="@filterSearch"
                        OnFilterChanged="OnSearchChangedAsync" />
 
@@ -237,6 +240,22 @@
     /// </summary>
     private PostnomicLanguageRouteStyle RouteStyle => BlogContext?.Options.LanguageRouteStyle
         ?? _injectedClientOptions.Value.LanguageRouteStyle;
+
+    private PostnomicMarkupStyle MarkupStyle =>
+        BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
+    private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    /// <summary>
+    /// Renders a small marker icon: a Bootstrap Icons <c>&lt;i&gt;</c> in Bootstrap mode, or a
+    /// generic inline <c>&lt;svg&gt;</c> in Semantic mode (which carries no framework CSS
+    /// dependency). Kept as a single inline expression (rather than a multi-line <c>@@if</c>) so
+    /// call sites can sit on the same source line as surrounding text without Razor's whitespace
+    /// trimming around code blocks swallowing the adjoining space.
+    /// </summary>
+    private MarkupString Icon(string bootstrapIconClass) => (MarkupString)(
+        MarkupStyle == PostnomicMarkupStyle.Semantic
+            ? "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" /></svg>"
+            : $"<i class=\"{bootstrapIconClass}\"></i>");
 
     /// <summary>The SEO data for the blog index, or <see langword="null"/> until the blog has loaded.</summary>
     private PostnomicSeoModel? Seo => blog is null

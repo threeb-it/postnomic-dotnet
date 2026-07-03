@@ -1,23 +1,24 @@
 @inject IPostnomicBlogService _injectedBlogService
+@inject IOptions<PostnomicClientOptions> _injectedClientOptions
 
-<div class="comment mb-3 @(Depth > 0 ? "ms-4 border-start ps-3" : "")"
+<div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? $"{Cls.Comment} {(Depth > 0 ? "pn-comment--nested" : "")}" : $"comment mb-3 {(Depth > 0 ? "ms-4 border-start ps-3" : "")}")"
      style="@(Depth > 0 ? "border-left: 2px solid #dee2e6;" : "")">
 
-    <div class="d-flex align-items-center mb-1">
-        <strong class="me-2">@(string.IsNullOrWhiteSpace(Comment.AuthorName) ? "Anonymous" : Comment.AuthorName)</strong>
+    <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "d-flex align-items-center mb-1")">
+        <strong class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "me-2")">@(string.IsNullOrWhiteSpace(Comment.AuthorName) ? "Anonymous" : Comment.AuthorName)</strong>
         <small class="text-muted">@Comment.CreatedAt.ToString("MMM dd, yyyy · HH:mm")</small>
     </div>
 
     @if (!string.IsNullOrEmpty(Comment.Subject))
     {
-        <div class="fw-semibold mb-1">@Comment.Subject</div>
+        <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "fw-semibold mb-1")">@Comment.Subject</div>
     }
 
-    <p class="mb-1">@Comment.Body</p>
+    <p class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-1")">@Comment.Body</p>
 
     @if (Post is not null && Post.CommentsEnabled)
     {
-        <button class="btn btn-link btn-sm text-decoration-none p-0 mb-2"
+        <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.BtnSm : "btn btn-link btn-sm text-decoration-none p-0 mb-2")"
                 @onclick="ToggleReplyForm">
             @(showReplyForm ? "Cancel reply" : "↩ Reply")
         </button>
@@ -25,59 +26,59 @@
 
     @if (showReplyForm)
     {
-        <div class="reply-form border rounded p-3 mb-3 bg-light">
+        <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.CommentForm : "reply-form border rounded p-3 mb-3 bg-light")">
             @if (!string.IsNullOrEmpty(replySuccessMessage))
             {
-                <div class="alert alert-success alert-sm py-2">@replySuccessMessage</div>
+                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-alert pn-alert--success" : "alert alert-success alert-sm py-2")">@replySuccessMessage</div>
             }
             @if (!string.IsNullOrEmpty(replyErrorMessage))
             {
-                <div class="alert alert-danger alert-sm py-2">@replyErrorMessage</div>
+                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-alert pn-alert--danger" : "alert alert-danger alert-sm py-2")">@replyErrorMessage</div>
             }
 
-            <div class="row">
-                <div class="col-md-6 mb-2">
-                    <label class="form-label small">
-                        First name @if (Post!.CommentRequireFirstname) { <span class="text-danger">*</span> }
+            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-form-row" : "row")">
+                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-2")">
+                    <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label small")">
+                        First name @if (Post!.CommentRequireFirstname) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                     </label>
-                    <input @bind="replyFirstname" class="form-control form-control-sm" />
+                    <input @bind="replyFirstname" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Field : "form-control form-control-sm")" />
                 </div>
-                <div class="col-md-6 mb-2">
-                    <label class="form-label small">
-                        Last name @if (Post.CommentRequireLastname) { <span class="text-danger">*</span> }
+                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-2")">
+                    <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label small")">
+                        Last name @if (Post.CommentRequireLastname) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                     </label>
-                    <input @bind="replyLastname" class="form-control form-control-sm" />
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-2">
-                    <label class="form-label small">
-                        Email @if (Post.CommentRequireEmail) { <span class="text-danger">*</span> }
-                    </label>
-                    <input @bind="replyEmail" class="form-control form-control-sm" type="email" />
-                </div>
-                <div class="col-md-6 mb-2">
-                    <label class="form-label small">
-                        Phone @if (Post.CommentRequirePhone) { <span class="text-danger">*</span> }
-                    </label>
-                    <input @bind="replyPhone" class="form-control form-control-sm" type="tel" />
+                    <input @bind="replyLastname" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Field : "form-control form-control-sm")" />
                 </div>
             </div>
 
-            <div class="mb-2">
-                <label class="form-label small">
-                    Subject @if (Post.CommentRequireSubject) { <span class="text-danger">*</span> }
+            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-form-row" : "row")">
+                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-2")">
+                    <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label small")">
+                        Email @if (Post.CommentRequireEmail) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
+                    </label>
+                    <input @bind="replyEmail" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Field : "form-control form-control-sm")" type="email" />
+                </div>
+                <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-2")">
+                    <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label small")">
+                        Phone @if (Post.CommentRequirePhone) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
+                    </label>
+                    <input @bind="replyPhone" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Field : "form-control form-control-sm")" type="tel" />
+                </div>
+            </div>
+
+            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-2")">
+                <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label small")">
+                    Subject @if (Post.CommentRequireSubject) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                 </label>
-                <input @bind="replySubject" class="form-control form-control-sm" />
+                <input @bind="replySubject" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Field : "form-control form-control-sm")" />
             </div>
 
-            <div class="mb-2">
-                <label class="form-label small">Reply <span class="text-danger">*</span></label>
-                <textarea @bind="replyBody" class="form-control form-control-sm" rows="3"></textarea>
+            <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-2")">
+                <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label small")">Reply <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span></label>
+                <textarea @bind="replyBody" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Field : "form-control form-control-sm")" rows="3"></textarea>
             </div>
 
-            <button class="btn btn-primary btn-sm" @onclick="SubmitReplyAsync" disabled="@isSubmittingReply">
+            <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.BtnPrimary : "btn btn-primary btn-sm")" @onclick="SubmitReplyAsync" disabled="@isSubmittingReply">
                 @(isSubmittingReply ? "Submitting…" : "Post reply")
             </button>
         </div>
@@ -133,6 +134,10 @@
     private PostnomicBlogContext? BlogContext { get; set; }
 
     private IPostnomicBlogService BlogService => BlogContext?.BlogService ?? _injectedBlogService;
+
+    private PostnomicMarkupStyle MarkupStyle =>
+        BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
+    private PostnomicCssClasses Cls => new(MarkupStyle);
 
     private bool showReplyForm;
     private string? replySubject;
