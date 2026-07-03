@@ -14,6 +14,12 @@
     <Description>Razor Pages Area for rendering a Postnomic blog in ASP.NET Core MVC/Razor Pages applications. The blog URL is configurable via PostnomicClientOptions.BasePath (default: /blog).</Description>
     <PackageTags>postnomic;blog;cms;client;aspnetcore;razorpages</PackageTags>
 
+    <!-- wwwroot/.gitkeep only exists to keep the content root directory tracked in git;
+         it must never become a static web asset (dotnet pack excludes dotfiles from the
+         nupkg by default, which would leave the asset referenced-but-absent and break
+         consumers' publish with MSB3030). -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);wwwroot\.gitkeep</DefaultItemExcludes>
+
   </PropertyGroup>
 
   <ItemGroup>
