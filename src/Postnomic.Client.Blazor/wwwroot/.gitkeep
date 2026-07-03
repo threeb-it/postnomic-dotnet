@@ -1,0 +1,2 @@
+# Keeps the wwwroot content root present so consumers can serve the shipped
+# postnomic-blog.css (Content-linked here). Do not delete.
