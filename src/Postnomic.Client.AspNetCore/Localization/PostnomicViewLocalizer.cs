@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Postnomic.Client.AspNetCore.Localization;
 
@@ -33,17 +35,38 @@ public sealed class PostnomicViewLocalizer : IViewLocalizer, IViewContextAware
     private static readonly string BlogAreaAssemblyName = typeof(PostnomicAspNetCoreExtensions).Assembly.GetName().Name!;
 
     private readonly IHtmlLocalizerFactory _localizerFactory;
+    private readonly IHtmlLocalizerFactory _blogAreaLocalizerFactory;
     private readonly string _hostApplicationName;
     private IHtmlLocalizer _localizer = null!;
 
     /// <summary>Creates the localizer. Invoked by DI; not intended for direct instantiation.</summary>
-    public PostnomicViewLocalizer(IHtmlLocalizerFactory localizerFactory, IWebHostEnvironment webHostEnvironment)
+    public PostnomicViewLocalizer(
+        IHtmlLocalizerFactory localizerFactory,
+        IWebHostEnvironment webHostEnvironment,
+        ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(localizerFactory);
         ArgumentNullException.ThrowIfNull(webHostEnvironment);
+        ArgumentNullException.ThrowIfNull(loggerFactory);
 
         _localizerFactory = localizerFactory;
         _hostApplicationName = webHostEnvironment.ApplicationName;
+
+        // Blog Area resources must resolve independent of whatever ResourcesPath the consuming
+        // host configures via services.AddLocalization(o => o.ResourcesPath = "..."). The
+        // injected _localizerFactory above is backed by the HOST's ResourceManagerStringLocalizerFactory,
+        // built from the host's LocalizationOptions.ResourcesPath -- if the host sets that to e.g.
+        // "Resources" (a common convention for its OWN page resx), the factory prepends
+        // "Resources." to the base resource name it searches for. But this assembly's Blog Area
+        // resx files are embedded WITHOUT that segment
+        // (Postnomic.Client.AspNetCore.Areas.Blog.Pages.Index, not
+        // Postnomic.Client.AspNetCore.Resources.Areas.Blog.Pages.Index), so the lookup misses and
+        // ResourceManagerStringLocalizer falls back to returning the raw key name. This private
+        // factory is always constructed with an empty ResourcesPath, so it always searches for the
+        // Blog Area's resources exactly where they are embedded, regardless of host configuration.
+        var blogAreaLocalizationOptions = Options.Create(new LocalizationOptions { ResourcesPath = "" });
+        var blogAreaStringLocalizerFactory = new ResourceManagerStringLocalizerFactory(blogAreaLocalizationOptions, loggerFactory);
+        _blogAreaLocalizerFactory = new HtmlLocalizerFactory(blogAreaStringLocalizerFactory);
     }
 
     /// <inheritdoc />
@@ -58,9 +81,10 @@ public sealed class PostnomicViewLocalizer : IViewLocalizer, IViewContextAware
         }
 
         var relativePath = BuildRelativePath(path);
-        var location = IsBlogAreaView(path) ? BlogAreaAssemblyName : _hostApplicationName;
 
-        _localizer = _localizerFactory.Create(relativePath, location);
+        _localizer = IsBlogAreaView(path)
+            ? _blogAreaLocalizerFactory.Create(relativePath, BlogAreaAssemblyName)
+            : _localizerFactory.Create(relativePath, _hostApplicationName);
     }
 
     /// <inheritdoc />
