@@ -10,7 +10,7 @@
     <partial name="_SeoHead" model="seoModel" />
 }
 
-<div class="container py-4">
+<div class="@(Model.Semantic ? Model.Cls.BlogRoot : "container py-4")">
     @if (!string.IsNullOrEmpty(Model.Profile.HeaderImageUrl))
     {
         <div class="mb-4">
@@ -21,10 +21,10 @@
         </div>
     }
 
-    <div class="row g-4">
-        <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
+    <div class="@(Model.Semantic ? Model.Cls.Layout : "row g-4")">
+        <div class="@Model.Cls.Sidebar">
+            <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm")">
+                <div class="@(Model.Semantic ? $"{Model.Cls.CardBody} pn-text-center" : "card-body text-center")">
                     @if (!string.IsNullOrEmpty(Model.Profile.ProfileImageUrl))
                     {
                         <img src="@Model.Profile.ProfileImageUrl"
@@ -32,16 +32,16 @@
                              alt="@Model.Profile.Name"
                              style="width: 150px; height: 150px; object-fit: cover;" />
                     }
-                    <h1 class="h4 fw-bold">@Model.Profile.Name</h1>
+                    <h1 class="@(Model.Semantic ? Model.Cls.Title : "h4 fw-bold")">@Model.Profile.Name</h1>
 
                     @if (!string.IsNullOrEmpty(Model.Profile.Headline))
                     {
-                        <p class="text-muted">@Model.Profile.Headline</p>
+                        <p class="@(Model.Semantic ? Model.Cls.Lead : "text-muted")">@Model.Profile.Headline</p>
                     }
 
                     @if (!string.IsNullOrEmpty(Model.Profile.JobTitle) || !string.IsNullOrEmpty(Model.Profile.Company))
                     {
-                        <p class="text-muted small">
+                        <p class="@(Model.Semantic ? "" : "text-muted small")">
                             @Model.Profile.JobTitle
                             @if (!string.IsNullOrEmpty(Model.Profile.JobTitle) && !string.IsNullOrEmpty(Model.Profile.Company))
                             {
@@ -56,33 +56,33 @@
 
                     @if (!string.IsNullOrEmpty(Model.Profile.Location))
                     {
-                        <p class="text-muted small">📍 @Model.Profile.Location</p>
+                        <p class="@(Model.Semantic ? "" : "text-muted small")">📍 @Model.Profile.Location</p>
                     }
 
                     @if (!string.IsNullOrEmpty(Model.Profile.WebsiteUrl))
                     {
                         <p>
                             <a href="@Model.Profile.WebsiteUrl" target="_blank" rel="noopener noreferrer"
-                               class="text-decoration-none">🌐 Website</a>
+                               class="@(Model.Semantic ? "" : "text-decoration-none")">🌐 Website</a>
                         </p>
                     }
 
-                    <p class="mb-0">
-                        <span class="badge bg-primary">@Model.Profile.PostCount post@(Model.Profile.PostCount == 1 ? "" : "s")</span>
+                    <p class="@(Model.Semantic ? "" : "mb-0")">
+                        <span class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary")">@Model.Profile.PostCount post@(Model.Profile.PostCount == 1 ? "" : "s")</span>
                     </p>
                 </div>
             </div>
 
             @if (Model.Profile.SocialLinks.Count > 0)
             {
-                <div class="card shadow-sm mt-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Connect</h5>
-                        <div class="d-flex flex-wrap gap-2">
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card shadow-sm mt-3")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Connect</h5>
+                        <div class="@(Model.Semantic ? "" : "d-flex flex-wrap gap-2")">
                             @foreach (var link in Model.Profile.SocialLinks)
                             {
                                 <a href="@link.Url" target="_blank" rel="noopener noreferrer"
-                                   class="btn btn-outline-secondary btn-sm">@link.Platform</a>
+                                   class="@(Model.Semantic ? Model.Cls.BtnOutline : "btn btn-outline-secondary btn-sm")">@link.Platform</a>
                             }
                         </div>
                     </div>
@@ -91,13 +91,13 @@
 
             @if (Model.Profile.Skills.Count > 0)
             {
-                <div class="card shadow-sm mt-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Skills</h5>
-                        <div class="d-flex flex-wrap gap-1">
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card shadow-sm mt-3")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Skills</h5>
+                        <div class="@(Model.Semantic ? "" : "d-flex flex-wrap gap-1")">
                             @foreach (var skill in Model.Profile.Skills)
                             {
-                                <span class="badge bg-secondary">@skill</span>
+                                <span class="@(Model.Semantic ? Model.Cls.Tag : "badge bg-secondary")">@skill</span>
                             }
                         </div>
                     </div>
@@ -106,17 +106,17 @@
 
             @if (Model.Profile.Languages.Count > 0)
             {
-                <div class="card shadow-sm mt-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Languages</h5>
-                        <ul class="list-unstyled mb-0">
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card shadow-sm mt-3")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Languages</h5>
+                        <ul class="@(Model.Semantic ? "" : "list-unstyled mb-0")">
                             @foreach (var lang in Model.Profile.Languages)
                             {
                                 <li>
                                     @lang.Name
                                     @if (!string.IsNullOrEmpty(lang.Proficiency))
                                     {
-                                        <span class="text-muted small">— @lang.Proficiency</span>
+                                        <span class="@(Model.Semantic ? "" : "text-muted small")">— @lang.Proficiency</span>
                                     }
                                 </li>
                             }
@@ -127,13 +127,13 @@
 
             @if (Model.Profile.Interests.Count > 0)
             {
-                <div class="card shadow-sm mt-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Interests</h5>
-                        <div class="d-flex flex-wrap gap-1">
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card shadow-sm mt-3")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Interests</h5>
+                        <div class="@(Model.Semantic ? "" : "d-flex flex-wrap gap-1")">
                             @foreach (var interest in Model.Profile.Interests)
                             {
-                                <span class="badge bg-info text-dark">@interest</span>
+                                <span class="@(Model.Semantic ? Model.Cls.Tag : "badge bg-info text-dark")">@interest</span>
                             }
                         </div>
                     </div>
@@ -143,20 +143,20 @@
             @* Postnomic promotion (free tier) *@
             @if (Model.ShowBranding)
             {
-                <div class="postnomic-sidebar-ad card mt-3 shadow-sm border-primary" role="complementary">
-                    <div class="card-body text-center">
-                        <h5 class="card-title fw-bold">Postnomic</h5>
-                        <p class="card-text text-muted small">
+                <div class="@(Model.Semantic ? $"{Model.Cls.Widget} pn-widget--promo" : "postnomic-sidebar-ad card mt-3 shadow-sm border-primary")" role="complementary">
+                    <div class="@(Model.Semantic ? "" : "card-body text-center")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title fw-bold")">Postnomic</h5>
+                        <p class="@(Model.Semantic ? "" : "card-text text-muted small")">
                             The developer-first headless blog platform. Add a full-featured blog to your app in minutes.
                         </p>
                         <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer"
-                           class="btn btn-primary btn-sm mb-2 w-100">Learn More</a>
+                           class="@(Model.Semantic ? Model.Cls.BtnPrimary : "btn btn-primary btn-sm mb-2 w-100")">Learn More</a>
                         <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
-                           class="btn btn-outline-primary btn-sm w-100">View Pricing</a>
-                        <p class="mt-2 mb-0">
+                           class="@(Model.Semantic ? Model.Cls.BtnOutline : "btn btn-outline-primary btn-sm w-100")">View Pricing</a>
+                        <p class="@(Model.Semantic ? "" : "mt-2 mb-0")">
                             <small class="text-muted">
                                 <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
-                                   class="text-decoration-none">Upgrade to remove ads</a>
+                                   class="@(Model.Semantic ? "" : "text-decoration-none")">Upgrade to remove ads</a>
                             </small>
                         </p>
                     </div>
@@ -164,12 +164,12 @@
             }
         </div>
 
-        <div class="col-lg-8">
+        <div class="@Model.Cls.Main">
             @if (!string.IsNullOrEmpty(Model.Profile.Bio))
             {
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">About</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm mb-4")">
+                    <div class="@Model.Cls.CardBody">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">About</h5>
                         @Html.Raw(Model.Profile.Bio)
                     </div>
                 </div>
@@ -177,9 +177,9 @@
 
             @if (Model.Profile.Certifications.Count > 0)
             {
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Certifications</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm mb-4")">
+                    <div class="@Model.Cls.CardBody">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Certifications</h5>
                         @foreach (var cert in Model.Profile.Certifications)
                         {
                             <div class="border-bottom py-2">
@@ -212,9 +212,9 @@
 
             @if (Model.Profile.Education.Count > 0)
             {
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Education</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm mb-4")">
+                    <div class="@Model.Cls.CardBody">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Education</h5>
                         @foreach (var edu in Model.Profile.Education)
                         {
                             <div class="border-bottom py-2">
@@ -252,9 +252,9 @@
 
             @if (Model.Profile.RecentPosts.Count > 0)
             {
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Recent Posts</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm mb-4")">
+                    <div class="@Model.Cls.CardBody">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Recent Posts</h5>
                         @foreach (var post in Model.Profile.RecentPosts)
                         {
                             <div class="border-bottom py-2">
@@ -273,7 +273,7 @@
             }
 
             <div class="mb-3">
-                <a href="@indexUrl" class="btn btn-outline-secondary btn-sm">
+                <a href="@indexUrl" class="@(Model.Semantic ? Model.Cls.BtnSm : "btn btn-outline-secondary btn-sm")">
                     &larr; Back to Blog
                 </a>
             </div>

@@ -10,38 +10,41 @@
     <partial name="_SeoHead" model="seoModel" />
 }
 
-<style>
-    .postnomic-cover-image {
-        max-height: 450px;
-        width: 100%;
-        object-fit: cover;
-    }
+@if (!Model.Semantic)
+{
+    <style>
+        .postnomic-cover-image {
+            max-height: 450px;
+            width: 100%;
+            object-fit: cover;
+        }
 
-    .postnomic-post-content img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 0.375rem;
-    }
-</style>
+        .postnomic-post-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.375rem;
+        }
+    </style>
+}
 
-<div class="container py-4">
-    <div class="row g-4">
+<div class="@(Model.Semantic ? Model.Cls.BlogRoot : "container py-4")">
+    <div class="@(Model.Semantic ? Model.Cls.Layout : "row g-4")">
 
         @* ══ Main content ════════════════════════════════════════════════════════ *@
-        <div class="col-lg-8">
+        <div class="@Model.Cls.Main">
 
             @* ── Cover image ── *@
             @if (!string.IsNullOrWhiteSpace(Model.Post.CoverImageUrl))
             {
                 <img src="@Model.Post.CoverImageUrl"
                      alt="@Model.Post.Title cover image"
-                     class="postnomic-cover-image rounded mb-4" />
+                     class="@(Model.Semantic ? $"{Model.Cls.CardMedia} postnomic-cover-image" : "postnomic-cover-image rounded mb-4")" />
             }
 
             @* ── Post header ── *@
-            <h1 class="fw-bold mb-2">@Model.Post.Title</h1>
+            <h1 class="@(Model.Semantic ? Model.Cls.PostTitle : "fw-bold mb-2")">@Model.Post.Title</h1>
 
-            <div class="d-flex flex-wrap gap-2 align-items-center text-muted small mb-3">
+            <div class="@(Model.Semantic ? Model.Cls.PostMeta : "d-flex flex-wrap gap-2 align-items-center text-muted small mb-3")">
                 <span>By
                     @if (!string.IsNullOrEmpty(Model.Post.AuthorSlug))
                     {
@@ -69,7 +72,7 @@
                     @foreach (var tag in Model.Post.Tags)
                     {
                         <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)"
-                           class="badge bg-secondary text-decoration-none">@tag.Name</a>
+                           class="@(Model.Semantic ? Model.Cls.Tag : "badge bg-secondary text-decoration-none")">@tag.Name</a>
                     }
                 </div>
             }
@@ -81,7 +84,7 @@
                     @foreach (var cat in Model.Post.Categories)
                     {
                         <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
-                           class="badge bg-primary text-decoration-none">@cat.Name</a>
+                           class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary text-decoration-none")">@cat.Name</a>
                     }
                 </div>
             }
@@ -91,7 +94,7 @@
             @* ── Post body ── *@
             @if (!string.IsNullOrWhiteSpace(Model.Post.Content))
             {
-                <div class="postnomic-post-content mb-5">
+                <div class="@(Model.Semantic ? Model.Cls.PostContent : "postnomic-post-content mb-5")">
                     @Html.Raw(Model.Post.Content)
                 </div>
             }
@@ -102,11 +105,11 @@
 
             @if (Model.ShowBranding)
             {
-                <div class="postnomic-branding alert alert-light border text-center py-3 mt-4" role="complementary">
+                <div class="@(Model.Semantic ? "" : "postnomic-branding alert alert-light border text-center py-3 mt-4")" role="complementary">
                     <small class="text-muted">
-                        Powered by <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer" class="fw-semibold text-decoration-none">Postnomic</a>
+                        Powered by <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer" class="@(Model.Semantic ? "" : "fw-semibold text-decoration-none")">Postnomic</a>
                         — The developer-first headless blog platform.
-                        <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Upgrade to remove this banner</a>
+                        <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer" class="@(Model.Semantic ? "" : "text-decoration-none")">Upgrade to remove this banner</a>
                     </small>
                 </div>
             }
@@ -126,13 +129,13 @@
                 @* ── Success / error banners ── *@
                 @if (!string.IsNullOrEmpty(Model.CommentSubmitSuccessMessage))
                 {
-                    <div class="alert alert-success" role="alert">
+                    <div class="@(Model.Semantic ? "pn-alert pn-alert--success" : "alert alert-success")" role="alert">
                         @Model.CommentSubmitSuccessMessage
                     </div>
                 }
                 @if (!string.IsNullOrEmpty(Model.CommentSubmitErrorMessage))
                 {
-                    <div class="alert alert-danger" role="alert">
+                    <div class="@(Model.Semantic ? "pn-alert pn-alert--danger" : "alert alert-danger")" role="alert">
                         @Model.CommentSubmitErrorMessage
                     </div>
                 }
@@ -157,9 +160,9 @@
                 @* ── Comment form ── *@
                 @if (Model.Post.CommentsEnabled)
                 {
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h4 class="card-title h5 mb-3">Leave a Comment</h4>
+                    <div class="@(Model.Semantic ? Model.Cls.Card : "card shadow-sm")">
+                        <div class="@Model.Cls.CardBody">
+                            <h4 class="@(Model.Semantic ? "" : "card-title h5 mb-3")">Leave a Comment</h4>
 
                             @if (Model.Post.CommentRequireModeration)
                             {
@@ -175,20 +178,20 @@
                                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                                 @* Body (always required) *@
-                                <div class="mb-3">
-                                    <label asp-for="CommentInput.Body" class="form-label fw-semibold">
+                                <div class="@(Model.Semantic ? "" : "mb-3")">
+                                    <label asp-for="CommentInput.Body" class="@(Model.Semantic ? "" : "form-label fw-semibold")">
                                         Comment <span class="text-danger">*</span>
                                     </label>
                                     <textarea asp-for="CommentInput.Body"
-                                              class="form-control"
+                                              class="@Model.Cls.Field"
                                               rows="4"
                                               placeholder="Write your comment here&hellip;"></textarea>
                                     <span asp-validation-for="CommentInput.Body" class="text-danger small"></span>
                                 </div>
 
                                 @* Subject (optional or required per blog settings) *@
-                                <div class="mb-3">
-                                    <label asp-for="CommentInput.Subject" class="form-label">
+                                <div class="@(Model.Semantic ? "" : "mb-3")">
+                                    <label asp-for="CommentInput.Subject" class="@(Model.Semantic ? "" : "form-label")">
                                         Subject
                                         @if (Model.Post.CommentRequireSubject)
                                         {
@@ -201,15 +204,15 @@
                                     </label>
                                     <input asp-for="CommentInput.Subject"
                                            type="text"
-                                           class="form-control"
+                                           class="@Model.Cls.Field"
                                            placeholder="Comment subject" />
                                     <span asp-validation-for="CommentInput.Subject" class="text-danger small"></span>
                                 </div>
 
                                 @* Name fields *@
-                                <div class="row g-3 mb-3">
-                                    <div class="col-sm-6">
-                                        <label asp-for="CommentInput.Firstname" class="form-label">
+                                <div class="@(Model.Semantic ? "pn-form-row" : "row g-3 mb-3")">
+                                    <div class="@(Model.Semantic ? "" : "col-sm-6")">
+                                        <label asp-for="CommentInput.Firstname" class="@(Model.Semantic ? "" : "form-label")">
                                             First Name
                                             @if (Model.Post.CommentRequireFirstname)
                                             {
@@ -222,12 +225,12 @@
                                         </label>
                                         <input asp-for="CommentInput.Firstname"
                                                type="text"
-                                               class="form-control"
+                                               class="@Model.Cls.Field"
                                                placeholder="Jane" />
                                         <span asp-validation-for="CommentInput.Firstname" class="text-danger small"></span>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <label asp-for="CommentInput.Lastname" class="form-label">
+                                    <div class="@(Model.Semantic ? "" : "col-sm-6")">
+                                        <label asp-for="CommentInput.Lastname" class="@(Model.Semantic ? "" : "form-label")">
                                             Last Name
                                             @if (Model.Post.CommentRequireLastname)
                                             {
@@ -240,16 +243,16 @@
                                         </label>
                                         <input asp-for="CommentInput.Lastname"
                                                type="text"
-                                               class="form-control"
+                                               class="@Model.Cls.Field"
                                                placeholder="Smith" />
                                         <span asp-validation-for="CommentInput.Lastname" class="text-danger small"></span>
                                     </div>
                                 </div>
 
                                 @* Contact fields *@
-                                <div class="row g-3 mb-3">
-                                    <div class="col-sm-6">
-                                        <label asp-for="CommentInput.Email" class="form-label">
+                                <div class="@(Model.Semantic ? "pn-form-row" : "row g-3 mb-3")">
+                                    <div class="@(Model.Semantic ? "" : "col-sm-6")">
+                                        <label asp-for="CommentInput.Email" class="@(Model.Semantic ? "" : "form-label")">
                                             Email Address
                                             @if (Model.Post.CommentRequireEmail)
                                             {
@@ -262,12 +265,12 @@
                                         </label>
                                         <input asp-for="CommentInput.Email"
                                                type="email"
-                                               class="form-control"
+                                               class="@Model.Cls.Field"
                                                placeholder="jane@example.com" />
                                         <span asp-validation-for="CommentInput.Email" class="text-danger small"></span>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <label asp-for="CommentInput.Phone" class="form-label">
+                                    <div class="@(Model.Semantic ? "" : "col-sm-6")">
+                                        <label asp-for="CommentInput.Phone" class="@(Model.Semantic ? "" : "form-label")">
                                             Phone Number
                                             @if (Model.Post.CommentRequirePhone)
                                             {
@@ -280,13 +283,13 @@
                                         </label>
                                         <input asp-for="CommentInput.Phone"
                                                type="tel"
-                                               class="form-control"
+                                               class="@Model.Cls.Field"
                                                placeholder="+1 555 000 0000" />
                                         <span asp-validation-for="CommentInput.Phone" class="text-danger small"></span>
                                     </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="@Model.Cls.BtnPrimary">
                                     Submit Comment
                                 </button>
                             </form>
@@ -301,11 +304,11 @@
         </div>
 
         @* ══ Sidebar ════════════════════════════════════════════════════════════ *@
-        <div class="col-lg-4">
+        <div class="@Model.Cls.Sidebar">
 
             @* Back to blog *@
-            <div class="mb-3">
-                <a href="@indexUrl" class="btn btn-outline-secondary btn-sm">
+            <div class="@(Model.Semantic ? "" : "mb-3")">
+                <a href="@indexUrl" class="@(Model.Semantic ? Model.Cls.BtnSm : "btn btn-outline-secondary btn-sm")">
                     &larr; Back to Blog
                 </a>
             </div>
@@ -313,10 +316,10 @@
             @* Read time card *@
             @if (Model.EstimatedReadMinutes > 0)
             {
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body text-center">
-                        <span class="display-6 fw-bold text-primary">@Model.EstimatedReadMinutes</span>
-                        <p class="mb-0 text-muted">min read</p>
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
+                    <div class="@(Model.Semantic ? "" : "card-body text-center")">
+                        <span class="@(Model.Semantic ? "" : "display-6 fw-bold text-primary")">@Model.EstimatedReadMinutes</span>
+                        <p class="@(Model.Semantic ? "" : "mb-0 text-muted")">min read</p>
                     </div>
                 </div>
             }
@@ -324,9 +327,9 @@
             @* Top Commented *@
             @if (Model.TopCommented.Count > 0)
             {
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Top Commented</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Top Commented</h5>
                         <ol class="mb-0 ps-3">
                             @foreach (var post in Model.TopCommented)
                             {
@@ -346,9 +349,9 @@
             @* Most Read *@
             @if (Model.MostRead.Count > 0)
             {
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Most Read</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Most Read</h5>
                         <ol class="mb-0 ps-3">
                             @foreach (var post in Model.MostRead)
                             {
@@ -368,20 +371,20 @@
             @* Postnomic promotion (free tier) *@
             @if (Model.ShowBranding)
             {
-                <div class="postnomic-sidebar-ad card mb-4 shadow-sm border-primary" role="complementary">
-                    <div class="card-body text-center">
-                        <h5 class="card-title fw-bold">Postnomic</h5>
-                        <p class="card-text text-muted small">
+                <div class="@(Model.Semantic ? $"{Model.Cls.Widget} pn-widget--promo" : "postnomic-sidebar-ad card mb-4 shadow-sm border-primary")" role="complementary">
+                    <div class="@(Model.Semantic ? "" : "card-body text-center")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title fw-bold")">Postnomic</h5>
+                        <p class="@(Model.Semantic ? "" : "card-text text-muted small")">
                             The developer-first headless blog platform. Add a full-featured blog to your app in minutes.
                         </p>
                         <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer"
-                           class="btn btn-primary btn-sm mb-2 w-100">Learn More</a>
+                           class="@(Model.Semantic ? Model.Cls.BtnPrimary : "btn btn-primary btn-sm mb-2 w-100")">Learn More</a>
                         <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
-                           class="btn btn-outline-primary btn-sm w-100">View Pricing</a>
-                        <p class="mt-2 mb-0">
+                           class="@(Model.Semantic ? Model.Cls.BtnOutline : "btn btn-outline-primary btn-sm w-100")">View Pricing</a>
+                        <p class="@(Model.Semantic ? "" : "mt-2 mb-0")">
                             <small class="text-muted">
                                 <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
-                                   class="text-decoration-none">Upgrade to remove ads</a>
+                                   class="@(Model.Semantic ? "" : "text-decoration-none")">Upgrade to remove ads</a>
                             </small>
                         </p>
                     </div>

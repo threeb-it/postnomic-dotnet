@@ -1,9 +1,21 @@
 @* Recursive partial view for rendering a single comment and its nested replies. *@
 @* Invoke with: @await Html.PartialAsync("_Comment", comment) *@
 @model Postnomic.Client.Abstractions.Models.PostnomicComment
+@using Postnomic.Client.AspNetCore
+@inject IPostnomicBlogResolver BlogResolver
+@inject Microsoft.Extensions.Options.IOptions<PostnomicClientOptions> DefaultClientOptions
+@inject Microsoft.Extensions.Options.IOptionsMonitor<PostnomicClientOptions> ClientOptionsMonitor
+@{
+    var blogName = BlogResolver.ResolveBlogName(ViewContext.HttpContext.Request.Path.Value ?? "");
+    var markupStyle = blogName is not null
+        ? ClientOptionsMonitor.Get(blogName).MarkupStyle
+        : DefaultClientOptions.Value.MarkupStyle;
+    var semantic = markupStyle == PostnomicMarkupStyle.Semantic;
+    var cls = new PostnomicCssClasses(markupStyle);
+}
 
-<div class="postnomic-comment border-start border-3 ps-3 mb-3">
-    <div class="d-flex align-items-center gap-2 mb-1">
+<div class="@(semantic ? cls.Comment : "postnomic-comment border-start border-3 ps-3 mb-3")">
+    <div class="@(semantic ? "" : "d-flex align-items-center gap-2 mb-1")">
         <span class="fw-semibold">@(Model.AuthorName ?? "Anonymous")</span>
         <span class="text-muted small">@Model.CreatedAt.ToString("MMM d, yyyy 'at' h:mm tt")</span>
     </div>

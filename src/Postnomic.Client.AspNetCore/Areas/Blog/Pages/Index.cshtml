@@ -12,46 +12,52 @@
     <partial name="_SeoHead" model="seoModel" />
 }
 
-<style>
-    .postnomic-post-thumbnail {
-        max-height: 300px;
-        width: 100%;
-        object-fit: cover;
-    }
-
-    .postnomic-masonry {
-        column-count: 2;
-        column-gap: 1.5rem;
-    }
-
-    .postnomic-masonry > article {
-        break-inside: avoid;
-        margin-bottom: 1.5rem;
-    }
-
-    @@media (max-width: 768px) {
-        .postnomic-masonry {
-            column-count: 1;
+@if (!Model.Semantic)
+{
+    <style>
+        .postnomic-post-thumbnail {
+            max-height: 300px;
+            width: 100%;
+            object-fit: cover;
         }
-    }
-</style>
 
-<div class="container py-4">
+        .postnomic-masonry {
+            column-count: 2;
+            column-gap: 1.5rem;
+        }
+
+        .postnomic-masonry > article {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+
+        @@media (max-width: 768px) {
+            .postnomic-masonry {
+                column-count: 1;
+            }
+        }
+    </style>
+}
+
+<div class="@(Model.Semantic ? Model.Cls.BlogRoot : "container py-4")">
 
     @* ── Blog header ── *@
-    <div class="mb-4">
-        <h1 class="display-5 fw-bold">@blogName</h1>
+    <div class="@(Model.Semantic ? Model.Cls.Header : "mb-4")">
+        <h1 class="@Model.Cls.Title">@blogName</h1>
         @if (!string.IsNullOrWhiteSpace(blogDescription))
         {
-            <p class="lead text-muted">@blogDescription</p>
+            <p class="@Model.Cls.Lead">@blogDescription</p>
         }
-        <hr />
+        @if (!Model.Semantic)
+        {
+            <hr />
+        }
     </div>
 
     @* ── Active filter indicator ── *@
     @if (Model.HasActiveFilter)
     {
-        <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert">
+        <div class="@(Model.Semantic ? Model.Cls.FilterBanner : "alert alert-info d-flex align-items-center gap-2 mb-3")" role="alert">
             <span>
                 Showing filtered results
                 @if (!string.IsNullOrWhiteSpace(Model.Search))
@@ -71,44 +77,44 @@
                     <span> &mdash; author: <strong>@Model.Author</strong></span>
                 }
             </span>
-            <a href="@indexUrl" class="ms-auto btn btn-sm btn-outline-secondary">Clear filters</a>
+            <a href="@indexUrl" class="@(Model.Semantic ? Model.Cls.BtnSm : "ms-auto btn btn-sm btn-outline-secondary")">Clear filters</a>
         </div>
     }
 
-    <div class="row g-4">
+    <div class="@(Model.Semantic ? Model.Cls.Layout : "row g-4")">
 
         @* ══ Main content (post list) ══════════════════════════════════════════ *@
-        <div class="col-lg-8">
+        <div class="@Model.Cls.Main">
 
             @if (Model.Posts.Items.Count == 0)
             {
-                <div class="text-center py-5 text-muted">
+                <div class="@(Model.Semantic ? Model.Cls.Empty : "text-center py-5 text-muted")">
                     <p class="fs-5">No posts found.</p>
                     @if (Model.HasActiveFilter)
                     {
-                        <a href="@indexUrl" class="btn btn-outline-primary">View all posts</a>
+                        <a href="@indexUrl" class="@(Model.Semantic ? Model.Cls.BtnPrimary : "btn btn-outline-primary")">View all posts</a>
                     }
                 </div>
             }
             else
             {
-                <div class="@(Model.IsMasonry ? "postnomic-masonry" : "")">
+                <div class="@(Model.IsMasonry ? (Model.Semantic ? Model.Cls.Masonry : "postnomic-masonry") : "")">
                 @foreach (var post in Model.Posts.Items)
                 {
-                    <article class="card mb-4 border-0 shadow-sm">
+                    <article class="@(Model.Semantic ? Model.Cls.Card : "card mb-4 border-0 shadow-sm")">
                         @if (!string.IsNullOrWhiteSpace(post.ThumbnailImageUrl))
                         {
                             <img src="@post.ThumbnailImageUrl"
                                  alt="@post.Title thumbnail"
-                                 class="card-img-top postnomic-post-thumbnail" />
+                                 class="@(Model.Semantic ? $"{Model.Cls.CardMedia} postnomic-post-thumbnail" : "card-img-top postnomic-post-thumbnail")" />
                         }
-                        <div class="card-body">
-                            <h2 class="card-title h4">
+                        <div class="@Model.Cls.CardBody">
+                            <h2 class="@Model.Cls.PostTitle">
                                 <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
                                    class="text-decoration-none text-dark">@post.Title</a>
                             </h2>
 
-                            <div class="d-flex flex-wrap gap-2 align-items-center text-muted small mb-2">
+                            <div class="@(Model.Semantic ? Model.Cls.PostMeta : "d-flex flex-wrap gap-2 align-items-center text-muted small mb-2")">
                                 <span>By
                                     @if (!string.IsNullOrEmpty(post.AuthorSlug))
                                     {
@@ -133,7 +139,7 @@
                                     @foreach (var tag in post.Tags)
                                     {
                                         <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)"
-                                           class="badge bg-secondary text-decoration-none">@tag.Name</a>
+                                           class="@(Model.Semantic ? Model.Cls.Tag : "badge bg-secondary text-decoration-none")">@tag.Name</a>
                                     }
                                 </div>
                             }
@@ -145,18 +151,18 @@
                                     @foreach (var cat in post.Categories)
                                     {
                                         <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
-                                           class="badge bg-primary text-decoration-none">@cat.Name</a>
+                                           class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary text-decoration-none")">@cat.Name</a>
                                     }
                                 </div>
                             }
 
                             @if (!string.IsNullOrWhiteSpace(post.Excerpt))
                             {
-                                <p class="card-text text-muted">@post.Excerpt</p>
+                                <p class="@(Model.Semantic ? Model.Cls.Excerpt : "card-text text-muted")">@post.Excerpt</p>
                             }
 
                             <a href="@PostnomicRouteBuilder.BuildPost(Model.BasePath, Model.RouteStyle, Model.Lang, post.Slug)"
-                               class="btn btn-sm btn-outline-primary mt-1">Read More &rarr;</a>
+                               class="@(Model.Semantic ? Model.Cls.BtnOutline : "btn btn-sm btn-outline-primary mt-1")">Read More &rarr;</a>
                         </div>
                     </article>
                 }
@@ -166,9 +172,9 @@
                 @if (Model.Posts.TotalPages > 1)
                 {
                     <nav aria-label="Post pagination" class="mt-4">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
-                                <a class="page-link"
+                        <ul class="@(Model.Semantic ? Model.Cls.Pagination : "pagination justify-content-center")">
+                            <li class="@Model.Cls.Page @(Model.PageNumber <= 1 ? Model.Cls.PageDisabled : "")">
+                                <a class="@(Model.Semantic ? "" : "page-link")"
                                    href="@Model.PageUrl(Model.PageNumber - 1)"
                                    aria-label="Previous">
                                     <span aria-hidden="true">&laquo;</span>
@@ -177,14 +183,14 @@
 
                             @for (int p = 1; p <= Model.Posts.TotalPages; p++)
                             {
-                                <li class="page-item @(p == Model.PageNumber ? "active" : "")">
-                                    <a class="page-link"
+                                <li class="@Model.Cls.Page @(p == Model.PageNumber ? Model.Cls.PageActive : "")">
+                                    <a class="@(Model.Semantic ? "" : "page-link")"
                                        href="@Model.PageUrl(p)">@p</a>
                                 </li>
                             }
 
-                            <li class="page-item @(Model.PageNumber >= Model.Posts.TotalPages ? "disabled" : "")">
-                                <a class="page-link"
+                            <li class="@Model.Cls.Page @(Model.PageNumber >= Model.Posts.TotalPages ? Model.Cls.PageDisabled : "")">
+                                <a class="@(Model.Semantic ? "" : "page-link")"
                                    href="@Model.PageUrl(Model.PageNumber + 1)"
                                    aria-label="Next">
                                     <span aria-hidden="true">&raquo;</span>
@@ -201,21 +207,21 @@
         </div>
 
         @* ══ Sidebar ════════════════════════════════════════════════════════════ *@
-        <div class="col-lg-4">
+        <div class="@Model.Cls.Sidebar">
 
             @* Search *@
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Search</h5>
+            <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
+                <div class="@(Model.Semantic ? "" : "card-body")">
+                    <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Search</h5>
                     <form method="get" action="@indexUrl">
                         <input type="hidden" name="pageSize" value="@Model.PageSize" />
-                        <div class="input-group">
+                        <div class="@(Model.Semantic ? Model.Cls.SearchBox : "input-group")">
                             <input type="search"
                                    name="search"
                                    value="@Model.Search"
-                                   class="form-control"
+                                   class="@Model.Cls.Field"
                                    placeholder="Search posts&hellip;" />
-                            <button type="submit" class="btn btn-primary">Go</button>
+                            <button type="submit" class="@Model.Cls.BtnPrimary">Go</button>
                         </div>
                     </form>
                 </div>
@@ -224,14 +230,14 @@
             @* Tags *@
             @if (Model.Tags.Count > 0)
             {
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Tags</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Tags</h5>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach (var tag in Model.Tags)
                             {
                                 <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)"
-                                   class="badge bg-secondary text-decoration-none fs-6">
+                                   class="@(Model.Semantic ? Model.Cls.Tag : "badge bg-secondary text-decoration-none fs-6")">
                                     @tag.Name
                                     <span class="ms-1 opacity-75">(@tag.PostCount)</span>
                                 </a>
@@ -244,15 +250,15 @@
             @* Categories *@
             @if (Model.Categories.Count > 0)
             {
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Categories</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Categories</h5>
                         <ul class="list-unstyled mb-0">
                             @foreach (var cat in Model.Categories)
                             {
                                 <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
                                     <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
-                                       class="badge bg-primary text-decoration-none">@cat.Name</a>
+                                       class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary text-decoration-none")">@cat.Name</a>
                                     <span class="text-muted small">@cat.PostCount post@(cat.PostCount == 1 ? "" : "s")</span>
                                 </li>
                             }
@@ -264,9 +270,9 @@
             @* Authors *@
             @if (Model.Authors.Count > 0)
             {
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Authors</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Authors</h5>
                         <ul class="list-unstyled mb-0">
                             @foreach (var author in Model.Authors)
                             {
@@ -284,9 +290,9 @@
             @* Top Commented *@
             @if (Model.TopCommented.Count > 0)
             {
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Top Commented</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Top Commented</h5>
                         <ol class="mb-0 ps-3">
                             @foreach (var post in Model.TopCommented)
                             {
@@ -306,9 +312,9 @@
             @* Most Read *@
             @if (Model.MostRead.Count > 0)
             {
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Most Read</h5>
+                <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
+                    <div class="@(Model.Semantic ? "" : "card-body")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">Most Read</h5>
                         <ol class="mb-0 ps-3">
                             @foreach (var post in Model.MostRead)
                             {
@@ -328,20 +334,20 @@
             @* Postnomic promotion (free tier) *@
             @if (Model.ShowBranding)
             {
-                <div class="postnomic-sidebar-ad card mb-4 shadow-sm border-primary" role="complementary">
-                    <div class="card-body text-center">
-                        <h5 class="card-title fw-bold">Postnomic</h5>
-                        <p class="card-text text-muted small">
+                <div class="@(Model.Semantic ? $"{Model.Cls.Widget} pn-widget--promo" : "postnomic-sidebar-ad card mb-4 shadow-sm border-primary")" role="complementary">
+                    <div class="@(Model.Semantic ? "" : "card-body text-center")">
+                        <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title fw-bold")">Postnomic</h5>
+                        <p class="@(Model.Semantic ? "" : "card-text text-muted small")">
                             The developer-first headless blog platform. Add a full-featured blog to your app in minutes.
                         </p>
                         <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer"
-                           class="btn btn-primary btn-sm mb-2 w-100">Learn More</a>
+                           class="@(Model.Semantic ? Model.Cls.BtnPrimary : "btn btn-primary btn-sm mb-2 w-100")">Learn More</a>
                         <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
-                           class="btn btn-outline-primary btn-sm w-100">View Pricing</a>
-                        <p class="mt-2 mb-0">
+                           class="@(Model.Semantic ? Model.Cls.BtnOutline : "btn btn-outline-primary btn-sm w-100")">View Pricing</a>
+                        <p class="@(Model.Semantic ? "" : "mt-2 mb-0")">
                             <small class="text-muted">
                                 <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
-                                   class="text-decoration-none">Upgrade to remove ads</a>
+                                   class="@(Model.Semantic ? "" : "text-decoration-none")">Upgrade to remove ads</a>
                             </small>
                         </p>
                     </div>

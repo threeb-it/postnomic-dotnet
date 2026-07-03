@@ -165,6 +165,29 @@ public class IndexModel(
     }
 
     /// <summary>
+    /// The <see cref="PostnomicMarkupStyle"/> configured for the currently resolved blog.
+    /// Default (<see cref="PostnomicMarkupStyle.Bootstrap"/>) preserves the page's pre-theming
+    /// literal Bootstrap markup byte-for-byte; opting into
+    /// <see cref="PostnomicMarkupStyle.Semantic"/> switches the view to <c>pn-*</c> classes.
+    /// </summary>
+    public PostnomicMarkupStyle MarkupStyle
+    {
+        get
+        {
+            var blogName = blogResolver.ResolveBlogName(HttpContext.Request.Path.Value ?? "");
+            return blogName is not null
+                ? optionsMonitor.Get(blogName).MarkupStyle
+                : defaultClientOptions.Value.MarkupStyle;
+        }
+    }
+
+    /// <summary>Resolves CSS classes for each semantic role according to <see cref="MarkupStyle"/>.</summary>
+    public PostnomicCssClasses Cls => new(MarkupStyle);
+
+    /// <summary>Whether <see cref="MarkupStyle"/> is <see cref="PostnomicMarkupStyle.Semantic"/>.</summary>
+    public bool Semantic => MarkupStyle == PostnomicMarkupStyle.Semantic;
+
+    /// <summary>
     /// Returns <see langword="true"/> when at least one filter (tag, category, author, or
     /// search) is currently active.
     /// </summary>
