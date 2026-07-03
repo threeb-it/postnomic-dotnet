@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -24,6 +25,8 @@ namespace Postnomic.Client.AspNetCore.Tests;
 public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
 {
     private const string Slug = "localization-post";
+    private const string AuthorSlug = "jane-doe";
+    private static readonly DateTime AnonymousCommentCreatedAt = new(2025, 6, 15, 9, 45, 0, DateTimeKind.Utc);
 
     private IHost _host = null!;
     private HttpClient _client = null!;
@@ -83,6 +86,30 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
                 Language = "en",
                 AvailableLanguages = ["en"],
                 CommentsEnabled = true,
+                // Anonymous (no AuthorName) so _Comment.cshtml's "CommentAnonymous" fallback
+                // renders, and dated so the "f" (long date + short time) format is exercised.
+                Comments =
+                [
+                    new PostnomicComment
+                    {
+                        PublicId = "c-anon",
+                        AuthorName = null,
+                        Body = "Thanks for sharing this!",
+                        CreatedAt = AnonymousCommentCreatedAt,
+                    },
+                ],
+            });
+
+        blogServiceMock
+            .Setup(s => s.GetAuthorProfileAsync(AuthorSlug, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicAuthorProfile
+            {
+                Name = "Jane Doe",
+                Slug = AuthorSlug,
+                Headline = "Senior Writer",
+                PostCount = 2,
+                SocialLinks = [new PostnomicSocialLink { Platform = "GitHub", Url = "https://github.com/janedoe" }],
+                Skills = ["Writing"],
             });
 
         var hostBuilder = new HostBuilder()
@@ -170,6 +197,13 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         html.Should().NotContain("Top Commented");
         html.Should().NotContain("Most Read");
         html.Should().NotContain("Leave a Comment");
+
+        // Fix 3 coverage: _Comment.cshtml renders the localized author fallback (the mocked
+        // comment has AuthorName = null) and a culture-formatted "long date + short time" ("f")
+        // timestamp for the German culture.
+        html.Should().Contain(">Anonym<");
+        html.Should().NotContain(">Anonymous<");
+        html.Should().Contain(AnonymousCommentCreatedAt.ToString("f", CultureInfo.GetCultureInfo("de")));
     }
 
     [Fact]
@@ -182,5 +216,37 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         html.Should().Contain("Leave a Comment");
         html.Should().NotContain("Meistkommentiert");
         html.Should().NotContain("Meistgelesen");
+
+        // Fix 3 coverage: same anonymous comment, rendered with the English author fallback and
+        // a culture-formatted "long date + short time" ("f") timestamp for the English culture.
+        html.Should().Contain(">Anonymous<");
+        html.Should().NotContain(">Anonym<");
+        html.Should().Contain(AnonymousCommentCreatedAt.ToString("f", CultureInfo.GetCultureInfo("en")));
+    }
+
+    [Fact]
+    public async Task GermanAcceptLanguage_AuthorPage_RendersGermanChrome_NotEnglish()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/blog/author/{AuthorSlug}");
+        request.Headers.Add("Accept-Language", "de");
+
+        using var response = await _client.SendAsync(request);
+        var html = await response.Content.ReadAsStringAsync();
+
+        html.Should().Contain("Vernetzen");
+        html.Should().Contain("Fähigkeiten");
+        html.Should().NotContain(">Connect<");
+        html.Should().NotContain(">Skills<");
+    }
+
+    [Fact]
+    public async Task DefaultCulture_AuthorPage_RendersEnglishChrome()
+    {
+        var html = await _client.GetStringAsync($"/blog/author/{AuthorSlug}");
+
+        html.Should().Contain(">Connect<");
+        html.Should().Contain(">Skills<");
+        html.Should().NotContain("Vernetzen");
+        html.Should().NotContain("Fähigkeiten");
     }
 }
