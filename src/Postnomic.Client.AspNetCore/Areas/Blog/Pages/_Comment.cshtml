@@ -17,7 +17,7 @@
 <div class="@(semantic ? cls.Comment : "postnomic-comment border-start border-3 ps-3 mb-3")">
     <div class="@(semantic ? "" : "d-flex align-items-center gap-2 mb-1")">
         <span class="fw-semibold">@(Model.AuthorName ?? Localizer["CommentAnonymous"].Value)</span>
-        <span class="text-muted small">@Model.CreatedAt.ToString("g", CultureInfo.CurrentCulture)</span>
+        <span class="text-muted small">@Model.CreatedAt.ToString("f", CultureInfo.CurrentCulture)</span>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Subject))

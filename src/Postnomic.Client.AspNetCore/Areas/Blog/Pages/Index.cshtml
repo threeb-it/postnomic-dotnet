@@ -127,7 +127,7 @@
                                     }
                                 </span>
                                 <span>&middot;</span>
-                                <span>@post.PublishedAt.ToString("d", CultureInfo.CurrentCulture)</span>
+                                <span>@post.PublishedAt.ToString("D", CultureInfo.CurrentCulture)</span>
                                 <span>&middot;</span>
                                 <span>@Localizer[post.CommentCount == 1 ? "CommentCountOne" : "CommentCountMany", post.CommentCount]</span>
                             </div>
