@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Xml.Linq;
 using Postnomic.Client.Abstractions.Models;
 
@@ -212,8 +213,22 @@ public static class PostnomicFeedBuilder
     private static string ToXmlString(XElement root)
     {
         var doc = new XDocument(new XDeclaration("1.0", "UTF-8", null), root);
-        using var writer = new StringWriter();
+        using var writer = new Utf8StringWriter();
         doc.Save(writer, SaveOptions.DisableFormatting);
         return writer.ToString();
+    }
+
+    /// <summary>
+    /// A <see cref="StringWriter"/> that reports <see cref="Encoding.UTF8"/> instead of the
+    /// default UTF-16, so <see cref="XDocument.Save(TextWriter, SaveOptions)"/> emits a
+    /// <c>&lt;?xml version="1.0" encoding="utf-8"?&gt;</c> prolog that matches how the resulting
+    /// string is actually transmitted (consumers serve it via <c>Results.Content(xml, ..., Encoding.UTF8)</c>
+    /// or equivalent). Without this override, the prolog would falsely declare <c>utf-16</c> — the
+    /// in-memory <see cref="string"/>/<see cref="StringBuilder"/> encoding — which contradicts the
+    /// UTF-8 bytes actually served and is invalid per strict XML/RSS consumers.
+    /// </summary>
+    private sealed class Utf8StringWriter : StringWriter
+    {
+        public override Encoding Encoding => Encoding.UTF8;
     }
 }
