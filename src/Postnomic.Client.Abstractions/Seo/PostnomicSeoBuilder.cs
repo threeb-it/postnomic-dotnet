@@ -86,7 +86,11 @@ public static class PostnomicSeoBuilder
     {
         // Self-referential canonical: canonicalize to the URL of the language variant actually
         // being rendered (lang), not the blog's default-language URL.
-        var canonical = ToAbsoluteUrl(baseUri, PostnomicRouteBuilder.BuildPost(basePath, style, lang, postSlug));
+        // Prefer the API-provided canonical (set only for cross-posted posts — points at the
+        // primary blog); otherwise the self-referential canonical for the rendered language variant.
+        var canonical = !string.IsNullOrWhiteSpace(post.CanonicalUrl)
+            ? post.CanonicalUrl!
+            : ToAbsoluteUrl(baseUri, PostnomicRouteBuilder.BuildPost(basePath, style, lang, postSlug));
         var image = ToAbsoluteUrlOrNull(baseUri, post.CoverImageUrl);
         var alternates = PostnomicRouteBuilder
             .BuildPostAlternates(basePath, style, post.AvailableLanguages, postSlug, post.Language)

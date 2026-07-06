@@ -18,7 +18,8 @@ public class PostnomicSeoBuilderTests
     private static PostnomicPostDetail CreatePost(
         string language = "de",
         IReadOnlyList<string>? availableLanguages = null,
-        DateTime? publishedAt = null) => new()
+        DateTime? publishedAt = null,
+        string? canonicalUrl = null) => new()
     {
         Slug = "hello-world",
         Title = "Hello World",
@@ -26,7 +27,38 @@ public class PostnomicSeoBuilderTests
         PublishedAt = publishedAt ?? new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
         Language = language,
         AvailableLanguages = availableLanguages ?? ["en", "de"],
+        CanonicalUrl = canonicalUrl,
     };
+
+    // ── CanonicalUrl (cross-posted posts canonicalize to their primary blog) ──────────────────
+
+    [Fact]
+    public void ForPost_CrossPostedPost_UsesApiProvidedCanonicalUrl()
+    {
+        // The API sets PostnomicPostDetail.CanonicalUrl ONLY for cross-posted posts, pointing at
+        // the primary blog. When present, it must win over the self-referential route canonical.
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(canonicalUrl: "https://a.example.com/blog/gitkraken-tips"),
+            blogInfo: null);
+
+        model.CanonicalUrl.Should().Be("https://a.example.com/blog/gitkraken-tips");
+    }
+
+    [Fact]
+    public void ForPost_NativePost_CanonicalUrlNull_FallsBackToSelfReferentialCanonical()
+    {
+        // Native (non-cross-posted) posts have CanonicalUrl == null from the API, so ForPost keeps
+        // computing the existing self-referential canonical for the rendered language variant.
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(canonicalUrl: null),
+            blogInfo: null);
+
+        model.CanonicalUrl.Should().Be("https://example.com/de/blog/post/hello-world");
+    }
 
     // ── XDefaultUrl (Finding 2: consistent x-default across the language cluster) ─────────────
 
