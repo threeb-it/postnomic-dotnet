@@ -29,6 +29,13 @@ public record PostnomicPostDetail
     public string? Excerpt { get; init; }
 
     /// <summary>
+    /// Absolute canonical URL of the post on its primary blog, as provided by the API. When set,
+    /// the blog Area uses it for &lt;link rel="canonical"&gt; instead of the host-relative URL —
+    /// so a cross-posted post's canonical points back to its primary blog.
+    /// </summary>
+    public string? CanonicalUrl { get; init; }
+
+    /// <summary>
     /// The URL of the cover image for the post.
     /// <see langword="null"/> when no cover image has been set.
     /// </summary>

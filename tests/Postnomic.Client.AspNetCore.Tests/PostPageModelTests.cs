@@ -577,4 +577,38 @@ public class PostPageModelTests
         sut.ShowBranding.Should().BeFalse(
             "the server-enforced value should override the client configuration");
     }
+
+    // ── CanonicalUrl ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task CanonicalUrl_WhenApiSuppliesCanonicalUrl_UsesApiValue()
+    {
+        // Arrange — the post is cross-posted; the API returns the primary blog's absolute URL
+        SetupPost(CreateDetail(slug: "gitkraken-tips") with
+        {
+            CanonicalUrl = "https://a.example.com/blog/gitkraken-tips"
+        });
+        _sut.PostSlug = "gitkraken-tips";
+
+        // Act
+        await _sut.OnGetAsync();
+
+        // Assert
+        _sut.CanonicalUrl.Should().Be("https://a.example.com/blog/gitkraken-tips");
+    }
+
+    [Fact]
+    public async Task CanonicalUrl_WhenApiCanonicalUrlIsNull_FallsBackToHostComputedUrl()
+    {
+        // Arrange — existing behavior: no API-provided canonical, so the host computes it
+        SetupPost(CreateDetail(slug: "gitkraken-tips"));
+        _sut.PostSlug = "gitkraken-tips";
+
+        // Act
+        await _sut.OnGetAsync();
+
+        // Assert
+        var expected = PostnomicRouteBuilder.BuildPost(_sut.BasePath, _sut.RouteStyle, lang: null, _sut.PostSlug);
+        _sut.CanonicalUrl.Should().Be(expected);
+    }
 }

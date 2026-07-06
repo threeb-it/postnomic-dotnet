@@ -205,8 +205,14 @@ public class PostModel(
         }
     }
 
-    /// <summary>The canonical (default-language) URL for this post: {BasePath}/post/{slug}.</summary>
-    public string CanonicalUrl => PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, lang: null, PostSlug);
+    /// <summary>
+    /// The canonical URL for this post. When the API supplies an absolute canonical (the post's
+    /// primary blog — set for cross-posted posts), use it; otherwise the host-relative default
+    /// {BasePath}/post/{slug}.
+    /// </summary>
+    public string CanonicalUrl => !string.IsNullOrWhiteSpace(Post?.CanonicalUrl)
+        ? Post!.CanonicalUrl!
+        : PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, lang: null, PostSlug);
 
     /// <summary>
     /// hreflang alternates: one (languageCode, url) per available language. The blog default
