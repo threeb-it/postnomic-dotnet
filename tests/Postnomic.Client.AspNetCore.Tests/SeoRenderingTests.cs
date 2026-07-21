@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.RegularExpressions;
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -124,8 +123,8 @@ public class SeoRenderingTests : IAsyncLifetime
 
         // Assert — Prefix routing resolved, page-model bound Lang="de", and link generation
         // (PostnomicRouteBuilder) produced /de/blog/... links back into the page.
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        html.Should().Contain("/de/blog/");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("/de/blog/", html);
     }
 
     [Fact]
@@ -134,8 +133,8 @@ public class SeoRenderingTests : IAsyncLifetime
         var response = await _client.GetAsync($"/de/blog/post/{Slug}");
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("rel=\"canonical\"");
-        html.Should().MatchRegex("<link rel=\"canonical\" href=\"https?://[^\"]+/blog/post/" + Slug + "\"");
+        Assert.Contains("rel=\"canonical\"", html);
+        Assert.Matches("<link rel=\"canonical\" href=\"https?://[^\"]+/blog/post/" + Slug + "\"", html);
     }
 
     [Fact]
@@ -146,7 +145,7 @@ public class SeoRenderingTests : IAsyncLifetime
         var response = await _client.GetAsync($"/de/blog/post/{Slug}");
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().MatchRegex("<link rel=\"canonical\" href=\"https?://[^\"]+/de/blog/post/" + Slug + "\"");
+        Assert.Matches("<link rel=\"canonical\" href=\"https?://[^\"]+/de/blog/post/" + Slug + "\"", html);
     }
 
     [Fact]
@@ -156,7 +155,7 @@ public class SeoRenderingTests : IAsyncLifetime
         var response = await _client.GetAsync($"/de/blog/post/{Slug}");
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("property=\"og:locale\" content=\"de_DE\"");
+        Assert.Contains("property=\"og:locale\" content=\"de_DE\"", html);
     }
 
     [Fact]
@@ -165,8 +164,8 @@ public class SeoRenderingTests : IAsyncLifetime
         var response = await _client.GetAsync($"/de/blog/post/{Slug}");
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("property=\"og:title\"");
-        html.Should().Contain("The SEO End-to-End Post");
+        Assert.Contains("property=\"og:title\"", html);
+        Assert.Contains("The SEO End-to-End Post", html);
     }
 
     [Fact]
@@ -175,8 +174,8 @@ public class SeoRenderingTests : IAsyncLifetime
         var response = await _client.GetAsync($"/de/blog/post/{Slug}");
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("name=\"twitter:card\"");
-        html.Should().Contain("summary_large_image");
+        Assert.Contains("name=\"twitter:card\"", html);
+        Assert.Contains("summary_large_image", html);
     }
 
     [Fact]
@@ -185,8 +184,8 @@ public class SeoRenderingTests : IAsyncLifetime
         var response = await _client.GetAsync($"/de/blog/post/{Slug}");
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("application/ld+json");
-        html.Should().Contain("\"@type\":\"BlogPosting\"");
+        Assert.Contains("application/ld+json", html);
+        Assert.Contains("\"@type\":\"BlogPosting\"", html);
     }
 
     [Fact]
@@ -195,7 +194,7 @@ public class SeoRenderingTests : IAsyncLifetime
         var response = await _client.GetAsync($"/de/blog/post/{Slug}");
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("hreflang=\"en\"");
+        Assert.Contains("hreflang=\"en\"", html);
     }
 
     [Fact]
@@ -215,9 +214,9 @@ public class SeoRenderingTests : IAsyncLifetime
         var deXDefault = xDefaultRegex.Match(deHtml).Groups[1].Value;
         var enXDefault = xDefaultRegex.Match(enHtml).Groups[1].Value;
 
-        deXDefault.Should().NotBeNullOrEmpty();
-        deXDefault.Should().Be(enXDefault);
-        deXDefault.Should().MatchRegex($"https?://[^/]+/en/blog/post/{Slug}$");
+        Assert.False(string.IsNullOrEmpty(deXDefault));
+        Assert.Equal(enXDefault, deXDefault);
+        Assert.Matches($"https?://[^/]+/en/blog/post/{Slug}$", deXDefault);
     }
 
     [Fact]
@@ -234,9 +233,9 @@ public class SeoRenderingTests : IAsyncLifetime
             .Select(m => m.Groups[1].Value)
             .ToList();
 
-        hrefs.Should().NotBeEmpty();
-        hrefs.Should().OnlyContain(href => Regex.IsMatch(href, "https?://[^/]+/[a-z]{2}/blog/post/" + Slug + "$"));
-        hrefs.Should().NotContain(href => Regex.IsMatch(href, "https?://[^/]+/blog/post/" + Slug + "$"));
+        Assert.NotEmpty(hrefs);
+        Assert.All(hrefs, href => Assert.Matches("https?://[^/]+/[a-z]{2}/blog/post/" + Slug + "$", href));
+        Assert.DoesNotContain(hrefs, href => Regex.IsMatch(href, "https?://[^/]+/blog/post/" + Slug + "$"));
     }
 
     [Fact]
@@ -249,19 +248,19 @@ public class SeoRenderingTests : IAsyncLifetime
         var response = await _client.GetAsync($"/de/blog/post/{Slug}");
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("property=\"article:published_time\" content=\"2025-06-01T00:00:00.0000000Z\"");
-        html.Should().Contain("\"datePublished\":\"2025-06-01T00:00:00.0000000Z\"");
+        Assert.Contains("property=\"article:published_time\" content=\"2025-06-01T00:00:00.0000000Z\"", html);
+        Assert.Contains("\"datePublished\":\"2025-06-01T00:00:00.0000000Z\"", html);
     }
 
     [Fact]
     public async Task GetAuthorPage_RendersSingleH1ForAuthorName()
     {
         var response = await _client.GetAsync($"/de/blog/author/{AuthorSlug}");
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("<h1");
-        html.Should().Contain("Jane Doe");
+        Assert.Contains("<h1", html);
+        Assert.Contains("Jane Doe", html);
     }
 }

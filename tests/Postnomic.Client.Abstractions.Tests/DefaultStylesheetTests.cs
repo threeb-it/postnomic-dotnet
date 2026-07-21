@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Xunit;
 
 namespace Postnomic.Client.Abstractions.Tests;
@@ -9,7 +8,7 @@ public class DefaultStylesheetTests
     {
         var d = new DirectoryInfo(AppContext.BaseDirectory);
         while (d is not null && !File.Exists(Path.Combine(d.FullName, "Postnomic.Client.slnx"))) d = d.Parent;
-        d.Should().NotBeNull(); return d!.FullName;
+        Assert.NotNull(d); return d!.FullName;
     }
 
     [Fact]
@@ -17,8 +16,8 @@ public class DefaultStylesheetTests
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot(), "assets", "postnomic-blog.css"));
         foreach (var token in new[] { "--pn-surface", "--pn-primary", "--pn-radius", ".pn-blog", ".pn-card", ".pn-btn", ".pn-post-content" })
-            css.Should().Contain(token);
-        css.Should().NotContain(".col-lg");
+            Assert.Contains(token, css);
+        Assert.DoesNotContain(".col-lg", css);
     }
 
     [Theory]
@@ -27,6 +26,6 @@ public class DefaultStylesheetTests
     public void Both_packages_ship_the_stylesheet(string csprojRelative)
     {
         var proj = File.ReadAllText(Path.Combine(RepoRoot(), csprojRelative));
-        proj.Should().Contain("postnomic-blog.css");
+        Assert.Contains("postnomic-blog.css", proj);
     }
 }

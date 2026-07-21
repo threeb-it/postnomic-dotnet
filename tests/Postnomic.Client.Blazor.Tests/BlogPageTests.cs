@@ -1,5 +1,4 @@
 using Bunit;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -107,7 +106,7 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert — while tasks are pending the loading placeholders appear
-        cut.Markup.Should().Contain("Loading");
+        Assert.Contains("Loading", cut.Markup);
     }
 
     // ── Blog header ───────────────────────────────────────────────────────────
@@ -123,7 +122,7 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert
-        cut.Find("h1").TextContent.Should().Contain("Awesome Dev Blog");
+        Assert.Contains("Awesome Dev Blog", cut.Find("h1").TextContent);
     }
 
     [Fact]
@@ -137,7 +136,7 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert
-        cut.Markup.Should().Contain("All things .NET");
+        Assert.Contains("All things .NET", cut.Markup);
     }
 
     [Fact]
@@ -152,7 +151,7 @@ public class BlogPageTests : BunitContext
 
         // Assert — lead paragraph should not appear when description is null
         var leadElements = cut.FindAll("p.lead");
-        leadElements.Should().BeEmpty();
+        Assert.Empty(leadElements);
     }
 
     // ── Post cards ────────────────────────────────────────────────────────────
@@ -173,7 +172,7 @@ public class BlogPageTests : BunitContext
 
         // Assert
         var articles = cut.FindAll("article.card");
-        articles.Should().HaveCount(2);
+        Assert.Equal(2, articles.Count());
     }
 
     [Fact]
@@ -190,7 +189,7 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert
-        cut.Markup.Should().Contain("Hello World");
+        Assert.Contains("Hello World", cut.Markup);
     }
 
     [Fact]
@@ -207,7 +206,7 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert
-        cut.Markup.Should().Contain("Alice Smith");
+        Assert.Contains("Alice Smith", cut.Markup);
     }
 
     [Fact]
@@ -230,8 +229,8 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert
-        cut.Markup.Should().Contain("C#");
-        cut.Markup.Should().Contain(".NET");
+        Assert.Contains("C#", cut.Markup);
+        Assert.Contains(".NET", cut.Markup);
     }
 
     [Fact]
@@ -249,7 +248,7 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert
-        cut.Markup.Should().Contain("A short teaser for the post.");
+        Assert.Contains("A short teaser for the post.", cut.Markup);
     }
 
     [Fact]
@@ -264,7 +263,7 @@ public class BlogPageTests : BunitContext
 
         // Assert
         var links = cut.FindAll("a[href]");
-        links.Should().Contain(a => a.GetAttribute("href")!.Contains("my-first-post"));
+        Assert.Contains(links, a => a.GetAttribute("href")!.Contains("my-first-post"));
     }
 
     [Fact]
@@ -279,7 +278,7 @@ public class BlogPageTests : BunitContext
 
         // Assert — links should use the default /blog base path
         var links = cut.FindAll("a[href]");
-        links.Should().Contain(a => a.GetAttribute("href") == "/blog/post/test-post");
+        Assert.Contains(links, a => a.GetAttribute("href") == "/blog/post/test-post");
     }
 
     // ── Empty state ───────────────────────────────────────────────────────────
@@ -295,7 +294,7 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert
-        cut.Markup.Should().Contain("No posts found");
+        Assert.Contains("No posts found", cut.Markup);
     }
 
     [Fact]
@@ -309,7 +308,7 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert
-        cut.FindAll("article.card").Should().BeEmpty();
+        Assert.Empty(cut.FindAll("article.card"));
     }
 
     // ── Pagination ────────────────────────────────────────────────────────────
@@ -325,7 +324,7 @@ public class BlogPageTests : BunitContext
         var cut = Render<BlogPage>();
 
         // Assert
-        cut.FindAll("nav[aria-label='Blog pagination']").Should().BeEmpty();
+        Assert.Empty(cut.FindAll("nav[aria-label='Blog pagination']"));
     }
 
     [Fact]
@@ -344,7 +343,7 @@ public class BlogPageTests : BunitContext
 
         // Assert
         var nav = cut.FindAll("nav[aria-label='Blog pagination']");
-        nav.Should().HaveCount(1);
+        Assert.Single(nav);
     }
 
     [Fact]
@@ -359,9 +358,9 @@ public class BlogPageTests : BunitContext
 
         // Assert — page buttons 1, 2, 3 should appear inside the pagination nav
         var nav = cut.Find("nav[aria-label='Blog pagination']");
-        nav.TextContent.Should().Contain("1");
-        nav.TextContent.Should().Contain("2");
-        nav.TextContent.Should().Contain("3");
+        Assert.Contains("1", nav.TextContent);
+        Assert.Contains("2", nav.TextContent);
+        Assert.Contains("3", nav.TextContent);
     }
 
     // ── Custom BasePath ──────────────────────────────────────────────────────
@@ -380,7 +379,7 @@ public class BlogPageTests : BunitContext
 
         // Assert — links should use the custom base path
         var links = cut.FindAll("a[href]");
-        links.Should().Contain(a => a.GetAttribute("href") == "/articles/post/my-post");
+        Assert.Contains(links, a => a.GetAttribute("href") == "/articles/post/my-post");
     }
 
     // ── Language parameter ───────────────────────────────────────────────────

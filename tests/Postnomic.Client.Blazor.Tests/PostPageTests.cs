@@ -1,5 +1,4 @@
 using Bunit;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -91,7 +90,7 @@ public class PostPageTests : BunitContext
         var cut = Render<PostPage>(p => p.Add(x => x.PostSlug, "test-post"));
 
         // Assert
-        cut.Markup.Should().Contain("Loading");
+        Assert.Contains("Loading", cut.Markup);
     }
 
     // ── Post detail rendering ─────────────────────────────────────────────────
@@ -106,7 +105,7 @@ public class PostPageTests : BunitContext
         var cut = Render<PostPage>(p => p.Add(x => x.PostSlug, "deep-dive-blazor"));
 
         // Assert
-        cut.Find("h1").TextContent.Should().Contain("Deep Dive into Blazor");
+        Assert.Contains("Deep Dive into Blazor", cut.Find("h1").TextContent);
     }
 
     [Fact]
@@ -119,7 +118,7 @@ public class PostPageTests : BunitContext
         var cut = Render<PostPage>(p => p.Add(x => x.PostSlug, "post"));
 
         // Assert
-        cut.Markup.Should().Contain("Alice Wonderland");
+        Assert.Contains("Alice Wonderland", cut.Markup);
     }
 
     [Fact]
@@ -132,7 +131,7 @@ public class PostPageTests : BunitContext
         var cut = Render<PostPage>(p => p.Add(x => x.PostSlug, "content-post"));
 
         // Assert
-        cut.Markup.Should().Contain("content");
+        Assert.Contains("content", cut.Markup);
     }
 
     [Fact]
@@ -153,8 +152,8 @@ public class PostPageTests : BunitContext
         var cut = Render<PostPage>(p => p.Add(x => x.PostSlug, "tagged"));
 
         // Assert
-        cut.Markup.Should().Contain("Blazor");
-        cut.Markup.Should().Contain(".NET");
+        Assert.Contains("Blazor", cut.Markup);
+        Assert.Contains(".NET", cut.Markup);
     }
 
     [Fact]
@@ -169,7 +168,7 @@ public class PostPageTests : BunitContext
 
         // Assert
         var img = cut.Find("img[src='https://example.com/cover.jpg']");
-        img.Should().NotBeNull();
+        Assert.NotNull(img);
     }
 
     [Fact]
@@ -184,7 +183,7 @@ public class PostPageTests : BunitContext
 
         // Assert — no img element with img-fluid class pointing to a cover URL
         var imgs = cut.FindAll("img.img-fluid");
-        imgs.Should().BeEmpty();
+        Assert.Empty(imgs);
     }
 
     // ── Comments section ──────────────────────────────────────────────────────
@@ -205,7 +204,7 @@ public class PostPageTests : BunitContext
 
         // Assert — the section heading "Comments (2)" should be present
         var heading = cut.Find("h3");
-        heading.TextContent.Should().Contain("2");
+        Assert.Contains("2", heading.TextContent);
     }
 
     [Fact]
@@ -218,7 +217,7 @@ public class PostPageTests : BunitContext
         var cut = Render<PostPage>(p => p.Add(x => x.PostSlug, "no-comments"));
 
         // Assert
-        cut.Markup.Should().Contain("No comments yet");
+        Assert.Contains("No comments yet", cut.Markup);
     }
 
     [Fact]
@@ -231,7 +230,7 @@ public class PostPageTests : BunitContext
         var cut = Render<PostPage>(p => p.Add(x => x.PostSlug, "open-post"));
 
         // Assert
-        cut.FindAll("form").Should().NotBeEmpty();
+        Assert.NotEmpty(cut.FindAll("form"));
     }
 
     [Fact]
@@ -244,8 +243,8 @@ public class PostPageTests : BunitContext
         var cut = Render<PostPage>(p => p.Add(x => x.PostSlug, "closed-post"));
 
         // Assert
-        cut.FindAll("form").Should().BeEmpty();
-        cut.Markup.Should().Contain("Comments are closed");
+        Assert.Empty(cut.FindAll("form"));
+        Assert.Contains("Comments are closed", cut.Markup);
     }
 
     // ── Back link ─────────────────────────────────────────────────────────────
@@ -261,7 +260,7 @@ public class PostPageTests : BunitContext
 
         // Assert
         var backLink = cut.FindAll("a[href='/blog']");
-        backLink.Should().NotBeEmpty();
+        Assert.NotEmpty(backLink);
     }
 
     [Fact]
@@ -277,7 +276,7 @@ public class PostPageTests : BunitContext
 
         // Assert
         var backLink = cut.FindAll("a[href='/articles']");
-        backLink.Should().NotBeEmpty();
+        Assert.NotEmpty(backLink);
     }
 
     // ── Language parameter ───────────────────────────────────────────────────

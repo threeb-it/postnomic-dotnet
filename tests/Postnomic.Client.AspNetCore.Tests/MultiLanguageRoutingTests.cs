@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -43,8 +42,8 @@ public class MultiLanguageRoutingTests
             .Select(s => s.AttributeRouteModel!.Template)
             .ToList();
 
-        templates.Should().Contain("blog/post/{postSlug}");
-        templates.Should().Contain("blog/{lang:regex(^[a-z][a-z]$)}/post/{postSlug}");
+        Assert.Contains("blog/post/{postSlug}", templates);
+        Assert.Contains("blog/{lang:regex(^[a-z][a-z]$)}/post/{postSlug}", templates);
     }
 
     [Fact]
@@ -63,8 +62,8 @@ public class MultiLanguageRoutingTests
             .Select(s => s.AttributeRouteModel!.Template)
             .ToList();
 
-        templates.Should().Contain("blog");
-        templates.Should().Contain("blog/{lang:regex(^[a-z][a-z]$)}");
+        Assert.Contains("blog", templates);
+        Assert.Contains("blog/{lang:regex(^[a-z][a-z]$)}", templates);
     }
 
     [Fact]
@@ -83,8 +82,8 @@ public class MultiLanguageRoutingTests
             .Select(s => s.AttributeRouteModel!.Template)
             .ToList();
 
-        templates.Should().Contain("blog/author/{authorSlug}");
-        templates.Should().Contain("blog/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}");
+        Assert.Contains("blog/author/{authorSlug}", templates);
+        Assert.Contains("blog/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}", templates);
     }
 
     // ── PostModel — CanonicalUrl / AlternateLanguageUrls ──────────────────────
@@ -118,9 +117,9 @@ public class MultiLanguageRoutingTests
         await sut.OnGetAsync();
 
         // Assert
-        sut.CanonicalUrl.Should().EndWith("/post/slug");
-        sut.AlternateLanguageUrls.Should().Contain(("en", "/blog/post/slug"));
-        sut.AlternateLanguageUrls.Should().Contain(("de", "/blog/de/post/slug"));
+        Assert.EndsWith("/post/slug", sut.CanonicalUrl);
+        Assert.Contains(("en", "/blog/post/slug"), sut.AlternateLanguageUrls);
+        Assert.Contains(("de", "/blog/de/post/slug"), sut.AlternateLanguageUrls);
     }
 
     [Fact]
@@ -132,7 +131,7 @@ public class MultiLanguageRoutingTests
         sut.PostSlug = "slug";
 
         // Act & Assert — before OnGetAsync runs, Post is null; AvailableLanguages defaults to []
-        sut.AlternateLanguageUrls.Should().BeEmpty();
+        Assert.Empty(sut.AlternateLanguageUrls);
     }
 
     // ── Helpers — convention resolution ───────────────────────────────────────

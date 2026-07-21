@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -183,16 +182,17 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     public async Task Default_mode_emits_bootstrap_classes()
     {
         var html = await _bootstrapClient.GetStringAsync("/blog");
-        html.Should().Contain("card").And.Contain("col-lg-8");
-        html.Should().NotContain("pn-card");
+        Assert.Contains("card", html);
+        Assert.Contains("col-lg-8", html);
+        Assert.DoesNotContain("pn-card", html);
     }
 
     [Fact]
     public async Task Semantic_mode_emits_pn_classes()
     {
         var html = await _semanticClient.GetStringAsync("/blog");
-        html.Should().Contain("pn-card");
-        html.Should().NotContain("col-lg-8");
+        Assert.Contains("pn-card", html);
+        Assert.DoesNotContain("col-lg-8", html);
     }
 
     [Fact]
@@ -200,40 +200,44 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     {
         var html = await _semanticClient.GetStringAsync("/blog");
         foreach (var bs in new[] { "col-lg-", "card mb-4", "badge", "btn btn-", "bi bi-" })
-            html.Should().NotContain(bs);
+            Assert.DoesNotContain(bs, html);
     }
 
     [Fact]
     public async Task Default_mode_post_page_emits_bootstrap_classes()
     {
         var html = await _bootstrapClient.GetStringAsync($"/blog/post/{Slug}");
-        html.Should().Contain("col-lg-8").And.Contain("card mb-4 shadow-sm");
-        html.Should().NotContain("pn-card");
+        Assert.Contains("col-lg-8", html);
+        Assert.Contains("card mb-4 shadow-sm", html);
+        Assert.DoesNotContain("pn-card", html);
     }
 
     [Fact]
     public async Task Semantic_mode_post_page_has_no_bootstrap_vestiges()
     {
         var html = await _semanticClient.GetStringAsync($"/blog/post/{Slug}");
-        html.Should().Contain("pn-post-content").And.Contain("pn-card");
+        Assert.Contains("pn-post-content", html);
+        Assert.Contains("pn-card", html);
         foreach (var bs in new[] { "col-lg-", "card mb-4", "badge", "btn btn-", "bi bi-" })
-            html.Should().NotContain(bs);
+            Assert.DoesNotContain(bs, html);
     }
 
     [Fact]
     public async Task Default_mode_author_page_emits_bootstrap_classes()
     {
         var html = await _bootstrapClient.GetStringAsync($"/blog/author/{AuthorSlug}");
-        html.Should().Contain("col-lg-8").And.Contain("card shadow-sm");
-        html.Should().NotContain("pn-card");
+        Assert.Contains("col-lg-8", html);
+        Assert.Contains("card shadow-sm", html);
+        Assert.DoesNotContain("pn-card", html);
     }
 
     [Fact]
     public async Task Semantic_mode_author_page_has_no_bootstrap_vestiges()
     {
         var html = await _semanticClient.GetStringAsync($"/blog/author/{AuthorSlug}");
-        html.Should().Contain("pn-main").And.Contain("pn-card");
+        Assert.Contains("pn-main", html);
+        Assert.Contains("pn-card", html);
         foreach (var bs in new[] { "col-lg-", "card mb-4", "badge", "btn btn-", "bi bi-" })
-            html.Should().NotContain(bs);
+            Assert.DoesNotContain(bs, html);
     }
 }

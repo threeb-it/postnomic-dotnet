@@ -1,5 +1,4 @@
 using System.Globalization;
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -169,8 +168,8 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         using var response = await _client.SendAsync(request);
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("Weiterlesen");
-        html.Should().NotContain("Read More");
+        Assert.Contains("Weiterlesen", html);
+        Assert.DoesNotContain("Read More", html);
     }
 
     [Fact]
@@ -178,8 +177,8 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
     {
         var html = await _client.GetStringAsync("/blog");
 
-        html.Should().Contain("Read More");
-        html.Should().NotContain("Weiterlesen");
+        Assert.Contains("Read More", html);
+        Assert.DoesNotContain("Weiterlesen", html);
     }
 
     [Fact]
@@ -191,12 +190,12 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         using var response = await _client.SendAsync(request);
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("Meistkommentiert");
-        html.Should().Contain("Meistgelesen");
-        html.Should().Contain("Kommentar hinterlassen");
-        html.Should().NotContain("Top Commented");
-        html.Should().NotContain("Most Read");
-        html.Should().NotContain("Leave a Comment");
+        Assert.Contains("Meistkommentiert", html);
+        Assert.Contains("Meistgelesen", html);
+        Assert.Contains("Kommentar hinterlassen", html);
+        Assert.DoesNotContain("Top Commented", html);
+        Assert.DoesNotContain("Most Read", html);
+        Assert.DoesNotContain("Leave a Comment", html);
 
         // Fix 3 coverage: _Comment.cshtml renders the localized author fallback (the mocked
         // comment has AuthorName = null) and a culture-formatted "long date + short time" ("f")
@@ -208,10 +207,10 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         // HtmlEncoder then emits as the entity "&#x202F;", so a full-"f" compare mismatches the
         // rendered HTML cross-OS even when computed the same way.
         var deCulture = CultureInfo.GetCultureInfo("de");
-        html.Should().Contain(">Anonym<");
-        html.Should().NotContain(">Anonymous<");
-        html.Should().Contain(AnonymousCommentCreatedAt.ToString("D", deCulture));
-        html.Should().Contain("Juni"); // German month name; distinct from English "June"
+        Assert.Contains(">Anonym<", html);
+        Assert.DoesNotContain(">Anonymous<", html);
+        Assert.Contains(AnonymousCommentCreatedAt.ToString("D", deCulture), html);
+        Assert.Contains("Juni", html); // German month name; distinct from English "June"
     }
 
     [Fact]
@@ -219,20 +218,20 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
     {
         var html = await _client.GetStringAsync($"/blog/post/{Slug}");
 
-        html.Should().Contain("Top Commented");
-        html.Should().Contain("Most Read");
-        html.Should().Contain("Leave a Comment");
-        html.Should().NotContain("Meistkommentiert");
-        html.Should().NotContain("Meistgelesen");
+        Assert.Contains("Top Commented", html);
+        Assert.Contains("Most Read", html);
+        Assert.Contains("Leave a Comment", html);
+        Assert.DoesNotContain("Meistkommentiert", html);
+        Assert.DoesNotContain("Meistgelesen", html);
 
         // Fix 3 coverage: same anonymous comment, rendered with the English author fallback and
         // the long-date ("D") portion of the culture-formatted timestamp for the English culture
         // (see the German test above for why "D" rather than the full "f" string — OS/ICU-robust).
         var enCulture = CultureInfo.GetCultureInfo("en");
-        html.Should().Contain(">Anonymous<");
-        html.Should().NotContain(">Anonym<");
-        html.Should().Contain(AnonymousCommentCreatedAt.ToString("D", enCulture));
-        html.Should().Contain("June"); // English month name; distinct from German "Juni"
+        Assert.Contains(">Anonymous<", html);
+        Assert.DoesNotContain(">Anonym<", html);
+        Assert.Contains(AnonymousCommentCreatedAt.ToString("D", enCulture), html);
+        Assert.Contains("June", html); // English month name; distinct from German "Juni"
     }
 
     [Fact]
@@ -244,10 +243,10 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         using var response = await _client.SendAsync(request);
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("Vernetzen");
-        html.Should().Contain("Fähigkeiten");
-        html.Should().NotContain(">Connect<");
-        html.Should().NotContain(">Skills<");
+        Assert.Contains("Vernetzen", html);
+        Assert.Contains("Fähigkeiten", html);
+        Assert.DoesNotContain(">Connect<", html);
+        Assert.DoesNotContain(">Skills<", html);
     }
 
     [Fact]
@@ -255,9 +254,9 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
     {
         var html = await _client.GetStringAsync($"/blog/author/{AuthorSlug}");
 
-        html.Should().Contain(">Connect<");
-        html.Should().Contain(">Skills<");
-        html.Should().NotContain("Vernetzen");
-        html.Should().NotContain("Fähigkeiten");
+        Assert.Contains(">Connect<", html);
+        Assert.Contains(">Skills<", html);
+        Assert.DoesNotContain("Vernetzen", html);
+        Assert.DoesNotContain("Fähigkeiten", html);
     }
 }

@@ -1,5 +1,4 @@
 using Bunit;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -100,7 +99,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
             .Add(x => x.Language, "de"));
 
         // Assert
-        cut.FindAll("a[href='/de/blog']").Should().NotBeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/de/blog']"));
     }
 
     [Fact]
@@ -116,7 +115,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
             .Add(x => x.Language, "de"));
 
         // Assert
-        cut.FindAll("a[href='/de/blog/author/jane-doe']").Should().NotBeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/de/blog/author/jane-doe']"));
     }
 
     // ── PostPage — Suffix-style links (default behavior preserved) ──────────
@@ -134,7 +133,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
             .Add(x => x.Language, "de"));
 
         // Assert
-        cut.FindAll("a[href='/blog/de']").Should().NotBeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/blog/de']"));
     }
 
     [Fact]
@@ -150,7 +149,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
             .Add(x => x.Language, "de"));
 
         // Assert
-        cut.FindAll("a[href='/blog/de/author/jane-doe']").Should().NotBeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/blog/de/author/jane-doe']"));
     }
 
     [Fact]
@@ -164,8 +163,8 @@ public class SeoAndLanguageRoutingTests : BunitContext
         var cut = Render<PostPage>(p => p.Add(x => x.PostSlug, "hello-world"));
 
         // Assert
-        cut.FindAll("a[href='/blog']").Should().NotBeEmpty();
-        cut.FindAll("a[href='/blog/author/jane-doe']").Should().NotBeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/blog']"));
+        Assert.NotEmpty(cut.FindAll("a[href='/blog/author/jane-doe']"));
     }
 
     // ── PostPage — <HeadContent> SEO ─────────────────────────────────────────
@@ -188,7 +187,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
 
         // Assert — canonicalizes to the *de* URL actually being rendered, not the default-lang one.
         var canonical = cut.Find("link[rel='canonical']");
-        canonical.GetAttribute("href").Should().Be("http://localhost/de/blog/post/hello-world");
+        Assert.Equal("http://localhost/de/blog/post/hello-world", canonical.GetAttribute("href"));
     }
 
     [Fact]
@@ -208,7 +207,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
         }));
 
         // Assert
-        cut.Find("meta[property='og:title']").GetAttribute("content").Should().Be("Deep Dive into Blazor SEO");
+        Assert.Equal("Deep Dive into Blazor SEO", cut.Find("meta[property='og:title']").GetAttribute("content"));
     }
 
     [Fact]
@@ -228,8 +227,8 @@ public class SeoAndLanguageRoutingTests : BunitContext
         }));
 
         // Assert
-        cut.Markup.Should().Contain("application/ld+json");
-        cut.Markup.Should().Contain("\"@type\":\"BlogPosting\"");
+        Assert.Contains("application/ld+json", cut.Markup);
+        Assert.Contains("\"@type\":\"BlogPosting\"", cut.Markup);
     }
 
     [Fact]
@@ -251,7 +250,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
         // Assert — under Prefix there is no bare /blog/... route, so the "en" alternate must carry
         // its own language segment rather than being bare, or it would 404.
         var alternate = cut.Find("link[hreflang='en']");
-        alternate.GetAttribute("href").Should().Be("http://localhost/en/blog/post/hello-world");
+        Assert.Equal("http://localhost/en/blog/post/hello-world", alternate.GetAttribute("href"));
     }
 
     [Fact]
@@ -276,8 +275,8 @@ public class SeoAndLanguageRoutingTests : BunitContext
         // self-referential canonical.
         var xDefault = cut.Find("link[hreflang='x-default']");
         var canonical = cut.Find("link[rel='canonical']");
-        xDefault.GetAttribute("href").Should().Be("http://localhost/en/blog/post/hello-world");
-        xDefault.GetAttribute("href").Should().NotBe(canonical.GetAttribute("href"));
+        Assert.Equal("http://localhost/en/blog/post/hello-world", xDefault.GetAttribute("href"));
+        Assert.NotEqual(canonical.GetAttribute("href"), xDefault.GetAttribute("href"));
     }
 
     [Fact]
@@ -303,8 +302,9 @@ public class SeoAndLanguageRoutingTests : BunitContext
         // Assert — same x-default value as the "de" variant test, even though this page's own
         // canonical is the "en" URL rather than the "de" one; under Prefix that "en" URL is itself
         // language-prefixed (/en/blog/...), never bare.
-        cut.Find("link[hreflang='x-default']").GetAttribute("href")
-            .Should().Be("http://localhost/en/blog/post/hello-world");
+        Assert.Equal(
+            "http://localhost/en/blog/post/hello-world",
+            cut.Find("link[hreflang='x-default']").GetAttribute("href"));
     }
 
     [Fact]
@@ -329,10 +329,10 @@ public class SeoAndLanguageRoutingTests : BunitContext
             .Select(el => el.GetAttribute("href"))
             .ToList();
 
-        alternateHrefs.Should().NotBeEmpty();
-        alternateHrefs.Should().NotContain(bareUrl);
-        alternateHrefs.Should().OnlyContain(href => href != null
-            && System.Text.RegularExpressions.Regex.IsMatch(href, "^http://localhost/[a-z]{2}/blog/post/hello-world$"));
+        Assert.NotEmpty(alternateHrefs);
+        Assert.DoesNotContain(bareUrl, alternateHrefs);
+        Assert.All(alternateHrefs, href => Assert.True(href != null
+            && System.Text.RegularExpressions.Regex.IsMatch(href, "^http://localhost/[a-z]{2}/blog/post/hello-world$")));
     }
 
     [Fact]
@@ -354,9 +354,10 @@ public class SeoAndLanguageRoutingTests : BunitContext
         }));
 
         // Assert
-        cut.Find("meta[property='article:published_time']").GetAttribute("content")
-            .Should().Be("2026-07-02T13:30:00.0000000Z");
-        cut.Markup.Should().Contain("\"datePublished\":\"2026-07-02T13:30:00.0000000Z\"");
+        Assert.Equal(
+            "2026-07-02T13:30:00.0000000Z",
+            cut.Find("meta[property='article:published_time']").GetAttribute("content"));
+        Assert.Contains("\"datePublished\":\"2026-07-02T13:30:00.0000000Z\"", cut.Markup);
     }
 
     [Fact]
@@ -376,7 +377,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
         }));
 
         // Assert
-        cut.Find("meta[property='og:locale']").GetAttribute("content").Should().Be("de_DE");
+        Assert.Equal("de_DE", cut.Find("meta[property='og:locale']").GetAttribute("content"));
     }
 
     // ── AuthorPage — single <h1> ──────────────────────────────────────────────
@@ -392,8 +393,8 @@ public class SeoAndLanguageRoutingTests : BunitContext
 
         // Assert
         var h1s = cut.FindAll("h1");
-        h1s.Should().HaveCount(1);
-        h1s[0].TextContent.Should().Contain("Jane Doe");
+        Assert.Single(h1s);
+        Assert.Contains("Jane Doe", h1s[0].TextContent);
     }
 
     // ── AuthorPage — language-aware links ────────────────────────────────────
@@ -411,7 +412,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
             .Add(x => x.Language, "de"));
 
         // Assert
-        cut.FindAll("a[href='/de/blog']").Should().NotBeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/de/blog']"));
     }
 
     [Fact]
@@ -442,7 +443,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
             .Add(x => x.Language, "de"));
 
         // Assert
-        cut.FindAll("a[href='/de/blog/post/recent-post']").Should().NotBeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/de/blog/post/recent-post']"));
     }
 
     [Fact]
@@ -462,8 +463,8 @@ public class SeoAndLanguageRoutingTests : BunitContext
         }));
 
         // Assert
-        cut.Markup.Should().Contain("\"@type\":\"ProfilePage\"");
-        cut.Find("link[rel='canonical']").GetAttribute("href").Should().Be("http://localhost/de/blog/author/jane-doe");
+        Assert.Contains("\"@type\":\"ProfilePage\"", cut.Markup);
+        Assert.Equal("http://localhost/de/blog/author/jane-doe", cut.Find("link[rel='canonical']").GetAttribute("href"));
     }
 
     // ── BlogPage — language-aware links + <HeadContent> ──────────────────────
@@ -503,8 +504,8 @@ public class SeoAndLanguageRoutingTests : BunitContext
         var cut = Render<BlogPage>(p => p.Add(x => x.Language, "de"));
 
         // Assert
-        cut.FindAll("a[href='/de/blog/post/hello-world']").Should().NotBeEmpty();
-        cut.FindAll("a[href='/de/blog/author/jane-doe']").Should().NotBeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/de/blog/post/hello-world']"));
+        Assert.NotEmpty(cut.FindAll("a[href='/de/blog/author/jane-doe']"));
     }
 
     [Fact]
@@ -530,7 +531,7 @@ public class SeoAndLanguageRoutingTests : BunitContext
         }));
 
         // Assert
-        cut.Find("link[rel='canonical']").GetAttribute("href").Should().Be("http://localhost/de/blog");
-        cut.Markup.Should().Contain("\"@type\":\"Blog\"");
+        Assert.Equal("http://localhost/de/blog", cut.Find("link[rel='canonical']").GetAttribute("href"));
+        Assert.Contains("\"@type\":\"Blog\"", cut.Markup);
     }
 }

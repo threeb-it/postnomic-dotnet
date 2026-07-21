@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
@@ -62,10 +61,10 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetBlogAsync();
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be("Test Blog");
-        result.Slug.Should().Be(BlogSlug);
-        result.Description.Should().Be("A test blog");
+        Assert.NotNull(result);
+        Assert.Equal("Test Blog", result!.Name);
+        Assert.Equal(BlogSlug, result.Slug);
+        Assert.Equal("A test blog", result.Description);
     }
 
     [Fact]
@@ -80,7 +79,7 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetBlogAsync();
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -119,8 +118,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetTagsAsync();
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().Contain(t => t.Slug == "csharp");
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, t => t.Slug == "csharp");
     }
 
     [Fact]
@@ -135,8 +134,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetTagsAsync();
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        Assert.NotNull(result);
+        Assert.Empty(result);
     }
 
     // ── GetCategoriesAsync ────────────────────────────────────────────────────
@@ -158,8 +157,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetCategoriesAsync();
 
         // Assert
-        result.Should().HaveCount(1);
-        result[0].Slug.Should().Be("tutorials");
+        Assert.Single(result);
+        Assert.Equal("tutorials", result[0].Slug);
     }
 
     [Fact]
@@ -174,8 +173,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetCategoriesAsync();
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        Assert.NotNull(result);
+        Assert.Empty(result);
     }
 
     // ── GetAuthorsAsync ───────────────────────────────────────────────────────
@@ -198,8 +197,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetAuthorsAsync();
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().Contain(a => a.Name == "Jane Doe");
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, a => a.Name == "Jane Doe");
     }
 
     [Fact]
@@ -214,8 +213,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetAuthorsAsync();
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        Assert.NotNull(result);
+        Assert.Empty(result);
     }
 
     // ── GetPostsAsync ─────────────────────────────────────────────────────────
@@ -360,9 +359,9 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetPostsAsync();
 
         // Assert
-        result.Items.Should().HaveCount(1);
-        result.Items.First().Slug.Should().Be("post-one");
-        result.TotalCount.Should().Be(1);
+        Assert.Single(result.Items);
+        Assert.Equal("post-one", result.Items.First().Slug);
+        Assert.Equal(1, result.TotalCount);
     }
 
     [Fact]
@@ -377,12 +376,12 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetPostsAsync(page: 2, pageSize: 10);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Items.Should().BeEmpty();
-        result.Page.Should().Be(2);
-        result.PageSize.Should().Be(10);
-        result.TotalCount.Should().Be(0);
-        result.TotalPages.Should().Be(0);
+        Assert.NotNull(result);
+        Assert.Empty(result.Items);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(10, result.PageSize);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(0, result.TotalPages);
     }
 
     [Fact]
@@ -407,10 +406,10 @@ public class PostnomicBlogServiceTests : IDisposable
         await _sut.GetPostsAsync(tag: null, category: null, author: null, search: null);
 
         // Assert
-        capturedUrl.Should().NotContain("tag=");
-        capturedUrl.Should().NotContain("category=");
-        capturedUrl.Should().NotContain("author=");
-        capturedUrl.Should().NotContain("search=");
+        Assert.DoesNotContain("tag=", capturedUrl);
+        Assert.DoesNotContain("category=", capturedUrl);
+        Assert.DoesNotContain("author=", capturedUrl);
+        Assert.DoesNotContain("search=", capturedUrl);
     }
 
     [Fact]
@@ -454,10 +453,10 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetPostAsync(postSlug);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Slug.Should().Be(postSlug);
-        result.Title.Should().Be("My Post");
-        result.CommentsEnabled.Should().BeTrue();
+        Assert.NotNull(result);
+        Assert.Equal(postSlug, result!.Slug);
+        Assert.Equal("My Post", result.Title);
+        Assert.True(result.CommentsEnabled);
     }
 
     [Fact]
@@ -472,7 +471,7 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetPostAsync("missing-post");
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -535,9 +534,9 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.CreateCommentAsync(postSlug, request);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.PublicId.Should().Be("cmt-1");
-        result.Body.Should().Be("Great!");
+        Assert.NotNull(result);
+        Assert.Equal("cmt-1", result!.PublicId);
+        Assert.Equal("Great!", result.Body);
     }
 
     [Fact]
@@ -555,7 +554,7 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.CreateCommentAsync(postSlug, request);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -573,7 +572,7 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.CreateCommentAsync(postSlug, request);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     // ── GetTopCommentedPostsAsync ─────────────────────────────────────────────
@@ -627,9 +626,9 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetTopCommentedPostsAsync();
 
         // Assert
-        result.Should().HaveCount(1);
-        result[0].Slug.Should().Be("top-post");
-        result[0].Count.Should().Be(100);
+        Assert.Single(result);
+        Assert.Equal("top-post", result[0].Slug);
+        Assert.Equal(100, result[0].Count);
     }
 
     [Fact]
@@ -644,8 +643,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetTopCommentedPostsAsync();
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        Assert.NotNull(result);
+        Assert.Empty(result);
     }
 
     // ── GetMostReadPostsAsync ─────────────────────────────────────────────────
@@ -683,8 +682,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetMostReadPostsAsync();
 
         // Assert
-        result.Should().HaveCount(1);
-        result[0].Count.Should().Be(9999);
+        Assert.Single(result);
+        Assert.Equal(9999, result[0].Count);
     }
 
     [Fact]
@@ -699,8 +698,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetMostReadPostsAsync();
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        Assert.NotNull(result);
+        Assert.Empty(result);
     }
 
     // ── RecordPageViewAsync ───────────────────────────────────────────────────
@@ -730,7 +729,7 @@ public class PostnomicBlogServiceTests : IDisposable
 
         // Act — should not throw
         var act = () => _sut.RecordPageViewAsync("session-xyz", postSlug: null);
-        await act.Should().NotThrowAsync();
+        Assert.Null(await Record.ExceptionAsync(act));
     }
 
     [Fact]
@@ -745,7 +744,7 @@ public class PostnomicBlogServiceTests : IDisposable
         var act = () => _sut.RecordPageViewAsync("session-xyz");
 
         // Assert
-        await act.Should().ThrowAsync<HttpRequestException>();
+        await Assert.ThrowsAsync<HttpRequestException>(act);
     }
 
     // ── UpdateReadDurationAsync ───────────────────────────────────────────────
@@ -777,7 +776,7 @@ public class PostnomicBlogServiceTests : IDisposable
         var act = () => _sut.UpdateReadDurationAsync("session-abc", 60);
 
         // Assert
-        await act.Should().ThrowAsync<HttpRequestException>();
+        await Assert.ThrowsAsync<HttpRequestException>(act);
     }
 
     // ── GetAuthorProfileAsync ─────────────────────────────────────────────────
@@ -805,13 +804,13 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetAuthorProfileAsync(authorSlug);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be("Jane Doe");
-        result.Slug.Should().Be(authorSlug);
-        result.Headline.Should().Be("Senior Engineer");
-        result.Bio.Should().Be("Writes about .NET");
-        result.Location.Should().Be("Berlin");
-        result.PostCount.Should().Be(12);
+        Assert.NotNull(result);
+        Assert.Equal("Jane Doe", result!.Name);
+        Assert.Equal(authorSlug, result.Slug);
+        Assert.Equal("Senior Engineer", result.Headline);
+        Assert.Equal("Writes about .NET", result.Bio);
+        Assert.Equal("Berlin", result.Location);
+        Assert.Equal(12, result.PostCount);
     }
 
     [Fact]
@@ -828,7 +827,7 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetAuthorProfileAsync(authorSlug);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -850,8 +849,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetAuthorProfileAsync(authorSlug);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.ProfileImageUrl.Should().Be($"{BaseUrl}/media/blob/avatar.jpg");
+        Assert.NotNull(result);
+        Assert.Equal($"{BaseUrl}/media/blob/avatar.jpg", result!.ProfileImageUrl);
     }
 
     [Fact]
@@ -873,8 +872,8 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetAuthorProfileAsync(authorSlug);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.HeaderImageUrl.Should().Be($"{BaseUrl}/media/blob/header.jpg");
+        Assert.NotNull(result);
+        Assert.Equal($"{BaseUrl}/media/blob/header.jpg", result!.HeaderImageUrl);
     }
 
     [Fact]
@@ -914,14 +913,15 @@ public class PostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetAuthorProfileAsync(authorSlug);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.RecentPosts.Should().HaveCount(2);
-        result.RecentPosts.Should().OnlyContain(
-            p => p.ThumbnailImageUrl!.StartsWith(BaseUrl));
-        result.RecentPosts.First(p => p.Slug == "post-one").ThumbnailImageUrl
-            .Should().Be($"{BaseUrl}/media/blob/post-one-thumb.jpg");
-        result.RecentPosts.First(p => p.Slug == "post-two").ThumbnailImageUrl
-            .Should().Be($"{BaseUrl}/media/blob/post-two-thumb.jpg");
+        Assert.NotNull(result);
+        Assert.Equal(2, result!.RecentPosts.Count());
+        Assert.All(result.RecentPosts, p => Assert.StartsWith(BaseUrl, p.ThumbnailImageUrl));
+        Assert.Equal(
+            $"{BaseUrl}/media/blob/post-one-thumb.jpg",
+            result.RecentPosts.First(p => p.Slug == "post-one").ThumbnailImageUrl);
+        Assert.Equal(
+            $"{BaseUrl}/media/blob/post-two-thumb.jpg",
+            result.RecentPosts.First(p => p.Slug == "post-two").ThumbnailImageUrl);
     }
 
     [Fact]

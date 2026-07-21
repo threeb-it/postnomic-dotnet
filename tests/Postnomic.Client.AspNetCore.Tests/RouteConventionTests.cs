@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +27,7 @@ public class RouteConventionTests
     {
         var templates = ApplyConvention("/blog", PostnomicLanguageRouteStyle.Suffix, IndexModel());
 
-        templates.Should().BeEquivalentTo(["blog", "blog/{lang:regex(^[a-z][a-z]$)}"]);
+        Assert.Equal(["blog", "blog/{lang:regex(^[a-z][a-z]$)}"], templates);
     }
 
     [Fact]
@@ -36,7 +35,7 @@ public class RouteConventionTests
     {
         var templates = ApplyConvention("/blog", PostnomicLanguageRouteStyle.Suffix, PostModel());
 
-        templates.Should().BeEquivalentTo(["blog/post/{postSlug}", "blog/{lang:regex(^[a-z][a-z]$)}/post/{postSlug}"]);
+        Assert.Equal(["blog/post/{postSlug}", "blog/{lang:regex(^[a-z][a-z]$)}/post/{postSlug}"], templates);
     }
 
     [Fact]
@@ -44,7 +43,7 @@ public class RouteConventionTests
     {
         var templates = ApplyConvention("/blog", PostnomicLanguageRouteStyle.Suffix, AuthorModel());
 
-        templates.Should().BeEquivalentTo(["blog/author/{authorSlug}", "blog/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}"]);
+        Assert.Equal(["blog/author/{authorSlug}", "blog/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}"], templates);
     }
 
     // ── Prefix — single route, lang leads and is required ─────────────────────
@@ -54,7 +53,7 @@ public class RouteConventionTests
     {
         var templates = ApplyConvention("/blog", PostnomicLanguageRouteStyle.Prefix, IndexModel());
 
-        templates.Should().BeEquivalentTo(["{lang:regex(^[a-z][a-z]$)}/blog"]);
+        Assert.Equal(["{lang:regex(^[a-z][a-z]$)}/blog"], templates);
     }
 
     [Fact]
@@ -62,7 +61,7 @@ public class RouteConventionTests
     {
         var templates = ApplyConvention("/blog", PostnomicLanguageRouteStyle.Prefix, PostModel());
 
-        templates.Should().BeEquivalentTo(["{lang:regex(^[a-z][a-z]$)}/blog/post/{postSlug}"]);
+        Assert.Equal(["{lang:regex(^[a-z][a-z]$)}/blog/post/{postSlug}"], templates);
     }
 
     [Fact]
@@ -70,7 +69,7 @@ public class RouteConventionTests
     {
         var templates = ApplyConvention("/blog", PostnomicLanguageRouteStyle.Prefix, AuthorModel());
 
-        templates.Should().BeEquivalentTo(["{lang:regex(^[a-z][a-z]$)}/blog/author/{authorSlug}"]);
+        Assert.Equal(["{lang:regex(^[a-z][a-z]$)}/blog/author/{authorSlug}"], templates);
     }
 
     // ── None — single bare route, no language segment ─────────────────────────
@@ -80,7 +79,7 @@ public class RouteConventionTests
     {
         var templates = ApplyConvention("/blog", PostnomicLanguageRouteStyle.None, IndexModel());
 
-        templates.Should().BeEquivalentTo(["blog"]);
+        Assert.Equal(["blog"], templates);
     }
 
     [Fact]
@@ -88,7 +87,7 @@ public class RouteConventionTests
     {
         var templates = ApplyConvention("/blog", PostnomicLanguageRouteStyle.None, PostModel());
 
-        templates.Should().BeEquivalentTo(["blog/post/{postSlug}"]);
+        Assert.Equal(["blog/post/{postSlug}"], templates);
     }
 
     [Fact]
@@ -96,7 +95,7 @@ public class RouteConventionTests
     {
         var templates = ApplyConvention("/blog", PostnomicLanguageRouteStyle.None, AuthorModel());
 
-        templates.Should().BeEquivalentTo(["blog/author/{authorSlug}"]);
+        Assert.Equal(["blog/author/{authorSlug}"], templates);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

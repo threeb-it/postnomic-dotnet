@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,8 +36,8 @@ public class PostnomicAspNetCoreExtensionsTests
 
         // Assert
         var service = provider.GetService<IPostnomicBlogService>();
-        service.Should().NotBeNull();
-        service.Should().BeOfType<PostnomicBlogService>();
+        Assert.NotNull(service);
+        Assert.IsType<PostnomicBlogService>(service);
     }
 
     [Fact]
@@ -51,7 +50,7 @@ public class PostnomicAspNetCoreExtensionsTests
         var returned = services.AddPostnomicBlog(o => o.BaseUrl = "https://api.example.com");
 
         // Assert
-        returned.Should().BeSameAs(services);
+        Assert.Same(services, returned);
     }
 
     // ── PostnomicClientOptions configuration ──────────────────────────────────
@@ -69,7 +68,7 @@ public class PostnomicAspNetCoreExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.BaseUrl.Should().Be("https://custom.example.com");
+        Assert.Equal("https://custom.example.com", options.BaseUrl);
     }
 
     [Fact]
@@ -85,7 +84,7 @@ public class PostnomicAspNetCoreExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.ApiKey.Should().Be("razor-pages-key");
+        Assert.Equal("razor-pages-key", options.ApiKey);
     }
 
     [Fact]
@@ -101,7 +100,7 @@ public class PostnomicAspNetCoreExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.BlogSlug.Should().Be("razor-blog");
+        Assert.Equal("razor-blog", options.BlogSlug);
     }
 
     [Fact]
@@ -122,9 +121,9 @@ public class PostnomicAspNetCoreExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.BaseUrl.Should().Be("https://api.postnomic.com");
-        options.ApiKey.Should().Be("super-secret");
-        options.BlogSlug.Should().Be("engineering");
+        Assert.Equal("https://api.postnomic.com", options.BaseUrl);
+        Assert.Equal("super-secret", options.ApiKey);
+        Assert.Equal("engineering", options.BlogSlug);
     }
 
     // ── PostnomicClientOptions.BasePath configuration ────────────────────────
@@ -145,7 +144,7 @@ public class PostnomicAspNetCoreExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.BasePath.Should().Be("/blog");
+        Assert.Equal("/blog", options.BasePath);
     }
 
     [Fact]
@@ -164,7 +163,7 @@ public class PostnomicAspNetCoreExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.BasePath.Should().Be("/articles");
+        Assert.Equal("/articles", options.BasePath);
     }
 
     // ── MapPostnomicBlog ──────────────────────────────────────────────────────
@@ -183,7 +182,7 @@ public class PostnomicAspNetCoreExtensionsTests
         var returned = builder.MapPostnomicBlog();
 
         // Assert
-        returned.Should().BeSameAs(builder);
+        Assert.Same(builder, returned);
     }
 
     // ── PostnomicBlogAreaRouteConvention — registration ───────────────────────
@@ -207,10 +206,8 @@ public class PostnomicAspNetCoreExtensionsTests
             .GetRequiredService<IOptions<RazorPagesOptions>>().Value;
 
         // Assert — the Blog area route convention must be registered exactly once
-        razorPagesOptions.Conventions
-            .OfType<IPageRouteModelConvention>()
-            .Should().ContainSingle(
-                "AddPostnomicBlog must register exactly one IPageRouteModelConvention");
+        // "AddPostnomicBlog must register exactly one IPageRouteModelConvention"
+        Assert.Single(razorPagesOptions.Conventions.OfType<IPageRouteModelConvention>());
     }
 
     // ── PostnomicBlogAreaRouteConvention — Author page routing ────────────────
@@ -236,11 +233,9 @@ public class PostnomicAspNetCoreExtensionsTests
         convention.Apply(model);
 
         // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
-        model.Selectors.Should().HaveCount(3);
-        model.Selectors[1].AttributeRouteModel!.Template
-            .Should().Be("blog/author/{authorSlug}");
-        model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("blog/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}");
+        Assert.Equal(3, model.Selectors.Count());
+        Assert.Equal("blog/author/{authorSlug}", model.Selectors[1].AttributeRouteModel!.Template);
+        Assert.Equal("blog/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}", model.Selectors[2].AttributeRouteModel!.Template);
     }
 
     [Fact]
@@ -263,11 +258,9 @@ public class PostnomicAspNetCoreExtensionsTests
         convention.Apply(model);
 
         // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
-        model.Selectors.Should().HaveCount(3);
-        model.Selectors[1].AttributeRouteModel!.Template
-            .Should().Be("articles/author/{authorSlug}");
-        model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("articles/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}");
+        Assert.Equal(3, model.Selectors.Count());
+        Assert.Equal("articles/author/{authorSlug}", model.Selectors[1].AttributeRouteModel!.Template);
+        Assert.Equal("articles/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}", model.Selectors[2].AttributeRouteModel!.Template);
     }
 
     [Fact]
@@ -290,11 +283,9 @@ public class PostnomicAspNetCoreExtensionsTests
         convention.Apply(model);
 
         // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
-        model.Selectors.Should().HaveCount(3);
-        model.Selectors[1].AttributeRouteModel!.Template
-            .Should().Be("news/author/{authorSlug}");
-        model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("news/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}");
+        Assert.Equal(3, model.Selectors.Count());
+        Assert.Equal("news/author/{authorSlug}", model.Selectors[1].AttributeRouteModel!.Template);
+        Assert.Equal("news/{lang:regex(^[a-z][a-z]$)}/author/{authorSlug}", model.Selectors[2].AttributeRouteModel!.Template);
     }
 
     [Fact]
@@ -325,8 +316,7 @@ public class PostnomicAspNetCoreExtensionsTests
         convention.Apply(model);
 
         // Assert — template must be left untouched
-        model.Selectors[0].AttributeRouteModel!.Template
-            .Should().Be("original");
+        Assert.Equal("original", model.Selectors[0].AttributeRouteModel!.Template);
     }
 
     [Fact]
@@ -354,8 +344,8 @@ public class PostnomicAspNetCoreExtensionsTests
         var act = () => convention.Apply(model);
 
         // Assert — no exception, and the null selector is left intact
-        act.Should().NotThrow();
-        model.Selectors[0].AttributeRouteModel.Should().BeNull();
+        Assert.Null(Record.Exception(act));
+        Assert.Null(model.Selectors[0].AttributeRouteModel);
     }
 
     // ── PostnomicBlogAreaRouteConvention — other Blog pages ───────────────────
@@ -387,11 +377,9 @@ public class PostnomicAspNetCoreExtensionsTests
         convention.Apply(model);
 
         // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
-        model.Selectors.Should().HaveCount(3);
-        model.Selectors[1].AttributeRouteModel!.Template
-            .Should().Be("blog");
-        model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("blog/{lang:regex(^[a-z][a-z]$)}");
+        Assert.Equal(3, model.Selectors.Count());
+        Assert.Equal("blog", model.Selectors[1].AttributeRouteModel!.Template);
+        Assert.Equal("blog/{lang:regex(^[a-z][a-z]$)}", model.Selectors[2].AttributeRouteModel!.Template);
     }
 
     [Fact]
@@ -421,11 +409,9 @@ public class PostnomicAspNetCoreExtensionsTests
         convention.Apply(model);
 
         // Assert — convention adds two new selectors: the mapped route and its /{lang}/ variant
-        model.Selectors.Should().HaveCount(3);
-        model.Selectors[1].AttributeRouteModel!.Template
-            .Should().Be("blog/post/{postSlug}");
-        model.Selectors[2].AttributeRouteModel!.Template
-            .Should().Be("blog/{lang:regex(^[a-z][a-z]$)}/post/{postSlug}");
+        Assert.Equal(3, model.Selectors.Count());
+        Assert.Equal("blog/post/{postSlug}", model.Selectors[1].AttributeRouteModel!.Template);
+        Assert.Equal("blog/{lang:regex(^[a-z][a-z]$)}/post/{postSlug}", model.Selectors[2].AttributeRouteModel!.Template);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

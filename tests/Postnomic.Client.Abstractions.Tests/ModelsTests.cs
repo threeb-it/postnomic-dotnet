@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Postnomic.Client.Abstractions.Models;
 
 namespace Postnomic.Client.Abstractions.Tests;
@@ -25,9 +24,9 @@ public class ModelsTests
         };
 
         // Assert
-        blog.Name.Should().Be("My Blog");
-        blog.Slug.Should().Be("my-blog");
-        blog.Description.Should().Be("A short description");
+        Assert.Equal("My Blog", blog.Name);
+        Assert.Equal("my-blog", blog.Slug);
+        Assert.Equal("A short description", blog.Description);
     }
 
     [Fact]
@@ -37,7 +36,7 @@ public class ModelsTests
         var blog = new PostnomicBlogInfo { Name = "Blog", Slug = "blog" };
 
         // Assert
-        blog.Description.Should().BeNull();
+        Assert.Null(blog.Description);
     }
 
     [Fact]
@@ -50,9 +49,9 @@ public class ModelsTests
         var updated = original with { Name = "New Name" };
 
         // Assert
-        updated.Name.Should().Be("New Name");
-        updated.Slug.Should().Be("old-slug");
-        original.Name.Should().Be("Old Name");
+        Assert.Equal("New Name", updated.Name);
+        Assert.Equal("old-slug", updated.Slug);
+        Assert.Equal("Old Name", original.Name);
     }
 
     // ── PostnomicTag ──────────────────────────────────────────────────────────
@@ -64,9 +63,9 @@ public class ModelsTests
         var tag = new PostnomicTag { Name = "C# Tips", Slug = "csharp-tips", PostCount = 7 };
 
         // Assert
-        tag.Name.Should().Be("C# Tips");
-        tag.Slug.Should().Be("csharp-tips");
-        tag.PostCount.Should().Be(7);
+        Assert.Equal("C# Tips", tag.Name);
+        Assert.Equal("csharp-tips", tag.Slug);
+        Assert.Equal(7, tag.PostCount);
     }
 
     [Fact]
@@ -76,7 +75,7 @@ public class ModelsTests
         var tag = new PostnomicTag { Name = "Tag", Slug = "tag" };
 
         // Assert
-        tag.PostCount.Should().Be(0);
+        Assert.Equal(0, tag.PostCount);
     }
 
     [Fact]
@@ -89,9 +88,9 @@ public class ModelsTests
         var updated = original with { PostCount = 10 };
 
         // Assert
-        updated.PostCount.Should().Be(10);
-        updated.Name.Should().Be("Tag");
-        original.PostCount.Should().Be(3);
+        Assert.Equal(10, updated.PostCount);
+        Assert.Equal("Tag", updated.Name);
+        Assert.Equal(3, original.PostCount);
     }
 
     // ── PostnomicCategory ─────────────────────────────────────────────────────
@@ -108,9 +107,9 @@ public class ModelsTests
         };
 
         // Assert
-        category.Name.Should().Be("Tutorials");
-        category.Slug.Should().Be("tutorials");
-        category.PostCount.Should().Be(12);
+        Assert.Equal("Tutorials", category.Name);
+        Assert.Equal("tutorials", category.Slug);
+        Assert.Equal(12, category.PostCount);
     }
 
     [Fact]
@@ -120,7 +119,7 @@ public class ModelsTests
         var category = new PostnomicCategory { Name = "Cat", Slug = "cat" };
 
         // Assert
-        category.PostCount.Should().Be(0);
+        Assert.Equal(0, category.PostCount);
     }
 
     [Fact]
@@ -133,8 +132,8 @@ public class ModelsTests
         var updated = original with { Slug = "new-cat" };
 
         // Assert
-        updated.Slug.Should().Be("new-cat");
-        original.Slug.Should().Be("cat");
+        Assert.Equal("new-cat", updated.Slug);
+        Assert.Equal("cat", original.Slug);
     }
 
     // ── PostnomicAuthor ───────────────────────────────────────────────────────
@@ -146,8 +145,8 @@ public class ModelsTests
         var author = new PostnomicAuthor { Name = "Jane Doe", PostCount = 4 };
 
         // Assert
-        author.Name.Should().Be("Jane Doe");
-        author.PostCount.Should().Be(4);
+        Assert.Equal("Jane Doe", author.Name);
+        Assert.Equal(4, author.PostCount);
     }
 
     [Fact]
@@ -157,7 +156,7 @@ public class ModelsTests
         var author = new PostnomicAuthor { Name = "Anonymous" };
 
         // Assert
-        author.PostCount.Should().Be(0);
+        Assert.Equal(0, author.PostCount);
     }
 
     [Fact]
@@ -170,9 +169,9 @@ public class ModelsTests
         var updated = original with { Name = "John" };
 
         // Assert
-        updated.Name.Should().Be("John");
-        updated.PostCount.Should().Be(2);
-        original.Name.Should().Be("Jane");
+        Assert.Equal("John", updated.Name);
+        Assert.Equal(2, updated.PostCount);
+        Assert.Equal("Jane", original.Name);
     }
 
     // ── PostnomicPostSummary ──────────────────────────────────────────────────
@@ -190,10 +189,10 @@ public class ModelsTests
         };
 
         // Assert
-        summary.Slug.Should().Be("my-first-post");
-        summary.Title.Should().Be("My First Post");
-        summary.AuthorName.Should().Be("Jane Doe");
-        summary.PublishedAt.Should().Be(new DateTime(2025, 1, 15, 10, 0, 0, DateTimeKind.Utc));
+        Assert.Equal("my-first-post", summary.Slug);
+        Assert.Equal("My First Post", summary.Title);
+        Assert.Equal("Jane Doe", summary.AuthorName);
+        Assert.Equal(new DateTime(2025, 1, 15, 10, 0, 0, DateTimeKind.Utc), summary.PublishedAt);
     }
 
     [Fact]
@@ -208,8 +207,8 @@ public class ModelsTests
         };
 
         // Assert
-        summary.Excerpt.Should().BeNull();
-        summary.ThumbnailImageUrl.Should().BeNull();
+        Assert.Null(summary.Excerpt);
+        Assert.Null(summary.ThumbnailImageUrl);
     }
 
     [Fact]
@@ -224,8 +223,8 @@ public class ModelsTests
         };
 
         // Assert
-        summary.Tags.Should().NotBeNull();
-        summary.Tags.Should().BeEmpty();
+        Assert.NotNull(summary.Tags);
+        Assert.Empty(summary.Tags);
     }
 
     [Fact]
@@ -240,8 +239,8 @@ public class ModelsTests
         };
 
         // Assert
-        summary.Categories.Should().NotBeNull();
-        summary.Categories.Should().BeEmpty();
+        Assert.NotNull(summary.Categories);
+        Assert.Empty(summary.Categories);
     }
 
     [Fact]
@@ -256,7 +255,7 @@ public class ModelsTests
         };
 
         // Assert
-        summary.CommentCount.Should().Be(0);
+        Assert.Equal(0, summary.CommentCount);
     }
 
     [Fact]
@@ -275,10 +274,10 @@ public class ModelsTests
         var updated = original with { Title = "Updated Title", CommentCount = 5 };
 
         // Assert
-        updated.Title.Should().Be("Updated Title");
-        updated.CommentCount.Should().Be(5);
-        updated.Slug.Should().Be("original");
-        original.Title.Should().Be("Original Title");
+        Assert.Equal("Updated Title", updated.Title);
+        Assert.Equal(5, updated.CommentCount);
+        Assert.Equal("original", updated.Slug);
+        Assert.Equal("Original Title", original.Title);
     }
 
     // ── PostnomicPostDetail ───────────────────────────────────────────────────
@@ -296,9 +295,9 @@ public class ModelsTests
         };
 
         // Assert
-        detail.Slug.Should().Be("detail-post");
-        detail.Title.Should().Be("Detail Post");
-        detail.AuthorName.Should().Be("John Smith");
+        Assert.Equal("detail-post", detail.Slug);
+        Assert.Equal("Detail Post", detail.Title);
+        Assert.Equal("John Smith", detail.AuthorName);
     }
 
     [Fact]
@@ -313,9 +312,9 @@ public class ModelsTests
         };
 
         // Assert
-        detail.Content.Should().BeNull();
-        detail.Excerpt.Should().BeNull();
-        detail.CoverImageUrl.Should().BeNull();
+        Assert.Null(detail.Content);
+        Assert.Null(detail.Excerpt);
+        Assert.Null(detail.CoverImageUrl);
     }
 
     [Fact]
@@ -330,13 +329,13 @@ public class ModelsTests
         };
 
         // Assert
-        detail.CommentsEnabled.Should().BeFalse();
-        detail.CommentRequireModeration.Should().BeFalse();
-        detail.CommentRequireFirstname.Should().BeFalse();
-        detail.CommentRequireLastname.Should().BeFalse();
-        detail.CommentRequireEmail.Should().BeFalse();
-        detail.CommentRequirePhone.Should().BeFalse();
-        detail.CommentRequireSubject.Should().BeFalse();
+        Assert.False(detail.CommentsEnabled);
+        Assert.False(detail.CommentRequireModeration);
+        Assert.False(detail.CommentRequireFirstname);
+        Assert.False(detail.CommentRequireLastname);
+        Assert.False(detail.CommentRequireEmail);
+        Assert.False(detail.CommentRequirePhone);
+        Assert.False(detail.CommentRequireSubject);
     }
 
     [Fact]
@@ -351,8 +350,8 @@ public class ModelsTests
         };
 
         // Assert
-        detail.Tags.Should().NotBeNull();
-        detail.Tags.Should().BeEmpty();
+        Assert.NotNull(detail.Tags);
+        Assert.Empty(detail.Tags);
     }
 
     [Fact]
@@ -367,8 +366,8 @@ public class ModelsTests
         };
 
         // Assert
-        detail.Categories.Should().NotBeNull();
-        detail.Categories.Should().BeEmpty();
+        Assert.NotNull(detail.Categories);
+        Assert.Empty(detail.Categories);
     }
 
     [Fact]
@@ -383,8 +382,8 @@ public class ModelsTests
         };
 
         // Assert
-        detail.Comments.Should().NotBeNull();
-        detail.Comments.Should().BeEmpty();
+        Assert.NotNull(detail.Comments);
+        Assert.Empty(detail.Comments);
     }
 
     [Fact]
@@ -403,9 +402,9 @@ public class ModelsTests
         var updated = original with { CommentsEnabled = true, Content = "<p>Hello</p>" };
 
         // Assert
-        updated.CommentsEnabled.Should().BeTrue();
-        updated.Content.Should().Be("<p>Hello</p>");
-        original.CommentsEnabled.Should().BeFalse();
+        Assert.True(updated.CommentsEnabled);
+        Assert.Equal("<p>Hello</p>", updated.Content);
+        Assert.False(original.CommentsEnabled);
     }
 
     // ── PostnomicComment ──────────────────────────────────────────────────────
@@ -422,9 +421,9 @@ public class ModelsTests
         };
 
         // Assert
-        comment.PublicId.Should().Be("abc-123");
-        comment.Body.Should().Be("Great post!");
-        comment.CreatedAt.Should().Be(new DateTime(2025, 2, 20, 9, 0, 0, DateTimeKind.Utc));
+        Assert.Equal("abc-123", comment.PublicId);
+        Assert.Equal("Great post!", comment.Body);
+        Assert.Equal(new DateTime(2025, 2, 20, 9, 0, 0, DateTimeKind.Utc), comment.CreatedAt);
     }
 
     [Fact]
@@ -434,8 +433,8 @@ public class ModelsTests
         var comment = new PostnomicComment { PublicId = "id", Body = "Body" };
 
         // Assert
-        comment.Subject.Should().BeNull();
-        comment.AuthorName.Should().BeNull();
+        Assert.Null(comment.Subject);
+        Assert.Null(comment.AuthorName);
     }
 
     [Fact]
@@ -445,8 +444,8 @@ public class ModelsTests
         var comment = new PostnomicComment { PublicId = "id", Body = "Body" };
 
         // Assert
-        comment.Replies.Should().NotBeNull();
-        comment.Replies.Should().BeEmpty();
+        Assert.NotNull(comment.Replies);
+        Assert.Empty(comment.Replies);
     }
 
     [Fact]
@@ -459,9 +458,9 @@ public class ModelsTests
         var updated = original with { Body = "Updated body", AuthorName = "Jane" };
 
         // Assert
-        updated.Body.Should().Be("Updated body");
-        updated.AuthorName.Should().Be("Jane");
-        original.Body.Should().Be("Original body");
+        Assert.Equal("Updated body", updated.Body);
+        Assert.Equal("Jane", updated.AuthorName);
+        Assert.Equal("Original body", original.Body);
     }
 
     // ── PostnomicPopularPost ──────────────────────────────────────────────────
@@ -478,9 +477,9 @@ public class ModelsTests
         };
 
         // Assert
-        post.Slug.Should().Be("popular-post");
-        post.Title.Should().Be("Popular Post");
-        post.Count.Should().Be(42);
+        Assert.Equal("popular-post", post.Slug);
+        Assert.Equal("Popular Post", post.Title);
+        Assert.Equal(42, post.Count);
     }
 
     [Fact]
@@ -490,7 +489,7 @@ public class ModelsTests
         var post = new PostnomicPopularPost { Slug = "slug", Title = "Title" };
 
         // Assert
-        post.Count.Should().Be(0);
+        Assert.Equal(0, post.Count);
     }
 
     [Fact]
@@ -503,8 +502,8 @@ public class ModelsTests
         var updated = original with { Count = 99 };
 
         // Assert
-        updated.Count.Should().Be(99);
-        original.Count.Should().Be(5);
+        Assert.Equal(99, updated.Count);
+        Assert.Equal(5, original.Count);
     }
 
     // ── PostnomicPagedResult<T> ───────────────────────────────────────────────
@@ -529,11 +528,11 @@ public class ModelsTests
         };
 
         // Assert
-        result.Items.Should().HaveCount(1);
-        result.Page.Should().Be(2);
-        result.PageSize.Should().Be(10);
-        result.TotalCount.Should().Be(21);
-        result.TotalPages.Should().Be(3);
+        Assert.Single(result.Items);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(10, result.PageSize);
+        Assert.Equal(21, result.TotalCount);
+        Assert.Equal(3, result.TotalPages);
     }
 
     [Fact]
@@ -543,10 +542,10 @@ public class ModelsTests
         var result = new PostnomicPagedResult<PostnomicTag> { Items = [] };
 
         // Assert
-        result.Page.Should().Be(0);
-        result.PageSize.Should().Be(0);
-        result.TotalCount.Should().Be(0);
-        result.TotalPages.Should().Be(0);
+        Assert.Equal(0, result.Page);
+        Assert.Equal(0, result.PageSize);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(0, result.TotalPages);
     }
 
     [Fact]
@@ -566,10 +565,10 @@ public class ModelsTests
         var updated = original with { Page = 2, TotalCount = 7, TotalPages = 2 };
 
         // Assert
-        updated.Page.Should().Be(2);
-        updated.TotalCount.Should().Be(7);
-        updated.TotalPages.Should().Be(2);
-        original.Page.Should().Be(1);
+        Assert.Equal(2, updated.Page);
+        Assert.Equal(7, updated.TotalCount);
+        Assert.Equal(2, updated.TotalPages);
+        Assert.Equal(1, original.Page);
     }
 
     // ── PostnomicCreateCommentRequest ─────────────────────────────────────────
@@ -581,7 +580,7 @@ public class ModelsTests
         var request = new PostnomicCreateCommentRequest { Body = "This is my comment." };
 
         // Assert
-        request.Body.Should().Be("This is my comment.");
+        Assert.Equal("This is my comment.", request.Body);
     }
 
     [Fact]
@@ -591,12 +590,12 @@ public class ModelsTests
         var request = new PostnomicCreateCommentRequest { Body = "Body" };
 
         // Assert
-        request.ParentCommentPublicId.Should().BeNull();
-        request.Subject.Should().BeNull();
-        request.AuthorFirstname.Should().BeNull();
-        request.AuthorLastname.Should().BeNull();
-        request.AuthorEmail.Should().BeNull();
-        request.AuthorPhone.Should().BeNull();
+        Assert.Null(request.ParentCommentPublicId);
+        Assert.Null(request.Subject);
+        Assert.Null(request.AuthorFirstname);
+        Assert.Null(request.AuthorLastname);
+        Assert.Null(request.AuthorEmail);
+        Assert.Null(request.AuthorPhone);
     }
 
     [Fact]
@@ -615,13 +614,13 @@ public class ModelsTests
         };
 
         // Assert
-        request.ParentCommentPublicId.Should().Be("parent-id");
-        request.Subject.Should().Be("Re: Great post");
-        request.Body.Should().Be("Thanks for the article!");
-        request.AuthorFirstname.Should().Be("Jane");
-        request.AuthorLastname.Should().Be("Doe");
-        request.AuthorEmail.Should().Be("jane@example.com");
-        request.AuthorPhone.Should().Be("+1-555-0100");
+        Assert.Equal("parent-id", request.ParentCommentPublicId);
+        Assert.Equal("Re: Great post", request.Subject);
+        Assert.Equal("Thanks for the article!", request.Body);
+        Assert.Equal("Jane", request.AuthorFirstname);
+        Assert.Equal("Doe", request.AuthorLastname);
+        Assert.Equal("jane@example.com", request.AuthorEmail);
+        Assert.Equal("+1-555-0100", request.AuthorPhone);
     }
 
     [Fact]
@@ -638,9 +637,9 @@ public class ModelsTests
         var updated = original with { AuthorFirstname = "John", AuthorLastname = "Doe" };
 
         // Assert
-        updated.AuthorFirstname.Should().Be("John");
-        updated.AuthorLastname.Should().Be("Doe");
-        updated.Body.Should().Be("Original body");
-        original.AuthorFirstname.Should().Be("Jane");
+        Assert.Equal("John", updated.AuthorFirstname);
+        Assert.Equal("Doe", updated.AuthorLastname);
+        Assert.Equal("Original body", updated.Body);
+        Assert.Equal("Jane", original.AuthorFirstname);
     }
 }

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Postnomic.Client.Abstractions;
@@ -33,8 +32,8 @@ public class NamedClientRegistrationTests
 
         // Assert
         var service = provider.GetKeyedService<IPostnomicBlogService>("blog-a");
-        service.Should().NotBeNull();
-        service.Should().BeOfType<PostnomicBlogService>();
+        Assert.NotNull(service);
+        Assert.IsType<PostnomicBlogService>(service);
     }
 
     [Fact]
@@ -47,7 +46,7 @@ public class NamedClientRegistrationTests
         var returned = services.AddPostnomicClient("blog-a", o => o.BaseUrl = "https://api.example.com");
 
         // Assert
-        returned.Should().BeSameAs(services);
+        Assert.Same(services, returned);
     }
 
     // ── Multiple named registrations coexist ───────────────────────────────────
@@ -77,9 +76,9 @@ public class NamedClientRegistrationTests
         var serviceB = provider.GetKeyedService<IPostnomicBlogService>("blog-b");
 
         // Assert
-        serviceA.Should().NotBeNull();
-        serviceB.Should().NotBeNull();
-        serviceA.Should().NotBeSameAs(serviceB);
+        Assert.NotNull(serviceA);
+        Assert.NotNull(serviceB);
+        Assert.NotSame(serviceB, serviceA);
     }
 
     // ── Named options via IOptionsMonitor ───────────────────────────────────────
@@ -103,9 +102,9 @@ public class NamedClientRegistrationTests
         var options = monitor.Get("blog-a");
 
         // Assert
-        options.BaseUrl.Should().Be("https://api-a.example.com");
-        options.ApiKey.Should().Be("key-a");
-        options.BlogSlug.Should().Be("slug-a");
+        Assert.Equal("https://api-a.example.com", options.BaseUrl);
+        Assert.Equal("key-a", options.ApiKey);
+        Assert.Equal("slug-a", options.BlogSlug);
     }
 
     [Fact]
@@ -134,13 +133,13 @@ public class NamedClientRegistrationTests
         var optionsB = monitor.Get("blog-b");
 
         // Assert
-        optionsA.BaseUrl.Should().Be("https://api-a.example.com");
-        optionsA.ApiKey.Should().Be("key-a");
-        optionsA.BlogSlug.Should().Be("slug-a");
+        Assert.Equal("https://api-a.example.com", optionsA.BaseUrl);
+        Assert.Equal("key-a", optionsA.ApiKey);
+        Assert.Equal("slug-a", optionsA.BlogSlug);
 
-        optionsB.BaseUrl.Should().Be("https://api-b.example.com");
-        optionsB.ApiKey.Should().Be("key-b");
-        optionsB.BlogSlug.Should().Be("slug-b");
+        Assert.Equal("https://api-b.example.com", optionsB.BaseUrl);
+        Assert.Equal("key-b", optionsB.ApiKey);
+        Assert.Equal("slug-b", optionsB.BlogSlug);
     }
 
     // ── Caching decorator for named blogs ──────────────────────────────────────
@@ -164,8 +163,8 @@ public class NamedClientRegistrationTests
         var service = provider.GetKeyedService<IPostnomicBlogService>("cached-blog");
 
         // Assert
-        service.Should().NotBeNull();
-        service.Should().BeOfType<CachingPostnomicBlogService>();
+        Assert.NotNull(service);
+        Assert.IsType<CachingPostnomicBlogService>(service);
     }
 
     [Fact]
@@ -186,8 +185,8 @@ public class NamedClientRegistrationTests
         var service = provider.GetKeyedService<IPostnomicBlogService>("plain-blog");
 
         // Assert
-        service.Should().NotBeNull();
-        service.Should().BeOfType<PostnomicBlogService>();
+        Assert.NotNull(service);
+        Assert.IsType<PostnomicBlogService>(service);
     }
 
     // ── Named and default registrations coexist ────────────────────────────────
@@ -221,9 +220,9 @@ public class NamedClientRegistrationTests
         var namedService = provider.GetKeyedService<IPostnomicBlogService>("named-blog");
 
         // Assert
-        defaultService.Should().NotBeNull();
-        namedService.Should().NotBeNull();
-        defaultService.Should().NotBeSameAs(namedService);
+        Assert.NotNull(defaultService);
+        Assert.NotNull(namedService);
+        Assert.NotSame(namedService, defaultService);
     }
 
     [Fact]
@@ -254,11 +253,11 @@ public class NamedClientRegistrationTests
         var namedOptions = monitor.Get("named-blog");
 
         // Assert
-        defaultOptions.BaseUrl.Should().Be("https://default.example.com");
-        defaultOptions.ApiKey.Should().Be("default-key");
+        Assert.Equal("https://default.example.com", defaultOptions.BaseUrl);
+        Assert.Equal("default-key", defaultOptions.ApiKey);
 
-        namedOptions.BaseUrl.Should().Be("https://named.example.com");
-        namedOptions.ApiKey.Should().Be("named-key");
+        Assert.Equal("https://named.example.com", namedOptions.BaseUrl);
+        Assert.Equal("named-key", namedOptions.ApiKey);
     }
 
     // ── HttpClient uses correct base URL per named blog ────────────────────────
@@ -290,7 +289,7 @@ public class NamedClientRegistrationTests
         var actB = () => provider.GetRequiredKeyedService<IPostnomicBlogService>("blog-b");
 
         // Assert
-        actA.Should().NotThrow();
-        actB.Should().NotThrow();
+        Assert.Null(Record.Exception(actA));
+        Assert.Null(Record.Exception(actB));
     }
 }

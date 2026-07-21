@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Postnomic.Client.Abstractions.Models;
 using Postnomic.Client.Abstractions.Seo;
 using Xunit;
@@ -43,7 +42,7 @@ public class PostnomicSeoBuilderTests
             post: CreatePost(canonicalUrl: "https://a.example.com/blog/gitkraken-tips"),
             blogInfo: null);
 
-        model.CanonicalUrl.Should().Be("https://a.example.com/blog/gitkraken-tips");
+        Assert.Equal("https://a.example.com/blog/gitkraken-tips", model.CanonicalUrl);
     }
 
     [Fact]
@@ -57,7 +56,7 @@ public class PostnomicSeoBuilderTests
             post: CreatePost(canonicalUrl: null),
             blogInfo: null);
 
-        model.CanonicalUrl.Should().Be("https://example.com/de/blog/post/hello-world");
+        Assert.Equal("https://example.com/de/blog/post/hello-world", model.CanonicalUrl);
     }
 
     // ── XDefaultUrl (Finding 2: consistent x-default across the language cluster) ─────────────
@@ -74,9 +73,9 @@ public class PostnomicSeoBuilderTests
             "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
             lang: "de", postSlug: "hello-world", post: CreatePost(), blogInfo: null);
 
-        model.CanonicalUrl.Should().Be("https://example.com/de/blog/post/hello-world");
-        model.XDefaultUrl.Should().Be("https://example.com/en/blog/post/hello-world");
-        model.XDefaultUrl.Should().NotBe(model.CanonicalUrl);
+        Assert.Equal("https://example.com/de/blog/post/hello-world", model.CanonicalUrl);
+        Assert.Equal("https://example.com/en/blog/post/hello-world", model.XDefaultUrl);
+        Assert.NotEqual(model.CanonicalUrl, model.XDefaultUrl);
     }
 
     [Fact]
@@ -94,10 +93,10 @@ public class PostnomicSeoBuilderTests
                 "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
                 lang: lang, postSlug: "hello-world", post: CreatePost(), blogInfo: null);
 
-            model.Alternates.Should().NotBeEmpty();
-            model.Alternates.Select(a => a.Url).Should().NotContain(bareUrl);
-            model.XDefaultUrl.Should().NotBe(bareUrl);
-            model.Alternates.Should().OnlyContain(a => a.Url.StartsWith($"https://example.com/{a.Lang}/blog/"));
+            Assert.NotEmpty(model.Alternates);
+            Assert.DoesNotContain(bareUrl, model.Alternates.Select(a => a.Url));
+            Assert.NotEqual(bareUrl, model.XDefaultUrl);
+            Assert.All(model.Alternates, a => Assert.StartsWith($"https://example.com/{a.Lang}/blog/", a.Url));
         }
     }
 
@@ -114,8 +113,8 @@ public class PostnomicSeoBuilderTests
             "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
             lang: "en", postSlug: "hello-world", post: CreatePost(), blogInfo: null);
 
-        dePage.CanonicalUrl.Should().NotBe(enPage.CanonicalUrl);
-        dePage.XDefaultUrl.Should().Be(enPage.XDefaultUrl);
+        Assert.NotEqual(enPage.CanonicalUrl, dePage.CanonicalUrl);
+        Assert.Equal(enPage.XDefaultUrl, dePage.XDefaultUrl);
     }
 
     [Fact]
@@ -129,8 +128,8 @@ public class PostnomicSeoBuilderTests
             lang: "de", postSlug: "hello-world",
             post: CreatePost(availableLanguages: []), blogInfo: null);
 
-        model.Alternates.Should().BeEmpty();
-        model.XDefaultUrl.Should().Be(model.CanonicalUrl);
+        Assert.Empty(model.Alternates);
+        Assert.Equal(model.CanonicalUrl, model.XDefaultUrl);
     }
 
     // ── PublishedAt / datePublished UTC normalization (Finding 3) ──────────────────────────────
@@ -148,7 +147,7 @@ public class PostnomicSeoBuilderTests
 
         // The wall-clock value must be preserved (treated AS UTC, not converted from local time),
         // and the JSON-LD payload must carry a UTC designator so consumers can't misread it.
-        model.JsonLd.Should().Contain("\"datePublished\":\"2026-07-02T13:30:00.0000000Z\"");
+        Assert.Contains("\"datePublished\":\"2026-07-02T13:30:00.0000000Z\"", model.JsonLd);
     }
 
     [Fact]
@@ -165,9 +164,9 @@ public class PostnomicSeoBuilderTests
             lang: "de", postSlug: "hello-world",
             post: CreatePost(publishedAt: unspecified), blogInfo: null);
 
-        model.PublishedAt.Should().NotBeNull();
-        model.PublishedAt!.Value.Kind.Should().Be(DateTimeKind.Utc);
-        model.PublishedAt.Value.ToString("O").Should().Be("2026-07-02T13:30:00.0000000Z");
+        Assert.NotNull(model.PublishedAt);
+        Assert.Equal(DateTimeKind.Utc, model.PublishedAt!.Value.Kind);
+        Assert.Equal("2026-07-02T13:30:00.0000000Z", model.PublishedAt.Value.ToString("O"));
     }
 
     [Fact]
@@ -180,7 +179,7 @@ public class PostnomicSeoBuilderTests
             lang: "de", postSlug: "hello-world",
             post: CreatePost(publishedAt: utc), blogInfo: null);
 
-        model.PublishedAt.Should().Be(utc);
+        Assert.Equal(utc, model.PublishedAt);
     }
 
     // ── ToAbsoluteUrl (Linux/Windows cross-platform regression guard) ──────────────────────────
@@ -203,7 +202,7 @@ public class PostnomicSeoBuilderTests
         // breaking every canonical/og:url/hreflang/sitemap/RSS URL in production.
         var result = PostnomicSeoBuilder.ToAbsoluteUrl("https://example.com", "/de/blog/post/x");
 
-        result.Should().Be("https://example.com/de/blog/post/x");
+        Assert.Equal("https://example.com/de/blog/post/x", result);
     }
 
     [Fact]
@@ -213,7 +212,7 @@ public class PostnomicSeoBuilderTests
         var result = PostnomicSeoBuilder.ToAbsoluteUrl(
             "https://example.com", "https://cdn.example.com/img.jpg");
 
-        result.Should().Be("https://cdn.example.com/img.jpg");
+        Assert.Equal("https://cdn.example.com/img.jpg", result);
     }
 
     [Fact]
@@ -222,7 +221,7 @@ public class PostnomicSeoBuilderTests
         var result = PostnomicSeoBuilder.ToAbsoluteUrl(
             "https://example.com", "http://cdn.example.com/img.jpg");
 
-        result.Should().Be("http://cdn.example.com/img.jpg");
+        Assert.Equal("http://cdn.example.com/img.jpg", result);
     }
 
     [Fact]
@@ -231,7 +230,7 @@ public class PostnomicSeoBuilderTests
         var result = PostnomicSeoBuilder.ToAbsoluteUrl(
             "https://example.com", "//cdn.example.com/img.jpg");
 
-        result.Should().Be("//cdn.example.com/img.jpg");
+        Assert.Equal("//cdn.example.com/img.jpg", result);
     }
 
     [Fact]
@@ -239,7 +238,7 @@ public class PostnomicSeoBuilderTests
     {
         var result = PostnomicSeoBuilder.ToAbsoluteUrl("https://example.com", "blog/post/x");
 
-        result.Should().Be("https://example.com/blog/post/x");
+        Assert.Equal("https://example.com/blog/post/x", result);
     }
 
     [Fact]
@@ -247,7 +246,7 @@ public class PostnomicSeoBuilderTests
     {
         var result = PostnomicSeoBuilder.ToAbsoluteUrl("https://example.com/", "/de/blog/post/x");
 
-        result.Should().Be("https://example.com/de/blog/post/x");
+        Assert.Equal("https://example.com/de/blog/post/x", result);
     }
 
     [Fact]
@@ -260,6 +259,6 @@ public class PostnomicSeoBuilderTests
             "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
             lang: "de", postSlug: "hello-world", post: CreatePost(), blogInfo: null);
 
-        model.CanonicalUrl.Should().StartWith("https://example.com/");
+        Assert.StartsWith("https://example.com/", model.CanonicalUrl);
     }
 }

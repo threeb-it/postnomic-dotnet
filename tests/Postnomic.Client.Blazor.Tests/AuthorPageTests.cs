@@ -1,5 +1,4 @@
 using Bunit;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -109,7 +108,7 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — while the task is pending the loading placeholder appears
-        cut.Markup.Should().Contain("Loading");
+        Assert.Contains("Loading", cut.Markup);
     }
 
     // ── Profile rendering ─────────────────────────────────────────────────────
@@ -125,7 +124,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — name appears in the h1.h4 heading (a single h1 per page for correct SEO
         // heading hierarchy; see SeoAndLanguageRoutingTests.AuthorPage_RendersExactlyOneH1ForAuthorName)
-        cut.Find("h1.h4").TextContent.Should().Contain("Jane Doe");
+        Assert.Contains("Jane Doe", cut.Find("h1.h4").TextContent);
     }
 
     [Fact]
@@ -138,7 +137,7 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert
-        cut.Markup.Should().Contain("Open Source Advocate");
+        Assert.Contains("Open Source Advocate", cut.Markup);
     }
 
     [Fact]
@@ -151,7 +150,7 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert
-        cut.Markup.Should().Contain("Amsterdam");
+        Assert.Contains("Amsterdam", cut.Markup);
     }
 
     [Fact]
@@ -164,8 +163,8 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert
-        cut.Markup.Should().Contain("Tech Corp");
-        cut.Markup.Should().Contain("Principal Engineer");
+        Assert.Contains("Tech Corp", cut.Markup);
+        Assert.Contains("Principal Engineer", cut.Markup);
     }
 
     [Fact]
@@ -179,7 +178,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — an anchor pointing to the website URL should be present
         var links = cut.FindAll("a[href]");
-        links.Should().Contain(a => a.GetAttribute("href") == "https://janedoe.dev");
+        Assert.Contains(links, a => a.GetAttribute("href") == "https://janedoe.dev");
     }
 
     [Fact]
@@ -193,7 +192,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — the primary badge should contain the count
         var badge = cut.Find("span.badge.bg-primary");
-        badge.TextContent.Should().Contain("42");
+        Assert.Contains("42", badge.TextContent);
     }
 
     [Fact]
@@ -207,7 +206,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — a rounded-circle img with the correct src should be present
         var img = cut.Find("img.rounded-circle");
-        img.GetAttribute("src").Should().Be("https://example.com/avatar.jpg");
+        Assert.Equal("https://example.com/avatar.jpg", img.GetAttribute("src"));
     }
 
     [Fact]
@@ -221,7 +220,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — the wide header img should be rendered with the correct src
         var img = cut.Find("img.w-100");
-        img.GetAttribute("src").Should().Be("https://example.com/header.jpg");
+        Assert.Equal("https://example.com/header.jpg", img.GetAttribute("src"));
     }
 
     [Fact]
@@ -234,7 +233,7 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — bio text rendered inside the About card
-        cut.Markup.Should().Contain("This is my bio.");
+        Assert.Contains("This is my bio.", cut.Markup);
     }
 
     // ── Social links ──────────────────────────────────────────────────────────
@@ -255,9 +254,9 @@ public class AuthorPageTests : BunitContext
 
         // Assert — one btn-outline-secondary anchor per social link
         var socialButtons = cut.FindAll("a.btn.btn-outline-secondary");
-        socialButtons.Should().HaveCount(2);
-        cut.Markup.Should().Contain("GitHub");
-        cut.Markup.Should().Contain("LinkedIn");
+        Assert.Equal(2, socialButtons.Count());
+        Assert.Contains("GitHub", cut.Markup);
+        Assert.Contains("LinkedIn", cut.Markup);
     }
 
     [Fact]
@@ -270,7 +269,7 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — "Connect" heading should not appear when there are no social links
-        cut.Markup.Should().NotContain("Connect");
+        Assert.DoesNotContain("Connect", cut.Markup);
     }
 
     // ── Skills ────────────────────────────────────────────────────────────────
@@ -286,10 +285,10 @@ public class AuthorPageTests : BunitContext
 
         // Assert — bg-secondary badges for each skill
         var skillBadges = cut.FindAll("span.badge.bg-secondary");
-        skillBadges.Should().HaveCount(3);
-        cut.Markup.Should().Contain("C#");
-        cut.Markup.Should().Contain("Blazor");
-        cut.Markup.Should().Contain("Azure");
+        Assert.Equal(3, skillBadges.Count());
+        Assert.Contains("C#", cut.Markup);
+        Assert.Contains("Blazor", cut.Markup);
+        Assert.Contains("Azure", cut.Markup);
     }
 
     [Fact]
@@ -302,7 +301,7 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — "Skills" heading should not appear when there are no skills
-        cut.Markup.Should().NotContain("Skills");
+        Assert.DoesNotContain("Skills", cut.Markup);
     }
 
     // ── Certifications ────────────────────────────────────────────────────────
@@ -321,9 +320,9 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — cert name appears in a <strong> element
-        cut.Markup.Should().Contain("Azure Solutions Architect");
+        Assert.Contains("Azure Solutions Architect", cut.Markup);
         var strong = cut.FindAll("strong");
-        strong.Should().Contain(s => s.TextContent.Contains("Azure Solutions Architect"));
+        Assert.Contains(strong, s => s.TextContent.Contains("Azure Solutions Architect"));
     }
 
     [Fact]
@@ -340,7 +339,7 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — issuing organisation appears as muted small text
-        cut.Markup.Should().Contain("CNCF");
+        Assert.Contains("CNCF", cut.Markup);
     }
 
     // ── Education ─────────────────────────────────────────────────────────────
@@ -359,9 +358,9 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — institution name rendered in a <strong> element
-        cut.Markup.Should().Contain("MIT");
+        Assert.Contains("MIT", cut.Markup);
         var strong = cut.FindAll("strong");
-        strong.Should().Contain(s => s.TextContent.Contains("MIT"));
+        Assert.Contains(strong, s => s.TextContent.Contains("MIT"));
     }
 
     // ── Languages ─────────────────────────────────────────────────────────────
@@ -381,8 +380,8 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert
-        cut.Markup.Should().Contain("English");
-        cut.Markup.Should().Contain("German");
+        Assert.Contains("English", cut.Markup);
+        Assert.Contains("German", cut.Markup);
     }
 
     // ── Interests ─────────────────────────────────────────────────────────────
@@ -398,10 +397,10 @@ public class AuthorPageTests : BunitContext
 
         // Assert — bg-info badges for each interest
         var interestBadges = cut.FindAll("span.badge.bg-info");
-        interestBadges.Should().HaveCount(3);
-        cut.Markup.Should().Contain("Open Source");
-        cut.Markup.Should().Contain("Hiking");
-        cut.Markup.Should().Contain("Music");
+        Assert.Equal(3, interestBadges.Count());
+        Assert.Contains("Open Source", cut.Markup);
+        Assert.Contains("Hiking", cut.Markup);
+        Assert.Contains("Music", cut.Markup);
     }
 
     // ── Recent posts ──────────────────────────────────────────────────────────
@@ -422,10 +421,10 @@ public class AuthorPageTests : BunitContext
 
         // Assert — one anchor per recent post
         var links = cut.FindAll("a[href]");
-        links.Should().Contain(a => a.GetAttribute("href")!.Contains("blazor-tips"));
-        links.Should().Contain(a => a.GetAttribute("href")!.Contains("dotnet-perf"));
-        cut.Markup.Should().Contain("Blazor Tips");
-        cut.Markup.Should().Contain(".NET Performance");
+        Assert.Contains(links, a => a.GetAttribute("href")!.Contains("blazor-tips"));
+        Assert.Contains(links, a => a.GetAttribute("href")!.Contains("dotnet-perf"));
+        Assert.Contains("Blazor Tips", cut.Markup);
+        Assert.Contains(".NET Performance", cut.Markup);
     }
 
     [Fact]
@@ -443,7 +442,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — links should use the default /blog base path
         var links = cut.FindAll("a[href]");
-        links.Should().Contain(a => a.GetAttribute("href") == "/blog/post/my-post");
+        Assert.Contains(links, a => a.GetAttribute("href") == "/blog/post/my-post");
     }
 
     // ── Custom BasePath ───────────────────────────────────────────────────────
@@ -466,7 +465,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — links should use the custom base path
         var links = cut.FindAll("a[href]");
-        links.Should().Contain(a => a.GetAttribute("href") == "/articles/post/custom-post");
+        Assert.Contains(links, a => a.GetAttribute("href") == "/articles/post/custom-post");
     }
 
     [Fact]
@@ -482,7 +481,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — back link should point to the custom base path
         var backLink = cut.FindAll("a[href='/articles']");
-        backLink.Should().NotBeEmpty();
+        Assert.NotEmpty(backLink);
     }
 
     // ── Null / empty optional sections ────────────────────────────────────────
@@ -497,7 +496,7 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — "About" card title should not be present
-        cut.Markup.Should().NotContain("About");
+        Assert.DoesNotContain("About", cut.Markup);
     }
 
     [Fact]
@@ -511,7 +510,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — no rounded-circle img should be present
         var imgs = cut.FindAll("img.rounded-circle");
-        imgs.Should().BeEmpty();
+        Assert.Empty(imgs);
     }
 
     [Fact]
@@ -525,7 +524,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — no wide header img should be present
         var imgs = cut.FindAll("img.w-100");
-        imgs.Should().BeEmpty();
+        Assert.Empty(imgs);
     }
 
     [Fact]
@@ -539,7 +538,7 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — the bi-geo-alt icon class is only rendered when Location is set
-        cut.Markup.Should().NotContain("bi-geo-alt");
+        Assert.DoesNotContain("bi-geo-alt", cut.Markup);
     }
 
     [Fact]
@@ -553,14 +552,13 @@ public class AuthorPageTests : BunitContext
         var cut = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe"));
 
         // Assert — no headline paragraph when Headline is null
-        cut.Markup.Should().NotContain(distinctHeadline);
+        Assert.DoesNotContain(distinctHeadline, cut.Markup);
         // The text-muted paragraph that wraps only the headline should not appear
         // when headline is null; verify by confirming the specific sentinel class
         // bi-geo-alt still appears only when location is set (location IS set here).
         // Directly confirm no element has the headline text at all.
-        cut.FindAll("p.text-muted").Should().NotContain(
-            p => p.TextContent == "Software Engineer",
-            "the default headline should not be rendered when Headline is null");
+        // "the default headline should not be rendered when Headline is null"
+        Assert.DoesNotContain(cut.FindAll("p.text-muted"), p => p.TextContent == "Software Engineer");
     }
 
     // ── Back link ─────────────────────────────────────────────────────────────
@@ -576,7 +574,7 @@ public class AuthorPageTests : BunitContext
 
         // Assert — a back link pointing to the default base path should be present
         var backLink = cut.FindAll("a[href='/blog']");
-        backLink.Should().NotBeEmpty();
-        backLink[0].TextContent.Should().Contain("Back to blog");
+        Assert.NotEmpty(backLink);
+        Assert.Contains("Back to blog", backLink[0].TextContent);
     }
 }

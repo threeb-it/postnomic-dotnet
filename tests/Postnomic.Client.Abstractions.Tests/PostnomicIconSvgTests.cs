@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Postnomic.Client.Abstractions;
 using Xunit;
 
@@ -16,7 +15,8 @@ public class PostnomicIconSvgTests
     public void For_known_class_returns_svg_markup()
     {
         var svg = PostnomicIconSvg.For("bi bi-calendar");
-        svg.Should().StartWith("<svg").And.EndWith("</svg>");
+        Assert.StartsWith("<svg", svg);
+        Assert.EndsWith("</svg>", svg);
     }
 
     [Fact]
@@ -24,19 +24,19 @@ public class PostnomicIconSvgTests
     {
         var person = PostnomicIconSvg.For("bi bi-person");
         var calendar = PostnomicIconSvg.For("bi bi-calendar");
-        person.Should().NotBe(calendar);
+        Assert.NotEqual(calendar, person);
     }
 
     [Fact]
     public void For_unknown_class_returns_generic_fallback_glyph()
     {
         var svg = PostnomicIconSvg.For("bi bi-does-not-exist");
-        svg.Should().Contain("<circle cx=\"8\" cy=\"8\" r=\"6\" />");
+        Assert.Contains("<circle cx=\"8\" cy=\"8\" r=\"6\" />", svg);
     }
 
     [Fact]
     public void For_same_class_is_deterministic()
     {
-        PostnomicIconSvg.For("bi bi-search").Should().Be(PostnomicIconSvg.For("bi bi-search"));
+        Assert.Equal(PostnomicIconSvg.For("bi bi-search"), PostnomicIconSvg.For("bi bi-search"));
     }
 }

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Postnomic.Client.Abstractions;
@@ -33,8 +32,8 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var service = provider.GetService<IPostnomicBlogService>();
-        service.Should().NotBeNull();
-        service.Should().BeOfType<PostnomicBlogService>();
+        Assert.NotNull(service);
+        Assert.IsType<PostnomicBlogService>(service);
     }
 
     [Fact]
@@ -47,7 +46,7 @@ public class ServiceCollectionExtensionsTests
         var returned = services.AddPostnomicClient(o => o.BaseUrl = "https://api.example.com");
 
         // Assert
-        returned.Should().BeSameAs(services);
+        Assert.Same(services, returned);
     }
 
     // ── PostnomicClientOptions configuration ──────────────────────────────────
@@ -65,7 +64,7 @@ public class ServiceCollectionExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.BaseUrl.Should().Be("https://custom-api.example.com");
+        Assert.Equal("https://custom-api.example.com", options.BaseUrl);
     }
 
     [Fact]
@@ -81,7 +80,7 @@ public class ServiceCollectionExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.ApiKey.Should().Be("test-api-key-123");
+        Assert.Equal("test-api-key-123", options.ApiKey);
     }
 
     [Fact]
@@ -97,7 +96,7 @@ public class ServiceCollectionExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.BlogSlug.Should().Be("my-tech-blog");
+        Assert.Equal("my-tech-blog", options.BlogSlug);
     }
 
     [Fact]
@@ -118,9 +117,9 @@ public class ServiceCollectionExtensionsTests
         var options = provider.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
 
         // Assert
-        options.BaseUrl.Should().Be("https://api.postnomic.com");
-        options.ApiKey.Should().Be("secret-key");
-        options.BlogSlug.Should().Be("engineering-blog");
+        Assert.Equal("https://api.postnomic.com", options.BaseUrl);
+        Assert.Equal("secret-key", options.ApiKey);
+        Assert.Equal("engineering-blog", options.BlogSlug);
     }
 
     // ── PostnomicApiKeyHandler registration ───────────────────────────────────
@@ -141,7 +140,7 @@ public class ServiceCollectionExtensionsTests
         var handler = provider.GetService<PostnomicApiKeyHandler>();
 
         // Assert
-        handler.Should().NotBeNull();
+        Assert.NotNull(handler);
     }
 
     // ── HttpClient base address ───────────────────────────────────────────────
@@ -163,6 +162,6 @@ public class ServiceCollectionExtensionsTests
         var act = () => provider.GetRequiredService<IPostnomicBlogService>();
 
         // Assert
-        act.Should().NotThrow();
+        Assert.Null(Record.Exception(act));
     }
 }

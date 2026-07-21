@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -62,9 +61,9 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetBlogAsync();
 
         // Assert
-        first.Should().NotBeNull();
-        second.Should().NotBeNull();
-        first!.Name.Should().Be(second!.Name);
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Equal(second!.Name, first!.Name);
         _innerMock.Verify(s => s.GetBlogAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -80,9 +79,9 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var result = await _sut.GetBlogAsync();
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be("My Blog");
-        result.Description.Should().Be("A blog");
+        Assert.NotNull(result);
+        Assert.Equal("My Blog", result!.Name);
+        Assert.Equal("A blog", result.Description);
     }
 
     // ── GetTagsAsync — caching ────────────────────────────────────────────────
@@ -103,8 +102,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetTagsAsync();
 
         // Assert
-        first.Should().HaveCount(1);
-        second.Should().HaveCount(1);
+        Assert.Single(first);
+        Assert.Single(second);
         _innerMock.Verify(s => s.GetTagsAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -126,8 +125,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetCategoriesAsync();
 
         // Assert
-        first.Should().HaveCount(1);
-        second.Should().HaveCount(1);
+        Assert.Single(first);
+        Assert.Single(second);
         _innerMock.Verify(s => s.GetCategoriesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -149,8 +148,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetAuthorsAsync();
 
         // Assert
-        first.Should().HaveCount(1);
-        second.Should().HaveCount(1);
+        Assert.Single(first);
+        Assert.Single(second);
         _innerMock.Verify(s => s.GetAuthorsAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -170,9 +169,9 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetAuthorProfileAsync(authorSlug);
 
         // Assert
-        first.Should().NotBeNull();
-        second.Should().NotBeNull();
-        first!.Name.Should().Be(second!.Name);
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Equal(second!.Name, first!.Name);
         _innerMock.Verify(
             s => s.GetAuthorProfileAsync(authorSlug, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -197,10 +196,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var john2 = await _sut.GetAuthorProfileAsync("john-smith");
 
         // Assert — inner called once per distinct slug
-        jane1!.Name.Should().Be("Jane Doe");
-        jane2!.Name.Should().Be("Jane Doe");
-        john1!.Name.Should().Be("John Smith");
-        john2!.Name.Should().Be("John Smith");
+        Assert.Equal("Jane Doe", jane1!.Name);
+        Assert.Equal("Jane Doe", jane2!.Name);
+        Assert.Equal("John Smith", john1!.Name);
+        Assert.Equal("John Smith", john2!.Name);
         _innerMock.Verify(
             s => s.GetAuthorProfileAsync("jane-doe", It.IsAny<CancellationToken>()),
             Times.Once);
@@ -224,8 +223,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetPostsAsync(page: 1, pageSize: 5);
 
         // Assert
-        first.Should().NotBeNull();
-        second.Should().NotBeNull();
+        Assert.NotNull(first);
+        Assert.NotNull(second);
         _innerMock.Verify(
             s => s.GetPostsAsync(1, 5, null, null, null, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -299,9 +298,9 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetPostAsync(postSlug);
 
         // Assert
-        first.Should().NotBeNull();
-        second.Should().NotBeNull();
-        first!.Title.Should().Be(second!.Title);
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Equal(second!.Title, first!.Title);
         _innerMock.Verify(
             s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -326,10 +325,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var b2 = await _sut.GetPostAsync("post-b");
 
         // Assert — inner called once per distinct slug
-        a1!.Title.Should().Be("Post A");
-        a2!.Title.Should().Be("Post A");
-        b1!.Title.Should().Be("Post B");
-        b2!.Title.Should().Be("Post B");
+        Assert.Equal("Post A", a1!.Title);
+        Assert.Equal("Post A", a2!.Title);
+        Assert.Equal("Post B", b1!.Title);
+        Assert.Equal("Post B", b2!.Title);
         _innerMock.Verify(s => s.GetPostAsync("post-a", null, It.IsAny<CancellationToken>()), Times.Once);
         _innerMock.Verify(s => s.GetPostAsync("post-b", null, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -386,8 +385,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetTopCommentedPostsAsync();
 
         // Assert
-        first.Should().HaveCount(1);
-        second.Should().HaveCount(1);
+        Assert.Single(first);
+        Assert.Single(second);
         _innerMock.Verify(
             s => s.GetTopCommentedPostsAsync(3, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -440,8 +439,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetMostReadPostsAsync();
 
         // Assert
-        first.Should().HaveCount(1);
-        second.Should().HaveCount(1);
+        Assert.Single(first);
+        Assert.Single(second);
         _innerMock.Verify(
             s => s.GetMostReadPostsAsync(3, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -813,8 +812,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetBlogAsync();
 
         // Assert — null result is cached; inner called only once
-        first.Should().BeNull();
-        second.Should().BeNull();
+        Assert.Null(first);
+        Assert.Null(second);
         _innerMock.Verify(s => s.GetBlogAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -831,8 +830,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetPostAsync(postSlug);
 
         // Assert — null result is cached; inner called only once
-        first.Should().BeNull();
-        second.Should().BeNull();
+        Assert.Null(first);
+        Assert.Null(second);
         _innerMock.Verify(
             s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -851,8 +850,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         var second = await _sut.GetAuthorProfileAsync(authorSlug);
 
         // Assert — null result is cached; inner called only once
-        first.Should().BeNull();
-        second.Should().BeNull();
+        Assert.Null(first);
+        Assert.Null(second);
         _innerMock.Verify(
             s => s.GetAuthorProfileAsync(authorSlug, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -864,7 +863,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
     public void Sut_ImplementsIPostnomicCacheControl()
     {
         // Assert — the service must also satisfy the cache-control contract
-        _sut.Should().BeAssignableTo<IPostnomicCacheControl>();
+        Assert.IsAssignableFrom<IPostnomicCacheControl>(_sut);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

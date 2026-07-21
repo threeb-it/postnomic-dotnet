@@ -1,5 +1,4 @@
 using System.Net;
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -131,7 +130,7 @@ public class FeedDateNormalizationTests : IAsyncLifetime
 
         // RFC-822 rendering of 2026-07-02T00:00:00 interpreted as UTC. If Unspecified were
         // wrongly treated as local time, this would shift by the host's UTC offset instead.
-        xml.Should().Contain("<pubDate>Thu, 02 Jul 2026 00:00:00 GMT</pubDate>");
+        Assert.Contains("<pubDate>Thu, 02 Jul 2026 00:00:00 GMT</pubDate>", xml);
     }
 
     [Fact]
@@ -140,6 +139,6 @@ public class FeedDateNormalizationTests : IAsyncLifetime
         var response = await _client.GetAsync("/blog/sitemap.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().Contain("<lastmod>2026-07-02</lastmod>");
+        Assert.Contains("<lastmod>2026-07-02</lastmod>", xml);
     }
 }

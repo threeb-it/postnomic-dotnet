@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using Bunit;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -59,8 +58,9 @@ public class MarkupStyleTests : BunitContext
     {
         Wire(PostnomicMarkupStyle.Bootstrap);
         var html = Render<BlogPage>().Markup;
-        html.Should().Contain("card").And.Contain("col-lg-8");
-        html.Should().NotContain("pn-card");
+        Assert.Contains("card", html);
+        Assert.Contains("col-lg-8", html);
+        Assert.DoesNotContain("pn-card", html);
     }
 
     [Fact]
@@ -68,9 +68,11 @@ public class MarkupStyleTests : BunitContext
     {
         Wire(PostnomicMarkupStyle.Semantic);
         var html = Render<BlogPage>().Markup;
-        html.Should().Contain("pn-blog").And.Contain("pn-card").And.Contain("pn-post-title");
+        Assert.Contains("pn-blog", html);
+        Assert.Contains("pn-card", html);
+        Assert.Contains("pn-post-title", html);
         foreach (var bs in new[] { "col-lg-", "card mb-4", "badge", "btn btn-", "bi bi-" })
-            html.Should().NotContain(bs);
+            Assert.DoesNotContain(bs, html);
     }
 
     // ── AuthorPage ────────────────────────────────────────────────────────────
@@ -111,8 +113,9 @@ public class MarkupStyleTests : BunitContext
     {
         WireAuthor(PostnomicMarkupStyle.Bootstrap);
         var html = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe")).Markup;
-        html.Should().Contain("col-lg-8").And.Contain("card shadow-sm");
-        html.Should().NotContain("pn-card");
+        Assert.Contains("col-lg-8", html);
+        Assert.Contains("card shadow-sm", html);
+        Assert.DoesNotContain("pn-card", html);
     }
 
     [Fact]
@@ -120,9 +123,10 @@ public class MarkupStyleTests : BunitContext
     {
         WireAuthor(PostnomicMarkupStyle.Semantic);
         var html = Render<AuthorPage>(p => p.Add(x => x.AuthorSlug, "jane-doe")).Markup;
-        html.Should().Contain("pn-main").And.Contain("pn-card");
+        Assert.Contains("pn-main", html);
+        Assert.Contains("pn-card", html);
         foreach (var bs in new[] { "col-lg-", "card mb-4", "badge", "btn btn-", "bi bi-" })
-            html.Should().NotContain(bs);
+            Assert.DoesNotContain(bs, html);
     }
 
     // ── PostPage ──────────────────────────────────────────────────────────────
@@ -163,8 +167,9 @@ public class MarkupStyleTests : BunitContext
     {
         WirePost(PostnomicMarkupStyle.Bootstrap);
         var html = Render<PostPage>(p => p.Add(x => x.PostSlug, "hello-world")).Markup;
-        html.Should().Contain("blog-post-content").And.Contain("form-control");
-        html.Should().NotContain("pn-post-content");
+        Assert.Contains("blog-post-content", html);
+        Assert.Contains("form-control", html);
+        Assert.DoesNotContain("pn-post-content", html);
     }
 
     [Fact]
@@ -172,9 +177,10 @@ public class MarkupStyleTests : BunitContext
     {
         WirePost(PostnomicMarkupStyle.Semantic);
         var html = Render<PostPage>(p => p.Add(x => x.PostSlug, "hello-world")).Markup;
-        html.Should().Contain("pn-post-content").And.Contain("pn-field");
+        Assert.Contains("pn-post-content", html);
+        Assert.Contains("pn-field", html);
         foreach (var bs in new[] { "col-lg-", "card mb-4", "badge", "btn btn-", "bi bi-" })
-            html.Should().NotContain(bs);
+            Assert.DoesNotContain(bs, html);
     }
 
     // ── CommentView ───────────────────────────────────────────────────────────
@@ -218,8 +224,8 @@ public class MarkupStyleTests : BunitContext
         // Reveal the reply form (hidden until the "Reply" toggle button is clicked).
         cut.Find("button").Click();
 
-        cut.Markup.Should().Contain("form-control");
-        cut.Markup.Should().NotContain("pn-field");
+        Assert.Contains("form-control", cut.Markup);
+        Assert.DoesNotContain("pn-field", cut.Markup);
     }
 
     [Fact]
@@ -235,9 +241,9 @@ public class MarkupStyleTests : BunitContext
         cut.Find("button").Click();
 
         var html = cut.Markup;
-        html.Should().Contain("pn-field");
+        Assert.Contains("pn-field", html);
         foreach (var bs in new[] { "col-", "card mb-4", "badge", "btn btn-", "bi bi-", "form-control" })
-            html.Should().NotContain(bs);
+            Assert.DoesNotContain(bs, html);
     }
 
     // ── Icon distinctness (Finding 1 regression guard) ───────────────────────
@@ -260,18 +266,18 @@ public class MarkupStyleTests : BunitContext
             .Select(m => m.Value)
             .ToList();
 
-        svgBlocks.Count.Should().BeGreaterThanOrEqualTo(2,
+        Assert.True(svgBlocks.Count >= 2,
             "expected at least the person (author) and calendar (published date) icons to render");
 
         var personIcon = svgBlocks[0];
         var calendarIcon = svgBlocks[1];
-        personIcon.Should().NotBe(calendarIcon,
-            "the person and calendar icons must be visually distinct SVGs, not the same generic placeholder repeated for every icon");
+        // "the person and calendar icons must be visually distinct SVGs, not the same generic placeholder repeated for every icon"
+        Assert.NotEqual(calendarIcon, personIcon);
 
         // Guard against the trivial "distinct but still not really different" case where every
         // icon collapsed to the same shape with different attributes: also require every distinct
         // bootstrap-icon class used across the rendered page to produce at least a few different
         // glyphs overall, not just two.
-        svgBlocks.Distinct().Count().Should().BeGreaterThanOrEqualTo(2);
+        Assert.True(svgBlocks.Distinct().Count() >= 2);
     }
 }

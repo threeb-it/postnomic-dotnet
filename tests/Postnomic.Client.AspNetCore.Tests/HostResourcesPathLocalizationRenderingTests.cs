@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
@@ -150,9 +149,9 @@ public class HostResourcesPathLocalizationRenderingTests : IAsyncLifetime
         response.EnsureSuccessStatusCode();
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("Weiterlesen");
-        html.Should().NotContain("ReadMore");
-        html.Should().NotContain("Read More");
+        Assert.Contains("Weiterlesen", html);
+        Assert.DoesNotContain("ReadMore", html);
+        Assert.DoesNotContain("Read More", html);
     }
 
     [Fact]
@@ -164,8 +163,8 @@ public class HostResourcesPathLocalizationRenderingTests : IAsyncLifetime
         response.EnsureSuccessStatusCode();
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().Contain("Read More");
-        html.Should().NotContain("ReadMore");
-        html.Should().NotContain("Weiterlesen");
+        Assert.Contains("Read More", html);
+        Assert.DoesNotContain("ReadMore", html);
+        Assert.DoesNotContain("Weiterlesen", html);
     }
 }

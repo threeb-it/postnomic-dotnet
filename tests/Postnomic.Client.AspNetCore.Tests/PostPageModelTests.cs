@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -131,7 +130,7 @@ public class PostPageModelTests
         var result = await _sut.OnGetAsync();
 
         // Assert
-        result.Should().BeOfType<PageResult>();
+        Assert.IsType<PageResult>(result);
     }
 
     [Fact]
@@ -145,8 +144,8 @@ public class PostPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.Post.Should().NotBeNull();
-        _sut.Post.Title.Should().Be("Loaded Post");
+        Assert.NotNull(_sut.Post);
+        Assert.Equal("Loaded Post", _sut.Post.Title);
     }
 
     [Fact]
@@ -160,7 +159,7 @@ public class PostPageModelTests
         var result = await _sut.OnGetAsync();
 
         // Assert
-        result.Should().BeOfType<NotFoundResult>();
+        Assert.IsType<NotFoundResult>(result);
     }
 
     [Fact]
@@ -179,7 +178,7 @@ public class PostPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.TopCommented.Should().HaveCount(1);
+        Assert.Single(_sut.TopCommented);
     }
 
     [Fact]
@@ -198,7 +197,7 @@ public class PostPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.MostRead.Should().HaveCount(1);
+        Assert.Single(_sut.MostRead);
     }
 
     [Fact]
@@ -211,7 +210,7 @@ public class PostPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.EstimatedReadMinutes.Should().Be(0);
+        Assert.Equal(0, _sut.EstimatedReadMinutes);
     }
 
     [Theory]
@@ -226,7 +225,7 @@ public class PostPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.EstimatedReadMinutes.Should().Be(expectedMinutes);
+        Assert.Equal(expectedMinutes, _sut.EstimatedReadMinutes);
     }
 
     // ── OnPostAsync — comment submission ──────────────────────────────────────
@@ -255,9 +254,9 @@ public class PostPageModelTests
         var result = await _sut.OnPostAsync();
 
         // Assert
-        result.Should().BeOfType<PageResult>();
-        _sut.CommentSubmitSuccessMessage.Should().NotBeNullOrEmpty();
-        _sut.CommentSubmitErrorMessage.Should().BeNullOrEmpty();
+        Assert.IsType<PageResult>(result);
+        Assert.False(string.IsNullOrEmpty(_sut.CommentSubmitSuccessMessage));
+        Assert.True(string.IsNullOrEmpty(_sut.CommentSubmitErrorMessage));
     }
 
     [Fact]
@@ -284,7 +283,7 @@ public class PostPageModelTests
         await _sut.OnPostAsync();
 
         // Assert
-        _sut.CommentSubmitSuccessMessage.Should().Contain("moderation");
+        Assert.Contains("moderation", _sut.CommentSubmitSuccessMessage);
     }
 
     [Fact]
@@ -311,7 +310,7 @@ public class PostPageModelTests
         await _sut.OnPostAsync();
 
         // Assert
-        _sut.CommentSubmitSuccessMessage.Should().Contain("published");
+        Assert.Contains("published", _sut.CommentSubmitSuccessMessage);
     }
 
     [Fact]
@@ -333,9 +332,9 @@ public class PostPageModelTests
         var result = await _sut.OnPostAsync();
 
         // Assert
-        result.Should().BeOfType<PageResult>();
-        _sut.CommentSubmitErrorMessage.Should().NotBeNullOrEmpty();
-        _sut.CommentSubmitSuccessMessage.Should().BeNullOrEmpty();
+        Assert.IsType<PageResult>(result);
+        Assert.False(string.IsNullOrEmpty(_sut.CommentSubmitErrorMessage));
+        Assert.True(string.IsNullOrEmpty(_sut.CommentSubmitSuccessMessage));
     }
 
     [Fact]
@@ -350,7 +349,7 @@ public class PostPageModelTests
         var result = await _sut.OnPostAsync();
 
         // Assert
-        result.Should().BeOfType<NotFoundResult>();
+        Assert.IsType<NotFoundResult>(result);
     }
 
     [Fact]
@@ -383,8 +382,8 @@ public class PostPageModelTests
         await _sut.OnPostAsync();
 
         // Assert
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.Body.Should().Be("My detailed comment body");
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("My detailed comment body", capturedRequest!.Body);
     }
 
     [Fact]
@@ -403,8 +402,8 @@ public class PostPageModelTests
         await _sut.OnPostAsync();
 
         // Assert
-        _sut.ModelState.IsValid.Should().BeFalse();
-        _sut.CommentSubmitErrorMessage.Should().NotBeNullOrEmpty();
+        Assert.False(_sut.ModelState.IsValid);
+        Assert.False(string.IsNullOrEmpty(_sut.CommentSubmitErrorMessage));
     }
 
     [Fact]
@@ -423,7 +422,7 @@ public class PostPageModelTests
         await _sut.OnPostAsync();
 
         // Assert
-        _sut.ModelState.IsValid.Should().BeFalse();
+        Assert.False(_sut.ModelState.IsValid);
     }
 
     [Fact]
@@ -442,7 +441,7 @@ public class PostPageModelTests
         await _sut.OnPostAsync();
 
         // Assert
-        _sut.ModelState.IsValid.Should().BeFalse();
+        Assert.False(_sut.ModelState.IsValid);
     }
 
     [Fact]
@@ -473,8 +472,8 @@ public class PostPageModelTests
         await _sut.OnPostAsync();
 
         // Assert — form should be reset to defaults
-        _sut.CommentInput.Body.Should().Be(string.Empty);
-        _sut.CommentInput.Firstname.Should().BeNull();
+        Assert.Equal(string.Empty, _sut.CommentInput.Body);
+        Assert.Null(_sut.CommentInput.Firstname);
     }
 
     // ── ShowBranding ──────────────────────────────────────────────────────────
@@ -486,7 +485,7 @@ public class PostPageModelTests
         var sut = CreateSut(new Mock<IPostnomicBlogService>());
 
         // Act & Assert
-        sut.ShowBranding.Should().BeFalse();
+        Assert.False(sut.ShowBranding);
     }
 
     [Fact]
@@ -497,7 +496,7 @@ public class PostPageModelTests
         var sut = CreateSut(new Mock<IPostnomicBlogService>(), options);
 
         // Act & Assert
-        sut.ShowBranding.Should().BeTrue();
+        Assert.True(sut.ShowBranding);
     }
 
     [Fact]
@@ -521,7 +520,7 @@ public class PostPageModelTests
         await sut.OnGetAsync();
 
         // Assert
-        sut.ShowBranding.Should().BeTrue(
+        Assert.True(sut.ShowBranding,
             "the server returned ShowBranding = true so it should take precedence");
     }
 
@@ -548,7 +547,7 @@ public class PostPageModelTests
         await sut.OnGetAsync();
 
         // Assert
-        sut.ShowBranding.Should().BeFalse(
+        Assert.False(sut.ShowBranding,
             "the server returned ShowBranding = false so it should take precedence over client config");
     }
 
@@ -574,7 +573,7 @@ public class PostPageModelTests
         await sut.OnGetAsync();
 
         // Assert: server value (false) wins over client config (true)
-        sut.ShowBranding.Should().BeFalse(
+        Assert.False(sut.ShowBranding,
             "the server-enforced value should override the client configuration");
     }
 
@@ -594,7 +593,7 @@ public class PostPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.CanonicalUrl.Should().Be("https://a.example.com/blog/gitkraken-tips");
+        Assert.Equal("https://a.example.com/blog/gitkraken-tips", _sut.CanonicalUrl);
     }
 
     [Fact]
@@ -609,6 +608,6 @@ public class PostPageModelTests
 
         // Assert
         var expected = PostnomicRouteBuilder.BuildPost(_sut.BasePath, _sut.RouteStyle, lang: null, _sut.PostSlug);
-        _sut.CanonicalUrl.Should().Be(expected);
+        Assert.Equal(expected, _sut.CanonicalUrl);
     }
 }

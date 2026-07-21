@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Postnomic.Client.Abstractions;
@@ -86,7 +85,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/blog/free");
 
         // Assert
-        result.Should().Be("free");
+        Assert.Equal("free", result);
     }
 
     [Fact]
@@ -98,8 +97,8 @@ public class PostnomicBlogResolverTests
             ("/blog/enterprise", "enterprise", "enterprise-blog"));
 
         // Act & Assert
-        resolver.ResolveBlogName("/blog/free").Should().Be("free");
-        resolver.ResolveBlogName("/blog/enterprise").Should().Be("enterprise");
+        Assert.Equal("free", resolver.ResolveBlogName("/blog/free"));
+        Assert.Equal("enterprise", resolver.ResolveBlogName("/blog/enterprise"));
     }
 
     // ── Unmatched path ─────────────────────────────────────────────────────────
@@ -114,7 +113,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/about");
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -127,7 +126,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/blog/anything");
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     // ── Case-insensitive matching ──────────────────────────────────────────────
@@ -139,9 +138,9 @@ public class PostnomicBlogResolverTests
         var resolver = CreateResolverViaExtension(("/blog/free", "free", "free-blog"));
 
         // Act & Assert
-        resolver.ResolveBlogName("/Blog/Free").Should().Be("free");
-        resolver.ResolveBlogName("/BLOG/FREE").Should().Be("free");
-        resolver.ResolveBlogName("/blog/FREE").Should().Be("free");
+        Assert.Equal("free", resolver.ResolveBlogName("/Blog/Free"));
+        Assert.Equal("free", resolver.ResolveBlogName("/BLOG/FREE"));
+        Assert.Equal("free", resolver.ResolveBlogName("/blog/FREE"));
     }
 
     // ── Prefix matching for longer paths ───────────────────────────────────────
@@ -156,7 +155,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/blog/free/post/my-first-post");
 
         // Assert
-        result.Should().Be("free");
+        Assert.Equal("free", result);
     }
 
     [Fact]
@@ -167,8 +166,8 @@ public class PostnomicBlogResolverTests
             ("/blog/enterprise", "enterprise", "enterprise-blog"));
 
         // Act & Assert
-        resolver.ResolveBlogName("/blog/enterprise/author/jane-doe").Should().Be("enterprise");
-        resolver.ResolveBlogName("/blog/enterprise/post/hello-world").Should().Be("enterprise");
+        Assert.Equal("enterprise", resolver.ResolveBlogName("/blog/enterprise/author/jane-doe"));
+        Assert.Equal("enterprise", resolver.ResolveBlogName("/blog/enterprise/post/hello-world"));
     }
 
     // ── Segment boundary matching ───────────────────────────────────────────────
@@ -183,7 +182,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/blog/freebird");
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -196,7 +195,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/blog/free?tag=csharp");
 
         // Assert
-        result.Should().Be("free");
+        Assert.Equal("free", result);
     }
 
     // ── Longest-prefix match ────────────────────────────────────────────────────
@@ -213,7 +212,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/blog/enterprise/post/hello");
 
         // Assert
-        result.Should().Be("enterprise");
+        Assert.Equal("enterprise", result);
     }
 
     [Fact]
@@ -228,7 +227,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/blog/free/post/hello");
 
         // Assert — /blog/enterprise doesn't match, /blog does
-        result.Should().Be("default");
+        Assert.Equal("default", result);
     }
 
     // ── Base path normalization ────────────────────────────────────────────────
@@ -243,7 +242,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/blog/free");
 
         // Assert
-        result.Should().Be("free");
+        Assert.Equal("free", result);
     }
 
     [Fact]
@@ -256,7 +255,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/blog/free");
 
         // Assert
-        result.Should().Be("free");
+        Assert.Equal("free", result);
     }
 
     // ── LanguageRouteStyle.Prefix — lang leads the base path ──────────────────
@@ -271,7 +270,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/de/blog");
 
         // Assert
-        result.Should().Be("default");
+        Assert.Equal("default", result);
     }
 
     [Fact]
@@ -284,7 +283,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/de/blog/post/hello-world");
 
         // Assert
-        result.Should().Be("default");
+        Assert.Equal("default", result);
     }
 
     [Fact]
@@ -297,7 +296,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/de/blog/free/post/hello");
 
         // Assert
-        result.Should().Be("free");
+        Assert.Equal("free", result);
     }
 
     [Fact]
@@ -310,7 +309,7 @@ public class PostnomicBlogResolverTests
         var result = resolver.ResolveBlogName("/about");
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     // ── Helpers — style-aware resolver construction ────────────────────────────

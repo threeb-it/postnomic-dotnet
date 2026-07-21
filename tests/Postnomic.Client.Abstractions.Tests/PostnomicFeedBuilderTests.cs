@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Moq;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
@@ -28,7 +27,8 @@ public class PostnomicFeedBuilderTests
     {
         var xml = await PostnomicFeedBuilder.BuildSitemapAsync(
             Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None);
-        xml.Should().Contain("https://www.outastory.com/blog/post/hello").And.NotContain("file:");
+        Assert.Contains("https://www.outastory.com/blog/post/hello", xml);
+        Assert.DoesNotContain("file:", xml);
     }
 
     [Fact]
@@ -37,7 +37,8 @@ public class PostnomicFeedBuilderTests
         var xml = await PostnomicFeedBuilder.BuildRssAsync(
             Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None,
             "OutaStory | Blog", "desc");
-        xml.Should().Contain("<title>OutaStory | Blog</title>").And.Contain("https://www.outastory.com/blog/post/hello");
+        Assert.Contains("<title>OutaStory | Blog</title>", xml);
+        Assert.Contains("https://www.outastory.com/blog/post/hello", xml);
     }
 
     // Consumers serve the returned string as UTF-8 (e.g. Results.Content(xml, "application/rss+xml",
@@ -50,8 +51,8 @@ public class PostnomicFeedBuilderTests
             Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None,
             "OutaStory | Blog", "desc");
 
-        xml.Should().StartWith("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        xml.ToLowerInvariant().Should().NotContain("encoding=\"utf-16\"");
+        Assert.StartsWith("<?xml version=\"1.0\" encoding=\"utf-8\"?>", xml);
+        Assert.DoesNotContain("encoding=\"utf-16\"", xml.ToLowerInvariant());
     }
 
     [Fact]
@@ -60,7 +61,7 @@ public class PostnomicFeedBuilderTests
         var xml = await PostnomicFeedBuilder.BuildSitemapAsync(
             Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None);
 
-        xml.Should().StartWith("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        xml.ToLowerInvariant().Should().NotContain("encoding=\"utf-16\"");
+        Assert.StartsWith("<?xml version=\"1.0\" encoding=\"utf-8\"?>", xml);
+        Assert.DoesNotContain("encoding=\"utf-16\"", xml.ToLowerInvariant());
     }
 }

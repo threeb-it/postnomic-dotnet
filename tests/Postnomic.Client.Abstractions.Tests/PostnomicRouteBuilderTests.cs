@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Postnomic.Client.Abstractions;
 using Xunit;
 
@@ -12,14 +11,14 @@ public class PostnomicRouteBuilderTests
     [InlineData(PostnomicLanguageRouteStyle.None,   "de", "/blog/post/hello")]
     [InlineData(PostnomicLanguageRouteStyle.Suffix, null, "/blog/post/hello")]
     public void BuildPost_shapes(PostnomicLanguageRouteStyle style, string? lang, string expected)
-        => PostnomicRouteBuilder.BuildPost("/blog", style, lang, "hello").Should().Be(expected);
+        => Assert.Equal(expected, PostnomicRouteBuilder.BuildPost("/blog", style, lang, "hello"));
 
     [Theory]
     [InlineData(PostnomicLanguageRouteStyle.Prefix, "/de/blog/post/x", "de")]
     [InlineData(PostnomicLanguageRouteStyle.Prefix, "/blog/post/x", null)]
     [InlineData(PostnomicLanguageRouteStyle.Suffix, "/blog/de/post/x", "de")]
     public void ExtractLang_works(PostnomicLanguageRouteStyle style, string path, string? expected)
-        => PostnomicRouteBuilder.ExtractLang(path, "/blog", style).Should().Be(expected);
+        => Assert.Equal(expected, PostnomicRouteBuilder.ExtractLang(path, "/blog", style));
 
     [Theory]
     [InlineData(PostnomicLanguageRouteStyle.Prefix, "/de/blog", true)]
@@ -27,13 +26,12 @@ public class PostnomicRouteBuilderTests
     [InlineData(PostnomicLanguageRouteStyle.Prefix, "/other", false)]
     [InlineData(PostnomicLanguageRouteStyle.Suffix, "/blog/de", true)]
     public void MatchesBlog_works(PostnomicLanguageRouteStyle style, string path, bool expected)
-        => PostnomicRouteBuilder.MatchesBlog(path, "/blog", style).Should().Be(expected);
+        => Assert.Equal(expected, PostnomicRouteBuilder.MatchesBlog(path, "/blog", style));
 
     [Fact]
     public void BuildPostAlternates_NoAvailableLanguages_ReturnsEmpty()
-        => PostnomicRouteBuilder
-            .BuildPostAlternates("/blog", PostnomicLanguageRouteStyle.Prefix, [], "hello")
-            .Should().BeEmpty();
+        => Assert.Empty(PostnomicRouteBuilder
+            .BuildPostAlternates("/blog", PostnomicLanguageRouteStyle.Prefix, [], "hello"));
 
     [Fact]
     public void BuildPostAlternates_PrefixStyle_AllLanguagesIncludingDefaultAreLanguagePrefixed()
@@ -45,11 +43,11 @@ public class PostnomicRouteBuilderTests
         var alternates = PostnomicRouteBuilder.BuildPostAlternates(
             "/blog", PostnomicLanguageRouteStyle.Prefix, ["en", "de"], "hello");
 
-        alternates.Should().BeEquivalentTo(new[]
+        Assert.Equal(new[]
         {
             ("en", "/en/blog/post/hello"),
             ("de", "/de/blog/post/hello"),
-        });
+        }, alternates);
     }
 
     [Fact]
@@ -60,11 +58,11 @@ public class PostnomicRouteBuilderTests
         var alternates = PostnomicRouteBuilder.BuildPostAlternates(
             "/blog", PostnomicLanguageRouteStyle.Suffix, ["en", "de"], "hello");
 
-        alternates.Should().BeEquivalentTo(new[]
+        Assert.Equal(new[]
         {
             ("en", "/blog/post/hello"),
             ("de", "/blog/de/post/hello"),
-        });
+        }, alternates);
     }
 
     [Fact]
@@ -78,11 +76,11 @@ public class PostnomicRouteBuilderTests
         var alternates = PostnomicRouteBuilder.BuildPostAlternates(
             "/blog", PostnomicLanguageRouteStyle.Suffix, ["EN", "de"], "hello");
 
-        alternates.Should().BeEquivalentTo(new[]
+        Assert.Equal(new[]
         {
             ("EN", "/blog/post/hello"),
             ("de", "/blog/de/post/hello"),
-        });
+        }, alternates);
     }
 
     [Fact]
@@ -95,8 +93,8 @@ public class PostnomicRouteBuilderTests
         var alternates = PostnomicRouteBuilder.BuildPostAlternates(
             "/blog", PostnomicLanguageRouteStyle.Prefix, ["de", "en"], "hello");
 
-        alternates.Should().NotBeEmpty();
-        alternates.Should().OnlyContain(a => a.Url.StartsWith($"/{a.Language}/blog/", StringComparison.OrdinalIgnoreCase));
-        alternates.Select(a => a.Url).Should().NotContain("/blog/post/hello");
+        Assert.NotEmpty(alternates);
+        Assert.All(alternates, a => Assert.StartsWith($"/{a.Language}/blog/", a.Url, StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain("/blog/post/hello", alternates.Select(a => a.Url));
     }
 }

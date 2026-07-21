@@ -1,4 +1,3 @@
-using FluentAssertions;
 
 namespace Postnomic.Client.Abstractions.Tests;
 
@@ -16,7 +15,7 @@ public class PostnomicClientOptionsTests
         var options = new PostnomicClientOptions();
 
         // Assert
-        options.BaseUrl.Should().Be(string.Empty);
+        Assert.Equal(string.Empty, options.BaseUrl);
     }
 
     [Fact]
@@ -26,7 +25,7 @@ public class PostnomicClientOptionsTests
         var options = new PostnomicClientOptions();
 
         // Assert
-        options.ApiKey.Should().Be(string.Empty);
+        Assert.Equal(string.Empty, options.ApiKey);
     }
 
     [Fact]
@@ -36,7 +35,7 @@ public class PostnomicClientOptionsTests
         var options = new PostnomicClientOptions();
 
         // Assert
-        options.BlogSlug.Should().Be(string.Empty);
+        Assert.Equal(string.Empty, options.BlogSlug);
     }
 
     [Fact]
@@ -46,9 +45,9 @@ public class PostnomicClientOptionsTests
         var options = new PostnomicClientOptions();
 
         // Assert — empty string, not null
-        options.BaseUrl.Should().NotBeNull();
-        options.ApiKey.Should().NotBeNull();
-        options.BlogSlug.Should().NotBeNull();
+        Assert.NotNull(options.BaseUrl);
+        Assert.NotNull(options.ApiKey);
+        Assert.NotNull(options.BlogSlug);
     }
 
     [Fact]
@@ -61,7 +60,7 @@ public class PostnomicClientOptionsTests
         options.BaseUrl = "https://api.postnomic.com";
 
         // Assert
-        options.BaseUrl.Should().Be("https://api.postnomic.com");
+        Assert.Equal("https://api.postnomic.com", options.BaseUrl);
     }
 
     [Fact]
@@ -74,7 +73,7 @@ public class PostnomicClientOptionsTests
         options.ApiKey = "my-secret-key";
 
         // Assert
-        options.ApiKey.Should().Be("my-secret-key");
+        Assert.Equal("my-secret-key", options.ApiKey);
     }
 
     [Fact]
@@ -87,7 +86,7 @@ public class PostnomicClientOptionsTests
         options.BlogSlug = "my-blog";
 
         // Assert
-        options.BlogSlug.Should().Be("my-blog");
+        Assert.Equal("my-blog", options.BlogSlug);
     }
 
     [Fact]
@@ -102,9 +101,9 @@ public class PostnomicClientOptionsTests
         };
 
         // Assert
-        options.BaseUrl.Should().Be("https://api.example.com");
-        options.ApiKey.Should().Be("key-abc");
-        options.BlogSlug.Should().Be("tech-blog");
+        Assert.Equal("https://api.example.com", options.BaseUrl);
+        Assert.Equal("key-abc", options.ApiKey);
+        Assert.Equal("tech-blog", options.BlogSlug);
     }
 
     [Fact]
@@ -124,8 +123,8 @@ public class PostnomicClientOptionsTests
         options.BlogSlug = "new-slug";
 
         // Assert
-        options.BaseUrl.Should().Be("https://new-url.com");
-        options.ApiKey.Should().Be("new-key");
-        options.BlogSlug.Should().Be("new-slug");
+        Assert.Equal("https://new-url.com", options.BaseUrl);
+        Assert.Equal("new-key", options.ApiKey);
+        Assert.Equal("new-slug", options.BlogSlug);
     }
 }

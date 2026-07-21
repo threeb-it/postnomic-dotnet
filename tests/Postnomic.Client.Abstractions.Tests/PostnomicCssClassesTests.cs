@@ -1,5 +1,4 @@
 using System.Reflection;
-using FluentAssertions;
 using Postnomic.Client.Abstractions;
 using Xunit;
 
@@ -11,24 +10,25 @@ public class PostnomicCssClassesTests
     public void Bootstrap_mode_returns_legacy_classes()
     {
         var c = new PostnomicCssClasses(PostnomicMarkupStyle.Bootstrap);
-        c.Card.Should().Be("card mb-4 shadow-sm");
-        c.BtnOutline.Should().Be("btn btn-outline-primary btn-sm");
-        c.Layout.Should().Be("row");
+        Assert.Equal("card mb-4 shadow-sm", c.Card);
+        Assert.Equal("btn btn-outline-primary btn-sm", c.BtnOutline);
+        Assert.Equal("row", c.Layout);
     }
 
     [Fact]
     public void Semantic_mode_returns_pn_classes()
     {
         var c = new PostnomicCssClasses(PostnomicMarkupStyle.Semantic);
-        c.Card.Should().Be("pn-card");
-        c.BtnOutline.Should().Be("pn-btn pn-btn--outline pn-btn--sm");
-        c.Layout.Should().Be("pn-layout");
+        Assert.Equal("pn-card", c.Card);
+        Assert.Equal("pn-btn pn-btn--outline pn-btn--sm", c.BtnOutline);
+        Assert.Equal("pn-layout", c.Layout);
     }
 
     [Fact]
     public void Options_default_markup_style_is_bootstrap() =>
-        new PostnomicClientOptions { BaseUrl = "x", ApiKey = "k", BlogSlug = "b" }
-            .MarkupStyle.Should().Be(PostnomicMarkupStyle.Bootstrap);
+        Assert.Equal(
+            PostnomicMarkupStyle.Bootstrap,
+            new PostnomicClientOptions { BaseUrl = "x", ApiKey = "k", BlogSlug = "b" }.MarkupStyle);
 
     /// <summary>
     /// Characterization test pinning ALL 33 <see cref="PostnomicCssClasses"/> role properties in both
@@ -76,13 +76,16 @@ public class PostnomicCssClassesTests
         string roleName, string expectedBootstrap, string expectedSemantic)
     {
         var property = typeof(PostnomicCssClasses).GetProperty(roleName, BindingFlags.Public | BindingFlags.Instance);
-        property.Should().NotBeNull($"'{roleName}' should be a public property on PostnomicCssClasses");
+        // "'{roleName}' should be a public property on PostnomicCssClasses"
+        Assert.NotNull(property);
 
         var bootstrap = new PostnomicCssClasses(PostnomicMarkupStyle.Bootstrap);
         var semantic = new PostnomicCssClasses(PostnomicMarkupStyle.Semantic);
 
-        property!.GetValue(bootstrap).Should().Be(expectedBootstrap, $"role '{roleName}' in Bootstrap mode");
-        property.GetValue(semantic).Should().Be(expectedSemantic, $"role '{roleName}' in Semantic mode");
+        // "role '{roleName}' in Bootstrap mode"
+        Assert.Equal(expectedBootstrap, property!.GetValue(bootstrap));
+        // "role '{roleName}' in Semantic mode"
+        Assert.Equal(expectedSemantic, property.GetValue(semantic));
     }
 
     [Fact]
@@ -103,7 +106,9 @@ public class PostnomicCssClassesTests
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToArray();
 
-        actualRoles.Should().BeEquivalentTo(expectedRoles,
-            "every public role property on PostnomicCssClasses must be pinned by the characterization theory above");
+        // "every public role property on PostnomicCssClasses must be pinned by the characterization theory above"
+        Assert.Equal(
+            expectedRoles.OrderBy(x => x, StringComparer.Ordinal),
+            actualRoles.OrderBy(x => x, StringComparer.Ordinal));
     }
 }

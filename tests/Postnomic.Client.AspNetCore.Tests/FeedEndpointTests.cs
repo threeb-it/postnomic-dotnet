@@ -1,5 +1,4 @@
 using System.Net;
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -122,8 +121,8 @@ public class FeedEndpointTests : IAsyncLifetime
     {
         var response = await _client.GetAsync("/blog/sitemap.xml");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Content.Headers.ContentType!.MediaType.Should().Be("application/xml");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/xml", response.Content.Headers.ContentType!.MediaType);
     }
 
     [Fact]
@@ -132,7 +131,7 @@ public class FeedEndpointTests : IAsyncLifetime
         var response = await _client.GetAsync("/blog/sitemap.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().Contain("<urlset");
+        Assert.Contains("<urlset", xml);
     }
 
     [Fact]
@@ -143,7 +142,7 @@ public class FeedEndpointTests : IAsyncLifetime
         var response = await _client.GetAsync("/blog/sitemap.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().MatchRegex($"<loc>https?://[^<]+/de/blog/post/{Slug}</loc>");
+        Assert.Matches($"<loc>https?://[^<]+/de/blog/post/{Slug}</loc>", xml);
     }
 
     [Fact]
@@ -152,8 +151,8 @@ public class FeedEndpointTests : IAsyncLifetime
         var response = await _client.GetAsync("/blog/sitemap.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().Contain("hreflang=\"en\"");
-        xml.Should().MatchRegex($"href=\"https?://[^\"]+/en/blog/post/{Slug}\"");
+        Assert.Contains("hreflang=\"en\"", xml);
+        Assert.Matches($"href=\"https?://[^\"]+/en/blog/post/{Slug}\"", xml);
     }
 
     [Fact]
@@ -162,7 +161,7 @@ public class FeedEndpointTests : IAsyncLifetime
         var response = await _client.GetAsync("/blog/sitemap.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().Contain("hreflang=\"de\"");
+        Assert.Contains("hreflang=\"de\"", xml);
     }
 
     // ── rss.xml ─────────────────────────────────────────────────────────────────
@@ -172,8 +171,8 @@ public class FeedEndpointTests : IAsyncLifetime
     {
         var response = await _client.GetAsync("/blog/rss.xml");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Content.Headers.ContentType!.MediaType.Should().Be("application/rss+xml");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/rss+xml", response.Content.Headers.ContentType!.MediaType);
     }
 
     [Fact]
@@ -182,7 +181,7 @@ public class FeedEndpointTests : IAsyncLifetime
         var response = await _client.GetAsync("/blog/rss.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().Contain("<rss");
+        Assert.Contains("<rss", xml);
     }
 
     [Fact]
@@ -191,8 +190,8 @@ public class FeedEndpointTests : IAsyncLifetime
         var response = await _client.GetAsync("/blog/rss.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().Contain("<item>");
-        xml.Should().MatchRegex($"<link>https?://[^<]+/de/blog/post/{Slug}</link>");
+        Assert.Contains("<item>", xml);
+        Assert.Matches($"<link>https?://[^<]+/de/blog/post/{Slug}</link>", xml);
     }
 
     [Fact]
@@ -201,8 +200,8 @@ public class FeedEndpointTests : IAsyncLifetime
         var response = await _client.GetAsync("/blog/rss.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().Contain("The Feed End-to-End Post");
-        xml.Should().Contain("<pubDate>");
+        Assert.Contains("The Feed End-to-End Post", xml);
+        Assert.Contains("<pubDate>", xml);
     }
 
     [Fact]
@@ -211,7 +210,7 @@ public class FeedEndpointTests : IAsyncLifetime
         var response = await _client.GetAsync("/blog/rss.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().Contain("<title>Feed Test Blog</title>");
+        Assert.Contains("<title>Feed Test Blog</title>", xml);
     }
 
     // ── robots.txt (opt-in helper) ─────────────────────────────────────────────
@@ -222,7 +221,7 @@ public class FeedEndpointTests : IAsyncLifetime
         var response = await _client.GetAsync("/robots.txt");
         var text = await response.Content.ReadAsStringAsync();
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        text.Should().MatchRegex("Sitemap: https?://[^\\s]+/blog/sitemap.xml");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Matches("Sitemap: https?://[^\\s]+/blog/sitemap.xml", text);
     }
 }

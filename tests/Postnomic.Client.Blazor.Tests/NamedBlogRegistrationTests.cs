@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Postnomic.Client;
@@ -35,8 +34,8 @@ public class NamedBlogRegistrationTests
 
         // Assert
         var service = provider.GetKeyedService<IPostnomicBlogService>("free");
-        service.Should().NotBeNull();
-        service.Should().BeOfType<PostnomicBlogService>();
+        Assert.NotNull(service);
+        Assert.IsType<PostnomicBlogService>(service);
     }
 
     [Fact]
@@ -49,7 +48,7 @@ public class NamedBlogRegistrationTests
         var returned = services.AddPostnomicBlog("free", o => o.BaseUrl = "https://api.example.com");
 
         // Assert
-        returned.Should().BeSameAs(services);
+        Assert.Same(services, returned);
     }
 
     // ── Multiple named registrations ───────────────────────────────────────────
@@ -79,9 +78,9 @@ public class NamedBlogRegistrationTests
         var enterpriseService = provider.GetKeyedService<IPostnomicBlogService>("enterprise");
 
         // Assert
-        freeService.Should().NotBeNull();
-        enterpriseService.Should().NotBeNull();
-        freeService.Should().NotBeSameAs(enterpriseService);
+        Assert.NotNull(freeService);
+        Assert.NotNull(enterpriseService);
+        Assert.NotSame(enterpriseService, freeService);
     }
 
     // ── Named options ──────────────────────────────────────────────────────────
@@ -105,9 +104,9 @@ public class NamedBlogRegistrationTests
         var options = monitor.Get("free");
 
         // Assert
-        options.BaseUrl.Should().Be("https://api-free.example.com");
-        options.ApiKey.Should().Be("pk_free");
-        options.BlogSlug.Should().Be("free-slug");
+        Assert.Equal("https://api-free.example.com", options.BaseUrl);
+        Assert.Equal("pk_free", options.ApiKey);
+        Assert.Equal("free-slug", options.BlogSlug);
     }
 
     // ── Named + default coexistence ────────────────────────────────────────────
@@ -141,9 +140,9 @@ public class NamedBlogRegistrationTests
         var namedService = provider.GetKeyedService<IPostnomicBlogService>("enterprise");
 
         // Assert
-        defaultService.Should().NotBeNull();
-        namedService.Should().NotBeNull();
-        defaultService.Should().NotBeSameAs(namedService);
+        Assert.NotNull(defaultService);
+        Assert.NotNull(namedService);
+        Assert.NotSame(namedService, defaultService);
     }
 
     // ── Caching decorator for named blogs ──────────────────────────────────────
@@ -168,7 +167,7 @@ public class NamedBlogRegistrationTests
 
         // Assert — CachingPostnomicBlogService is internal, so verify via the
         // IPostnomicCacheControl interface it implements
-        service.Should().NotBeNull();
-        service.Should().BeAssignableTo<IPostnomicCacheControl>();
+        Assert.NotNull(service);
+        Assert.IsAssignableFrom<IPostnomicCacheControl>(service);
     }
 }

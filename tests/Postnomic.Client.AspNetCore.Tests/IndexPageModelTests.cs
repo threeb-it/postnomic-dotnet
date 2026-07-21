@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -117,7 +116,7 @@ public class IndexPageModelTests
         var result = await _sut.OnGetAsync();
 
         // Assert
-        result.Should().BeOfType<PageResult>();
+        Assert.IsType<PageResult>(result);
     }
 
     // ── OnGetAsync — data population ─────────────────────────────────────────
@@ -129,8 +128,8 @@ public class IndexPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.BlogInfo.Should().NotBeNull();
-        _sut.BlogInfo!.Name.Should().Be("Test Blog");
+        Assert.NotNull(_sut.BlogInfo);
+        Assert.Equal("Test Blog", _sut.BlogInfo!.Name);
     }
 
     [Fact]
@@ -166,8 +165,8 @@ public class IndexPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.Posts.Items.Should().HaveCount(1);
-        _sut.Posts.Items.First().Slug.Should().Be("loaded-post");
+        Assert.Single(_sut.Posts.Items);
+        Assert.Equal("loaded-post", _sut.Posts.Items.First().Slug);
     }
 
     [Fact]
@@ -185,8 +184,8 @@ public class IndexPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.Tags.Should().HaveCount(1);
-        _sut.Tags[0].Slug.Should().Be("csharp");
+        Assert.Single(_sut.Tags);
+        Assert.Equal("csharp", _sut.Tags[0].Slug);
     }
 
     [Fact]
@@ -204,8 +203,8 @@ public class IndexPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.Categories.Should().HaveCount(1);
-        _sut.Categories[0].Slug.Should().Be("tutorials");
+        Assert.Single(_sut.Categories);
+        Assert.Equal("tutorials", _sut.Categories[0].Slug);
     }
 
     [Fact]
@@ -223,8 +222,8 @@ public class IndexPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.Authors.Should().HaveCount(1);
-        _sut.Authors[0].Name.Should().Be("Jane Doe");
+        Assert.Single(_sut.Authors);
+        Assert.Equal("Jane Doe", _sut.Authors[0].Name);
     }
 
     [Fact]
@@ -242,8 +241,8 @@ public class IndexPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.TopCommented.Should().HaveCount(1);
-        _sut.TopCommented[0].Slug.Should().Be("hot-post");
+        Assert.Single(_sut.TopCommented);
+        Assert.Equal("hot-post", _sut.TopCommented[0].Slug);
     }
 
     [Fact]
@@ -261,8 +260,8 @@ public class IndexPageModelTests
         await _sut.OnGetAsync();
 
         // Assert
-        _sut.MostRead.Should().HaveCount(1);
-        _sut.MostRead[0].Slug.Should().Be("viral-post");
+        Assert.Single(_sut.MostRead);
+        Assert.Equal("viral-post", _sut.MostRead[0].Slug);
     }
 
     // ── OnGetAsync — filter parameters ───────────────────────────────────────
@@ -390,7 +389,7 @@ public class IndexPageModelTests
         _sut.Search = search;
 
         // Act & Assert
-        _sut.HasActiveFilter.Should().Be(expected);
+        Assert.Equal(expected, _sut.HasActiveFilter);
     }
 
     // ── PageRouteValues helper ─────────────────────────────────────────────────
@@ -406,7 +405,7 @@ public class IndexPageModelTests
         var values = _sut.PageRouteValues(4);
 
         // Assert
-        values["p"].Should().Be("4");
+        Assert.Equal("4", values["p"]);
     }
 
     [Fact]
@@ -423,11 +422,11 @@ public class IndexPageModelTests
         var values = _sut.PageRouteValues(2);
 
         // Assert
-        values["Tag"].Should().Be("dotnet");
-        values["Category"].Should().Be("tutorials");
-        values["Author"].Should().Be("Jane");
-        values["Search"].Should().Be("query");
-        values["PageSize"].Should().Be("5");
+        Assert.Equal("dotnet", values["Tag"]);
+        Assert.Equal("tutorials", values["Category"]);
+        Assert.Equal("Jane", values["Author"]);
+        Assert.Equal("query", values["Search"]);
+        Assert.Equal("5", values["PageSize"]);
     }
 
     // ── ShowBranding ──────────────────────────────────────────────────────────
@@ -439,7 +438,7 @@ public class IndexPageModelTests
         var sut = CreateSut(new Mock<IPostnomicBlogService>());
 
         // Act & Assert
-        sut.ShowBranding.Should().BeFalse();
+        Assert.False(sut.ShowBranding);
     }
 
     [Fact]
@@ -450,7 +449,7 @@ public class IndexPageModelTests
         var sut = CreateSut(new Mock<IPostnomicBlogService>(), options);
 
         // Act & Assert
-        sut.ShowBranding.Should().BeTrue();
+        Assert.True(sut.ShowBranding);
     }
 
     [Fact]
@@ -487,7 +486,7 @@ public class IndexPageModelTests
         await sut.OnGetAsync();
 
         // Assert
-        sut.ShowBranding.Should().BeTrue(
+        Assert.True(sut.ShowBranding,
             "the server returned ShowBranding = true so it should take precedence");
     }
 
@@ -527,7 +526,7 @@ public class IndexPageModelTests
         await sut.OnGetAsync();
 
         // Assert
-        sut.ShowBranding.Should().BeFalse(
+        Assert.False(sut.ShowBranding,
             "the server returned ShowBranding = false so it should take precedence over client config");
     }
 }

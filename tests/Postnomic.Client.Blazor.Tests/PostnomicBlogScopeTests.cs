@@ -1,5 +1,4 @@
 using Bunit;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -35,7 +34,7 @@ public class PostnomicBlogScopeTests : BunitContext
             .Add(s => s.BlogName, "krause-engineering")
             .AddChildContent("<span>scoped-content</span>"));
 
-        cut.Markup.Should().Contain("scoped-content");
+        Assert.Contains("scoped-content", cut.Markup);
     }
 
     [Fact]
@@ -45,8 +44,8 @@ public class PostnomicBlogScopeTests : BunitContext
         var act = () => Render<PostnomicBlogScope>(p => p
             .Add(s => s.BlogName, "unregistered-blog"));
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*unregistered-blog*")
-            .WithMessage("*AddPostnomicBlog*");
+        var ex = Assert.Throws<InvalidOperationException>(act);
+        Assert.Contains("unregistered-blog", ex.Message);
+        Assert.Contains("AddPostnomicBlog", ex.Message);
     }
 }

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing.Patterns;
@@ -54,8 +53,8 @@ public class RouteTemplateValidityTests
 
         // Sanity check — the convention must actually have produced templates to validate,
         // including the /{lang}/-prefixed ones the bug affected.
-        templates.Should().NotBeEmpty();
-        templates.Should().Contain(t => t.Contains("{lang:regex("));
+        Assert.NotEmpty(templates);
+        Assert.Contains(templates, t => t.Contains("{lang:regex("));
 
         // Act & Assert — every generated template must be a valid, registerable route pattern.
         // RoutePatternFactory.Parse throws RoutePatternException for an invalid template such as
@@ -63,8 +62,8 @@ public class RouteTemplateValidityTests
         foreach (var template in templates)
         {
             var act = () => RoutePatternFactory.Parse(template);
-            act.Should().NotThrow(
-                because: $"the generated route template '{template}' must be registerable by ASP.NET Core routing");
+            // because: $"the generated route template '{template}' must be registerable by ASP.NET Core routing"
+            Assert.Null(Record.Exception(act));
         }
     }
 
@@ -95,15 +94,15 @@ public class RouteTemplateValidityTests
             .Select(s => s.AttributeRouteModel!.Template!)
             .ToList();
 
-        templates.Should().NotBeEmpty();
+        Assert.NotEmpty(templates);
 
         // Act & Assert — every generated template must be a valid, registerable route pattern,
         // including the Prefix style's leading {lang:regex(...)} segment.
         foreach (var template in templates)
         {
             var act = () => RoutePatternFactory.Parse(template);
-            act.Should().NotThrow(
-                because: $"the generated template '{template}' (style: {style}) must be registerable by ASP.NET Core routing");
+            // because: $"the generated template '{template}' (style: {style}) must be registerable by ASP.NET Core routing"
+            Assert.Null(Record.Exception(act));
         }
     }
 

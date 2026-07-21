@@ -1,5 +1,4 @@
 using System.Net;
-using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Postnomic.Client.Abstractions;
 
@@ -67,9 +66,10 @@ public class PostnomicApiKeyHandlerTests
 
         // Assert
         var request = getCaptured();
-        request.Should().NotBeNull();
-        request!.Headers.TryGetValues(ApiKeyHeaderName, out var values).Should().BeTrue();
-        values.Should().ContainSingle().Which.Should().Be("my-secret-key");
+        Assert.NotNull(request);
+        Assert.True(request!.Headers.TryGetValues(ApiKeyHeaderName, out var values));
+        var value = Assert.Single(values);
+        Assert.Equal("my-secret-key", value);
     }
 
     [Fact]
@@ -83,8 +83,8 @@ public class PostnomicApiKeyHandlerTests
 
         // Assert
         var request = getCaptured();
-        request.Should().NotBeNull();
-        request!.Headers.Contains(ApiKeyHeaderName).Should().BeFalse();
+        Assert.NotNull(request);
+        Assert.False(request!.Headers.Contains(ApiKeyHeaderName));
     }
 
     [Fact]
@@ -98,8 +98,8 @@ public class PostnomicApiKeyHandlerTests
 
         // Assert
         var request = getCaptured();
-        request.Should().NotBeNull();
-        request!.Headers.Contains(ApiKeyHeaderName).Should().BeFalse();
+        Assert.NotNull(request);
+        Assert.False(request!.Headers.Contains(ApiKeyHeaderName));
     }
 
     [Fact]
@@ -115,9 +115,10 @@ public class PostnomicApiKeyHandlerTests
 
         // Assert
         var captured = getCaptured();
-        captured!.Headers.TryGetValues(ApiKeyHeaderName, out _).Should().BeTrue();
-        captured.Headers.TryGetValues("X-Custom-Header", out var custom).Should().BeTrue();
-        custom.Should().ContainSingle().Which.Should().Be("custom-value");
+        Assert.True(captured!.Headers.TryGetValues(ApiKeyHeaderName, out _));
+        Assert.True(captured.Headers.TryGetValues("X-Custom-Header", out var custom));
+        var value = Assert.Single(custom);
+        Assert.Equal("custom-value", value);
     }
 
     [Fact]
@@ -143,8 +144,8 @@ public class PostnomicApiKeyHandlerTests
         await client.GetAsync("/three");
 
         // Assert
-        capturedHeaders.Should().HaveCount(3);
-        capturedHeaders.Should().AllBe("repeated-key");
+        Assert.Equal(3, capturedHeaders.Count());
+        Assert.All(capturedHeaders, h => Assert.Equal("repeated-key", h));
     }
 
     // ── CapturingHandler ──────────────────────────────────────────────────────

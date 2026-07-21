@@ -1,5 +1,4 @@
 using Bunit;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -37,7 +36,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.PostContent, (string?)null));
 
         // Assert
-        cut.Markup.Should().Contain("No content available");
+        Assert.Contains("No content available", cut.Markup);
     }
 
     [Fact]
@@ -48,7 +47,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.PostContent, ""));
 
         // Assert
-        cut.Markup.Should().Contain("No content available");
+        Assert.Contains("No content available", cut.Markup);
     }
 
     [Fact]
@@ -59,7 +58,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.PostContent, "   "));
 
         // Assert
-        cut.Markup.Should().Contain("No content available");
+        Assert.Contains("No content available", cut.Markup);
     }
 
     [Theory]
@@ -77,7 +76,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.PostContent, content));
 
         // Assert — the displayed number should match the expected minutes
-        cut.Markup.Should().Contain(expectedMinutes.ToString());
+        Assert.Contains(expectedMinutes.ToString(), cut.Markup);
     }
 
     [Fact]
@@ -91,8 +90,8 @@ public class SidebarTests : BunitContext
             p.Add(c => c.PostContent, content));
 
         // Assert
-        cut.Markup.Should().Contain("minute");
-        cut.Markup.Should().NotContain("minutes");
+        Assert.Contains("minute", cut.Markup);
+        Assert.DoesNotContain("minutes", cut.Markup);
     }
 
     [Fact]
@@ -106,7 +105,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.PostContent, content));
 
         // Assert
-        cut.Markup.Should().Contain("minutes");
+        Assert.Contains("minutes", cut.Markup);
     }
 
     [Fact]
@@ -120,7 +119,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.PostContent, html));
 
         // Assert — word count should be rendered and be 10
-        cut.Markup.Should().Contain("10");
+        Assert.Contains("10", cut.Markup);
     }
 
     [Fact]
@@ -134,7 +133,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.PostContent, content));
 
         // Assert — word count "50" should be displayed
-        cut.Markup.Should().Contain("50");
+        Assert.Contains("50", cut.Markup);
     }
 
     // ── TagCloud ──────────────────────────────────────────────────────────────
@@ -156,7 +155,7 @@ public class SidebarTests : BunitContext
 
         // Assert — one button per tag
         var tagButtons = cut.FindAll("button.btn");
-        tagButtons.Should().HaveCount(2);
+        Assert.Equal(2, tagButtons.Count());
     }
 
     [Fact]
@@ -174,7 +173,7 @@ public class SidebarTests : BunitContext
         var cut = Render<TagCloud>();
 
         // Assert
-        cut.Markup.Should().Contain("Blazor");
+        Assert.Contains("Blazor", cut.Markup);
     }
 
     [Fact]
@@ -192,7 +191,7 @@ public class SidebarTests : BunitContext
         var cut = Render<TagCloud>();
 
         // Assert
-        cut.Markup.Should().Contain("7");
+        Assert.Contains("7", cut.Markup);
     }
 
     [Fact]
@@ -207,7 +206,7 @@ public class SidebarTests : BunitContext
         var cut = Render<TagCloud>();
 
         // Assert
-        cut.Markup.Should().Contain("No tags found");
+        Assert.Contains("No tags found", cut.Markup);
     }
 
     [Fact]
@@ -228,8 +227,8 @@ public class SidebarTests : BunitContext
 
         // Assert — active tag button should have btn-secondary class
         var activeBtn = cut.FindAll("button.btn-secondary");
-        activeBtn.Should().HaveCount(1);
-        activeBtn[0].TextContent.Should().Contain("C#");
+        Assert.Single(activeBtn);
+        Assert.Contains("C#", activeBtn[0].TextContent);
     }
 
     [Fact]
@@ -248,7 +247,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.ActiveTagSlug, "tag"));
 
         // Assert
-        cut.Markup.Should().Contain("Clear filter");
+        Assert.Contains("Clear filter", cut.Markup);
     }
 
     // ── CategoryList ──────────────────────────────────────────────────────────
@@ -270,7 +269,7 @@ public class SidebarTests : BunitContext
 
         // Assert
         var items = cut.FindAll("li.list-group-item");
-        items.Should().HaveCount(2);
+        Assert.Equal(2, items.Count());
     }
 
     [Fact]
@@ -288,7 +287,7 @@ public class SidebarTests : BunitContext
         var cut = Render<CategoryList>();
 
         // Assert
-        cut.Markup.Should().Contain("Architecture");
+        Assert.Contains("Architecture", cut.Markup);
     }
 
     [Fact]
@@ -306,7 +305,7 @@ public class SidebarTests : BunitContext
         var cut = Render<CategoryList>();
 
         // Assert — badge showing count
-        cut.Find("span.badge").TextContent.Should().Contain("6");
+        Assert.Contains("6", cut.Find("span.badge").TextContent);
     }
 
     [Fact]
@@ -321,7 +320,7 @@ public class SidebarTests : BunitContext
         var cut = Render<CategoryList>();
 
         // Assert
-        cut.Markup.Should().Contain("No categories found");
+        Assert.Contains("No categories found", cut.Markup);
     }
 
     [Fact]
@@ -340,7 +339,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.ActiveCategorySlug, "tutorials"));
 
         // Assert
-        cut.Markup.Should().Contain("Clear filter");
+        Assert.Contains("Clear filter", cut.Markup);
     }
 
     // ── AuthorList ────────────────────────────────────────────────────────────
@@ -362,7 +361,7 @@ public class SidebarTests : BunitContext
 
         // Assert
         var items = cut.FindAll("li.list-group-item");
-        items.Should().HaveCount(2);
+        Assert.Equal(2, items.Count());
     }
 
     [Fact]
@@ -380,7 +379,7 @@ public class SidebarTests : BunitContext
         var cut = Render<AuthorList>();
 
         // Assert
-        cut.Markup.Should().Contain("Alice Brown");
+        Assert.Contains("Alice Brown", cut.Markup);
     }
 
     [Fact]
@@ -398,7 +397,7 @@ public class SidebarTests : BunitContext
         var cut = Render<AuthorList>();
 
         // Assert
-        cut.Find("span.badge").TextContent.Should().Contain("12");
+        Assert.Contains("12", cut.Find("span.badge").TextContent);
     }
 
     [Fact]
@@ -413,7 +412,7 @@ public class SidebarTests : BunitContext
         var cut = Render<AuthorList>();
 
         // Assert
-        cut.Markup.Should().Contain("No authors found");
+        Assert.Contains("No authors found", cut.Markup);
     }
 
     [Fact]
@@ -432,7 +431,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.ActiveAuthorName, "Jane Doe"));
 
         // Assert
-        cut.Markup.Should().Contain("Clear filter");
+        Assert.Contains("Clear filter", cut.Markup);
     }
 
     [Fact]
@@ -451,11 +450,11 @@ public class SidebarTests : BunitContext
 
         // Assert — a filter button is rendered (sidebar uses filter, not profile links)
         var buttons = cut.FindAll("button.btn.btn-link");
-        buttons.Should().Contain(b => b.TextContent.Contains("Jane Doe"));
+        Assert.Contains(buttons, b => b.TextContent.Contains("Jane Doe"));
 
         // No profile-page anchor should be present in the sidebar
         var links = cut.FindAll("a[href]");
-        links.Should().NotContain(a => a.GetAttribute("href")!.Contains("/author/"));
+        Assert.DoesNotContain(links, a => a.GetAttribute("href")!.Contains("/author/"));
     }
 
     [Fact]
@@ -474,11 +473,11 @@ public class SidebarTests : BunitContext
 
         // Assert — a btn-link button is rendered for filtering
         var buttons = cut.FindAll("button.btn.btn-link");
-        buttons.Should().Contain(b => b.TextContent.Contains("Anonymous Author"));
+        Assert.Contains(buttons, b => b.TextContent.Contains("Anonymous Author"));
 
         // And no profile-page anchor should be present
         var links = cut.FindAll("a[href]");
-        links.Should().NotContain(a => a.GetAttribute("href")!.Contains("/author/"));
+        Assert.DoesNotContain(links, a => a.GetAttribute("href")!.Contains("/author/"));
     }
 
     // ── TopCommentedPosts / MostReadPosts — language-aware links ────────────────
@@ -506,8 +505,8 @@ public class SidebarTests : BunitContext
             p.Add(c => c.Language, "de"));
 
         // Assert — must be language-prefixed, not the bare unprefixed base-path link.
-        cut.FindAll("a[href='/de/blog/post/hello-world']").Should().NotBeEmpty();
-        cut.FindAll("a[href='/blog/post/hello-world']").Should().BeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/de/blog/post/hello-world']"));
+        Assert.Empty(cut.FindAll("a[href='/blog/post/hello-world']"));
     }
 
     [Fact]
@@ -527,7 +526,7 @@ public class SidebarTests : BunitContext
             p.Add(c => c.Language, "de"));
 
         // Assert — must be language-prefixed, not the bare unprefixed base-path link.
-        cut.FindAll("a[href='/de/blog/post/hello-world']").Should().NotBeEmpty();
-        cut.FindAll("a[href='/blog/post/hello-world']").Should().BeEmpty();
+        Assert.NotEmpty(cut.FindAll("a[href='/de/blog/post/hello-world']"));
+        Assert.Empty(cut.FindAll("a[href='/blog/post/hello-world']"));
     }
 }

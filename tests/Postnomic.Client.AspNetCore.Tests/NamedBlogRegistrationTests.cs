@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,7 +37,7 @@ public class NamedBlogRegistrationTests
 
         // Assert
         var service = provider.GetKeyedService<IPostnomicBlogService>("free");
-        service.Should().NotBeNull();
+        Assert.NotNull(service);
     }
 
     [Fact]
@@ -55,7 +54,7 @@ public class NamedBlogRegistrationTests
         });
 
         // Assert
-        returned.Should().BeSameAs(services);
+        Assert.Same(services, returned);
     }
 
     // ── IPostnomicBlogResolver registration ────────────────────────────────────
@@ -77,7 +76,7 @@ public class NamedBlogRegistrationTests
 
         // Assert
         var resolver = provider.GetService<IPostnomicBlogResolver>();
-        resolver.Should().NotBeNull();
+        Assert.NotNull(resolver);
     }
 
     // ── PostnomicBlogResolverOptions populated ─────────────────────────────────
@@ -101,8 +100,8 @@ public class NamedBlogRegistrationTests
         var resolverOptions = provider.GetRequiredService<IOptions<PostnomicBlogResolverOptions>>().Value;
 
         // Assert
-        resolverOptions.BasePathToBlogName.Should().ContainKey("/blog/free");
-        resolverOptions.BasePathToBlogName["/blog/free"].Should().Be("free");
+        Assert.Contains("/blog/free", resolverOptions.BasePathToBlogName);
+        Assert.Equal("free", resolverOptions.BasePathToBlogName["/blog/free"]);
     }
 
     [Fact]
@@ -131,9 +130,9 @@ public class NamedBlogRegistrationTests
         var resolverOptions = provider.GetRequiredService<IOptions<PostnomicBlogResolverOptions>>().Value;
 
         // Assert
-        resolverOptions.BasePathToBlogName.Should().HaveCount(2);
-        resolverOptions.BasePathToBlogName["/blog/free"].Should().Be("free");
-        resolverOptions.BasePathToBlogName["/blog/enterprise"].Should().Be("enterprise");
+        Assert.Equal(2, resolverOptions.BasePathToBlogName.Count());
+        Assert.Equal("free", resolverOptions.BasePathToBlogName["/blog/free"]);
+        Assert.Equal("enterprise", resolverOptions.BasePathToBlogName["/blog/enterprise"]);
     }
 
     // ── Multiple named blogs get route conventions ─────────────────────────────
@@ -164,9 +163,9 @@ public class NamedBlogRegistrationTests
         var razorPagesOptions = provider.GetRequiredService<IOptions<RazorPagesOptions>>().Value;
 
         // Assert — each named blog registration adds one route convention
-        razorPagesOptions.Conventions
+        Assert.Equal(2, razorPagesOptions.Conventions
             .OfType<IPageRouteModelConvention>()
-            .Should().HaveCount(2);
+            .Count());
     }
 
     // ── Named + default coexistence ────────────────────────────────────────────
@@ -202,9 +201,9 @@ public class NamedBlogRegistrationTests
         var namedService = provider.GetKeyedService<IPostnomicBlogService>("enterprise");
 
         // Assert
-        defaultService.Should().NotBeNull();
-        namedService.Should().NotBeNull();
-        defaultService.Should().NotBeSameAs(namedService);
+        Assert.NotNull(defaultService);
+        Assert.NotNull(namedService);
+        Assert.NotSame(namedService, defaultService);
     }
 
     [Fact]
@@ -235,8 +234,8 @@ public class NamedBlogRegistrationTests
         var razorPagesOptions = provider.GetRequiredService<IOptions<RazorPagesOptions>>().Value;
 
         // Assert — both default and named register a route convention
-        razorPagesOptions.Conventions
+        Assert.Equal(2, razorPagesOptions.Conventions
             .OfType<IPageRouteModelConvention>()
-            .Should().HaveCount(2);
+            .Count());
     }
 }

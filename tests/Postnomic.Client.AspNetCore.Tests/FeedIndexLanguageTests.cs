@@ -1,5 +1,4 @@
 using System.Net;
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -117,10 +116,10 @@ public class FeedIndexLanguageTests
         var response = await client.GetAsync("/blog/sitemap.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         // The index <loc> (as opposed to the post's own <loc>, which carries a /post/{slug} tail)
         // must be the real, routable /de/blog URL — a bare /blog <loc> would 404 under Prefix.
-        xml.Should().MatchRegex("<loc>https?://[^<]+/de/blog</loc>");
+        Assert.Matches("<loc>https?://[^<]+/de/blog</loc>", xml);
     }
 
     [Fact]
@@ -132,8 +131,8 @@ public class FeedIndexLanguageTests
         var response = await client.GetAsync("/blog/rss.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        xml.Should().MatchRegex("<link>https?://[^<]+/de/blog</link>");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Matches("<link>https?://[^<]+/de/blog</link>", xml);
     }
 
     // ── Suffix: bare /blog index URL is still correct (a real route) — unchanged behavior ─────
@@ -147,7 +146,7 @@ public class FeedIndexLanguageTests
         var response = await client.GetAsync("/blog/sitemap.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().MatchRegex("<loc>https?://[^<]+/blog</loc>");
+        Assert.Matches("<loc>https?://[^<]+/blog</loc>", xml);
     }
 
     [Fact]
@@ -159,6 +158,6 @@ public class FeedIndexLanguageTests
         var response = await client.GetAsync("/blog/rss.xml");
         var xml = await response.Content.ReadAsStringAsync();
 
-        xml.Should().MatchRegex("<link>https?://[^<]+/blog</link>");
+        Assert.Matches("<link>https?://[^<]+/blog</link>", xml);
     }
 }
