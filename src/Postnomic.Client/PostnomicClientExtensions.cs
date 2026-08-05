@@ -91,6 +91,56 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Registers the Postnomic authoring client services, including the typed
+    /// <see cref="IPostnomicAuthoringService"/> and the
+    /// <see cref="PostnomicPersonalAccessTokenHandler"/> delegating handler that injects the
+    /// <c>Authorization: Bearer</c> header on every request. This is a separate registration
+    /// from <see cref="AddPostnomicClient(IServiceCollection, Action{PostnomicClientOptions})"/>
+    /// because most consumers only need to read published content — authoring requires a
+    /// Personal Access Token, a stronger credential scoped to a specific user rather than a
+    /// single blog's public content.
+    /// </summary>
+    /// <param name="services">The service collection to add services to.</param>
+    /// <param name="configure">
+    /// A delegate that configures <see cref="PostnomicClientOptions"/>, including
+    /// <see cref="PostnomicClientOptions.BaseUrl"/>,
+    /// <see cref="PostnomicClientOptions.PersonalAccessToken"/>, and
+    /// <see cref="PostnomicClientOptions.BlogId"/> (the blog's public ID — not its
+    /// <see cref="PostnomicClientOptions.BlogSlug"/>).
+    /// </param>
+    /// <returns>The same <paramref name="services"/> instance for fluent chaining.</returns>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddPostnomicAuthoringClient(options =>
+    /// {
+    ///     options.BaseUrl = "https://api.postnomic.com";
+    ///     options.PersonalAccessToken = "pnp_...";
+    ///     options.BlogId = "3f2a1c9e-....";
+    /// });
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddPostnomicAuthoringClient(
+        this IServiceCollection services,
+        Action<PostnomicClientOptions> configure)
+    {
+        services.Configure(configure);
+
+        services.AddTransient<PostnomicPersonalAccessTokenHandler>();
+
+        services.AddHttpClient<PostnomicAuthoringService>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<IOptions<PostnomicClientOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+        })
+        .AddHttpMessageHandler<PostnomicPersonalAccessTokenHandler>();
+
+        services.AddSingleton<IPostnomicAuthoringService>(sp =>
+            sp.GetRequiredService<PostnomicAuthoringService>());
+
+        return services;
+    }
+
+    /// <summary>
     /// Registers a named Postnomic blog client as a keyed service. Call this method multiple
     /// times with different <paramref name="name"/> values to host several blogs in one application.
     /// The keyed <see cref="IPostnomicBlogService"/> can be resolved with
