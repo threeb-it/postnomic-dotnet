@@ -17,14 +17,39 @@ public class PostnomicClientOptions
     /// <summary>
     /// The API key used to authenticate with the Postnomic API.
     /// This value is sent as the <c>X-Api-Key</c> HTTP request header on every call.
+    /// Read-only: scoped to anonymous access to a single blog's published content. Used by
+    /// <see cref="IPostnomicBlogService"/> (<c>AddPostnomicClient</c>); ignored by
+    /// <see cref="IPostnomicAuthoringService"/>.
     /// </summary>
     public string ApiKey { get; set; } = "";
 
     /// <summary>
     /// The URL-friendly slug of the blog that this client instance targets
-    /// (e.g. <c>"my-blog"</c>).
+    /// (e.g. <c>"my-blog"</c>). Used by <see cref="IPostnomicBlogService"/>'s read routes
+    /// (<c>/public/blogs/{slug}/...</c>). Not the same value as <see cref="BlogId"/>, which the
+    /// authoring routes require instead.
     /// </summary>
     public string BlogSlug { get; set; } = "";
+
+    /// <summary>
+    /// A user-level Personal Access Token (format <c>pnp_...</c>), minted from the Postnomic
+    /// dashboard's "Access Tokens" page. Sent as <c>Authorization: Bearer &lt;token&gt;</c>.
+    /// Required by <see cref="IPostnomicAuthoringService"/> (<c>AddPostnomicAuthoringClient</c>)
+    /// for every write; ignored by the read-only <see cref="IPostnomicBlogService"/>. The
+    /// token's owner must be a member of <see cref="BlogId"/> with at least the <c>Author</c>
+    /// role — see the remarks on <see cref="IPostnomicAuthoringService"/> for the exact roles
+    /// each operation needs.
+    /// </summary>
+    public string? PersonalAccessToken { get; set; }
+
+    /// <summary>
+    /// The public ID (a GUID) of the blog that <see cref="IPostnomicAuthoringService"/> targets —
+    /// as shown in the Postnomic dashboard URL, or returned as <c>BlogResponse.PublicId</c> by
+    /// the management API. This is <b>not</b> the same value as <see cref="BlogSlug"/>: the
+    /// authoring API's routes (<c>/blogs/{blogId}/...</c>) key on the blog's public ID, not its
+    /// slug. Ignored by the read-only <see cref="IPostnomicBlogService"/>.
+    /// </summary>
+    public string? BlogId { get; set; }
 
     /// <summary>
     /// The base path at which the blog pages are served (e.g. <c>"/blog"</c> or <c>"/articles"</c>).
