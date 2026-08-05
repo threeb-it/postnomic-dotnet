@@ -51,6 +51,41 @@ public class PostnomicClientOptionsTests
     }
 
     [Fact]
+    public void PostnomicClientOptions_PersonalAccessToken_DefaultsToNull()
+    {
+        // Arrange & Act
+        var options = new PostnomicClientOptions();
+
+        // Assert
+        Assert.Null(options.PersonalAccessToken);
+    }
+
+    [Fact]
+    public void PostnomicClientOptions_BlogId_DefaultsToNull()
+    {
+        // Arrange & Act
+        var options = new PostnomicClientOptions();
+
+        // Assert
+        Assert.Null(options.BlogId);
+    }
+
+    [Fact]
+    public void PostnomicClientOptions_PersonalAccessTokenAndBlogId_CanBeSet()
+    {
+        // Arrange
+        var options = new PostnomicClientOptions();
+
+        // Act
+        options.PersonalAccessToken = "pnp_abc123";
+        options.BlogId = "3f2a1c9e-guid";
+
+        // Assert
+        Assert.Equal("pnp_abc123", options.PersonalAccessToken);
+        Assert.Equal("3f2a1c9e-guid", options.BlogId);
+    }
+
+    [Fact]
     public void PostnomicClientOptions_BaseUrl_CanBeSet()
     {
         // Arrange
