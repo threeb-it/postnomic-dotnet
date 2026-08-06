@@ -144,4 +144,67 @@ public interface IPostnomicAuthoringService
         string contentType,
         string? path = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists the post's translations — its content in languages other than the blog's default.
+    /// The default-language content lives on the post itself (<see cref="PostnomicPost.Title"/>
+    /// etc.), not in this list.
+    /// </summary>
+    /// <param name="postId">The public ID of the post whose translations to list.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// The post's translations, ordered by language. Empty when the post has none — this is the
+    /// common case for a freshly created post, not an error.
+    /// </returns>
+    /// <exception cref="PostnomicApiException">
+    /// The API rejected the request — e.g. 404 when no such post exists on this blog.
+    /// </exception>
+    Task<IReadOnlyList<PostnomicPostTranslation>> GetPostTranslationsAsync(
+        string postId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates or updates the post's translation in <paramref name="language"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>The API rejects the blog's default language with 400.</b> That language is edited
+    /// through the post itself (<see cref="UpdatePostAsync"/>), not as a translation — pass any
+    /// other language code here.
+    /// </remarks>
+    /// <param name="postId">The public ID of the post to add or update a translation for.</param>
+    /// <param name="language">
+    /// The ISO-639-1 language code to create or update the translation in. Must not be the
+    /// blog's default language.
+    /// </param>
+    /// <param name="request">The translated title, slug, and (optionally) content and excerpt.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>The created or updated <see cref="PostnomicPostTranslation"/>.</returns>
+    /// <exception cref="PostnomicApiException">
+    /// The API rejected the request — e.g. 400 when <paramref name="language"/> is the blog's
+    /// default language, 404 when no such post exists on this blog, or 409 when another post
+    /// already uses <see cref="PostnomicUpsertTranslationRequest.Slug"/> in this language on
+    /// this blog.
+    /// </exception>
+    Task<PostnomicPostTranslation> SetPostTranslationAsync(
+        string postId,
+        string language,
+        PostnomicUpsertTranslationRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes the post's translation in <paramref name="language"/>. The blog's default
+    /// language cannot be deleted this way — it is part of the post itself.
+    /// </summary>
+    /// <param name="postId">The public ID of the post to remove a translation from.</param>
+    /// <param name="language">The ISO-639-1 language code of the translation to delete.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the asynchronous operation.</param>
+    /// <exception cref="PostnomicApiException">
+    /// The API rejected the request — e.g. 400 when <paramref name="language"/> is the blog's
+    /// default language, 404 when no such post exists on this blog, or 404 when the post has no
+    /// translation in <paramref name="language"/>.
+    /// </exception>
+    Task DeletePostTranslationAsync(
+        string postId,
+        string language,
+        CancellationToken cancellationToken = default);
 }
