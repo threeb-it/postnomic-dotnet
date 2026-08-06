@@ -26,6 +26,8 @@ public sealed class PostnomicAuthoringService(
 
     private string PostsRoute => $"blogs/{_options.BlogId}/posts";
 
+    private string TranslationsRoute(string postId) => $"{PostsRoute}/{postId}/translations";
+
     /// <inheritdoc />
     public async Task<PostnomicPost> CreatePostAsync(
         PostnomicCreatePostRequest request,
@@ -107,19 +109,62 @@ public sealed class PostnomicAuthoringService(
         return items[0];
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<PostnomicPostTranslation>> GetPostTranslationsAsync(
+        string postId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.GetAsync(TranslationsRoute(postId), cancellationToken);
+        return await ReadOrThrowAsync<List<PostnomicPostTranslation>>(response, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<PostnomicPostTranslation> SetPostTranslationAsync(
+        string postId,
+        string language,
+        PostnomicUpsertTranslationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.PutAsJsonAsync(
+            $"{TranslationsRoute(postId)}/{Uri.EscapeDataString(language)}", request, cancellationToken);
+        return await ReadOrThrowAsync<PostnomicPostTranslation>(response, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task DeletePostTranslationAsync(
+        string postId,
+        string language,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.DeleteAsync(
+            $"{TranslationsRoute(postId)}/{Uri.EscapeDataString(language)}", cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
+    /// <summary>
+    /// Throws <see cref="PostnomicApiException"/> carrying the status code and the API's
+    /// rejection reason (its response body, when present, otherwise the HTTP reason phrase) when
+    /// <paramref name="response"/> is not a success. The single error-mapping path shared by
+    /// <see cref="ReadOrThrowAsync{T}"/> and calls with no response body to deserialize
+    /// (<see cref="DeletePostTranslationAsync"/>).
+    /// </summary>
+    private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        if (response.IsSuccessStatusCode)
+            return;
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var message = string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body;
+        throw new PostnomicApiException(response.StatusCode, message);
+    }
+
     /// <summary>
     /// Reads and deserializes a successful response body, or throws
-    /// <see cref="PostnomicApiException"/> carrying the status code and the API's rejection
-    /// reason (its response body, when present, otherwise the HTTP reason phrase).
+    /// <see cref="PostnomicApiException"/> via <see cref="EnsureSuccessAsync"/>.
     /// </summary>
     private static async Task<T> ReadOrThrowAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken)
     {
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            var message = string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body;
-            throw new PostnomicApiException(response.StatusCode, message);
-        }
+        await EnsureSuccessAsync(response, cancellationToken);
 
         var result = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
         return result ?? throw new PostnomicApiException(response.StatusCode, "The API returned an empty response body.");

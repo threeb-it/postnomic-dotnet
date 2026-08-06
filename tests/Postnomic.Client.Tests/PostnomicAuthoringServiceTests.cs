@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
@@ -406,7 +407,279 @@ public class PostnomicAuthoringServiceTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, ex.StatusCode);
     }
 
+    // ── GetPostTranslationsAsync ─────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetPostTranslationsAsync_WhenApiReturnsOk_ReturnsTranslations()
+    {
+        // Arrange
+        const string postId = "post-1";
+        var translations = new List<PostnomicPostTranslation>
+        {
+            CreateTranslation(language: "de"),
+            CreateTranslation(language: "fr")
+        };
+
+        _mockHttp
+            .When(HttpMethod.Get, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations")
+            .Respond(HttpStatusCode.OK, JsonContent.Create(translations));
+
+        // Act
+        var result = await _sut.GetPostTranslationsAsync(postId);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, t => t.Language == "de");
+        Assert.Contains(result, t => t.Language == "fr");
+    }
+
+    [Fact]
+    public async Task GetPostTranslationsAsync_CallsCorrectUrl()
+    {
+        // Arrange
+        const string postId = "post-1";
+
+        _mockHttp
+            .Expect(HttpMethod.Get, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations")
+            .Respond(HttpStatusCode.OK, JsonContent.Create(new List<PostnomicPostTranslation>()));
+
+        // Act
+        await _sut.GetPostTranslationsAsync(postId);
+
+        // Assert
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task GetPostTranslationsAsync_WhenApiReturnsEmptyList_ReturnsEmptyList()
+    {
+        // Arrange
+        const string postId = "post-1";
+
+        _mockHttp
+            .When(HttpMethod.Get, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations")
+            .Respond(HttpStatusCode.OK, JsonContent.Create(new List<PostnomicPostTranslation>()));
+
+        // Act
+        var result = await _sut.GetPostTranslationsAsync(postId);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetPostTranslationsAsync_WhenApiReturnsNotFound_ThrowsPostnomicApiException()
+    {
+        // Arrange — 404 here means the post itself doesn't exist, distinct from "no
+        // translations yet" (which is a 200 with an empty list); throwing keeps that
+        // distinction visible to the caller instead of masking it as an empty result.
+        const string postId = "missing";
+
+        _mockHttp
+            .When(HttpMethod.Get, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations")
+            .Respond(HttpStatusCode.NotFound, new StringContent("Post not found.", Encoding.UTF8, "text/plain"));
+
+        // Act
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.GetPostTranslationsAsync(postId));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
+        Assert.Equal("Post not found.", ex.Message);
+    }
+
+    // ── SetPostTranslationAsync ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task SetPostTranslationAsync_SendsExactBody_AndReturnsDeserializedResponse()
+    {
+        // Arrange
+        const string postId = "post-1";
+        const string language = "de";
+        var request = new PostnomicUpsertTranslationRequest
+        {
+            Title = "Hallo Welt",
+            Slug = "hallo-welt",
+            Content = "<p>Inhalt</p>",
+            Excerpt = "Kurzfassung"
+        };
+        var translation = CreateTranslation(language: language, title: request.Title, slug: request.Slug);
+
+        // PutAsJsonAsync serializes with System.Net.Http.Json's Web defaults (camelCase); match
+        // that explicitly rather than MockHttp's WithJsonContent default (PascalCase), which
+        // would never match the request the service actually sends.
+        _mockHttp
+            .Expect(HttpMethod.Put, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations/{language}")
+            .WithJsonContent(request, new JsonSerializerOptions(JsonSerializerDefaults.Web))
+            .Respond(HttpStatusCode.OK, JsonContent.Create(translation));
+
+        // Act
+        var result = await _sut.SetPostTranslationAsync(postId, language, request);
+
+        // Assert
+        Assert.Equal(language, result.Language);
+        Assert.Equal("Hallo Welt", result.Title);
+        Assert.Equal("hallo-welt", result.Slug);
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task SetPostTranslationAsync_EscapesLanguageSegment()
+    {
+        // Arrange — not a realistic ISO-639-1 code, but proves the segment is escaped rather
+        // than concatenated raw into the URL.
+        const string postId = "post-1";
+        const string language = "de/x";
+        var request = new PostnomicUpsertTranslationRequest { Title = "T", Slug = "s" };
+        var translation = CreateTranslation(language: language);
+
+        _mockHttp
+            .Expect(HttpMethod.Put, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations/de%2Fx")
+            .Respond(HttpStatusCode.OK, JsonContent.Create(translation));
+
+        // Act
+        await _sut.SetPostTranslationAsync(postId, language, request);
+
+        // Assert
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task SetPostTranslationAsync_WhenApiRejectsDefaultLanguage_ThrowsWithReason()
+    {
+        // Arrange — the API's documented 400: the blog's default language is edited through the
+        // post itself, not as a translation.
+        const string postId = "post-1";
+        const string language = "en";
+        var request = new PostnomicUpsertTranslationRequest { Title = "T", Slug = "s" };
+
+        _mockHttp
+            .When(HttpMethod.Put, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations/{language}")
+            .Respond(HttpStatusCode.BadRequest, new StringContent(
+                "The default language is edited through the post itself.", Encoding.UTF8, "text/plain"));
+
+        // Act
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(
+            () => _sut.SetPostTranslationAsync(postId, language, request));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, ex.StatusCode);
+        Assert.Equal("The default language is edited through the post itself.", ex.Message);
+    }
+
+    [Fact]
+    public async Task SetPostTranslationAsync_WhenApiReturnsConflict_ThrowsWithReason()
+    {
+        // Arrange
+        const string postId = "post-1";
+        const string language = "de";
+        var request = new PostnomicUpsertTranslationRequest { Title = "T", Slug = "taken" };
+
+        _mockHttp
+            .When(HttpMethod.Put, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations/{language}")
+            .Respond(HttpStatusCode.Conflict, new StringContent(
+                "Another post already uses this slug in this language.", Encoding.UTF8, "text/plain"));
+
+        // Act
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(
+            () => _sut.SetPostTranslationAsync(postId, language, request));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Conflict, ex.StatusCode);
+        Assert.Equal("Another post already uses this slug in this language.", ex.Message);
+    }
+
+    // ── DeletePostTranslationAsync ───────────────────────────────────────────
+
+    [Fact]
+    public async Task DeletePostTranslationAsync_CallsCorrectUrl()
+    {
+        // Arrange
+        const string postId = "post-1";
+        const string language = "de";
+
+        _mockHttp
+            .Expect(HttpMethod.Delete, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations/{language}")
+            .Respond(HttpStatusCode.NoContent);
+
+        // Act
+        await _sut.DeletePostTranslationAsync(postId, language);
+
+        // Assert
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task DeletePostTranslationAsync_EscapesLanguageSegment()
+    {
+        // Arrange
+        const string postId = "post-1";
+        const string language = "de/x";
+
+        _mockHttp
+            .Expect(HttpMethod.Delete, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations/de%2Fx")
+            .Respond(HttpStatusCode.NoContent);
+
+        // Act
+        await _sut.DeletePostTranslationAsync(postId, language);
+
+        // Assert
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task DeletePostTranslationAsync_WhenApiReturnsNotFound_ThrowsWithReason()
+    {
+        // Arrange
+        const string postId = "post-1";
+        const string language = "de";
+
+        _mockHttp
+            .When(HttpMethod.Delete, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations/{language}")
+            .Respond(HttpStatusCode.NotFound, new StringContent("Translation not found.", Encoding.UTF8, "text/plain"));
+
+        // Act
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(
+            () => _sut.DeletePostTranslationAsync(postId, language));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
+        Assert.Equal("Translation not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task DeletePostTranslationAsync_WhenApiRejectsDefaultLanguage_ThrowsWithReason()
+    {
+        // Arrange
+        const string postId = "post-1";
+        const string language = "en";
+
+        _mockHttp
+            .When(HttpMethod.Delete, $"{BaseUrl}/blogs/{BlogId}/posts/{postId}/translations/{language}")
+            .Respond(HttpStatusCode.BadRequest, new StringContent(
+                "The default language cannot be deleted.", Encoding.UTF8, "text/plain"));
+
+        // Act
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(
+            () => _sut.DeletePostTranslationAsync(postId, language));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, ex.StatusCode);
+        Assert.Equal("The default language cannot be deleted.", ex.Message);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static PostnomicPostTranslation CreateTranslation(
+        string language = "de",
+        string title = "Titel",
+        string slug = "titel") =>
+        new()
+        {
+            Language = language,
+            Title = title,
+            Slug = slug,
+            CreatedAt = DateTime.UtcNow
+        };
 
     private static PostnomicPost CreatePost(
         string publicId = "post-1",
