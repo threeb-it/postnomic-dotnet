@@ -4,15 +4,15 @@
 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Widget : "card mb-4")">
     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-body")">
         <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title fw-bold mb-3")">
-            @Icon("bi bi-folder") Categories
+            @Icon("bi bi-folder") @T("CategoryList.Title")
         </h5>
         @if (categories is null)
         {
-            <p class="text-muted"><em>Loading…</em></p>
+            <p class="text-muted"><em>@T("Common.Loading")</em></p>
         }
         else if (categories.Count == 0)
         {
-            <p class="text-muted small">No categories found.</p>
+            <p class="text-muted small">@T("CategoryList.NoneFound")</p>
         }
         else
         {
@@ -33,7 +33,7 @@
             {
                 <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.BtnSm : "btn btn-link btn-sm text-decoration-none mt-2 p-0")"
                         @onclick="ClearFilterAsync">
-                    &#10005; Clear filter
+                    @T("Common.ClearFilter")
                 </button>
             }
         }
@@ -55,12 +55,31 @@
     [Parameter]
     public EventCallback<string?> OnFilterChanged { get; set; }
 
+    /// <summary>
+    /// Optional ISO-639-1 language code (e.g. "de") used to select the UI chrome strings (title,
+    /// empty state, "Clear filter") rendered by this component. Null renders the English
+    /// built-ins. The host page (e.g. <c>BlogPage</c>) supplies this from its own
+    /// <c>Language</c> parameter.
+    /// </summary>
+    [Parameter]
+    public string? Language { get; set; }
+
     [CascadingParameter]
     private PostnomicBlogContext? BlogContext { get; set; }
 
     private PostnomicMarkupStyle MarkupStyle =>
         BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
     private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    /// <summary>
+    /// Consumer-supplied overrides for the built-in UI chrome strings, if any. See
+    /// <see cref="PostnomicUiStringOverrides"/>.
+    /// </summary>
+    private PostnomicUiStringOverrides? UiStringOverrides =>
+        BlogContext?.Options.UiStrings ?? _injectedClientOptions.Value.UiStrings;
+
+    /// <summary>Resolves a built-in UI chrome string key for this component's <see cref="Language"/>.</summary>
+    private string T(string key) => PostnomicUiStrings.Get(key, Language, UiStringOverrides);
 
     private MarkupString Icon(string bootstrapIconClass) => (MarkupString)(
         MarkupStyle == PostnomicMarkupStyle.Semantic
