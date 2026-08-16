@@ -6,16 +6,16 @@
         <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-body text-center")">
             <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title fw-bold")">Postnomic</h5>
             <p class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-text text-muted small")">
-                The developer-first headless blog platform. Add a full-featured blog to your app in minutes.
+                @T("PostnomicPromo.Description")
             </p>
             <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer"
-               class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.BtnPrimary : "btn btn-primary btn-sm mb-2 w-100")">Learn More</a>
+               class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.BtnPrimary : "btn btn-primary btn-sm mb-2 w-100")">@T("PostnomicPromo.LearnMore")</a>
             <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
-               class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.BtnOutline : "btn btn-outline-primary btn-sm w-100")">View Pricing</a>
+               class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.BtnOutline : "btn btn-outline-primary btn-sm w-100")">@T("PostnomicPromo.ViewPricing")</a>
             <p class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mt-2 mb-0")">
                 <small class="text-muted">
                     <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer"
-                       class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">Upgrade to remove ads</a>
+                       class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">@T("PostnomicPromo.UpgradeToRemoveAds")</a>
                 </small>
             </p>
         </div>
@@ -26,10 +26,29 @@
     [Parameter]
     public bool Visible { get; set; }
 
+    /// <summary>
+    /// Optional ISO-639-1 language code (e.g. "de") used to select the UI chrome strings
+    /// (description, calls to action) rendered by this component. Null renders the English
+    /// built-ins. The host page (e.g. <c>BlogPage</c>/<c>PostPage</c>) supplies this from its own
+    /// <c>Language</c> parameter.
+    /// </summary>
+    [Parameter]
+    public string? Language { get; set; }
+
     [CascadingParameter]
     private PostnomicBlogContext? BlogContext { get; set; }
 
     private PostnomicMarkupStyle MarkupStyle =>
         BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
     private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    /// <summary>
+    /// Consumer-supplied overrides for the built-in UI chrome strings, if any. See
+    /// <see cref="PostnomicUiStringOverrides"/>.
+    /// </summary>
+    private PostnomicUiStringOverrides? UiStringOverrides =>
+        BlogContext?.Options.UiStrings ?? _injectedClientOptions.Value.UiStrings;
+
+    /// <summary>Resolves a built-in UI chrome string key for this component's <see cref="Language"/>.</summary>
+    private string T(string key) => PostnomicUiStrings.Get(key, Language, UiStringOverrides);
 }

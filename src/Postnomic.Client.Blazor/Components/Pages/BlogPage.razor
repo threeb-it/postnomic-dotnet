@@ -44,7 +44,7 @@
         }
         else
         {
-            <p><em>Loading…</em></p>
+            <p><em>@T("Common.Loading")</em></p>
         }
     </div>
 
@@ -55,10 +55,10 @@
             {
                 <div class="@Cls.FilterBanner">
                     <span>
-                        @Icon("bi bi-funnel") Filtered by: <strong>@ActiveFilterLabel</strong>
+                        @Icon("bi bi-funnel") @T("BlogPage.FilteredByLabel") <strong>@ActiveFilterLabel</strong>
                     </span>
                     <button class="@Cls.BtnSm" @onclick="ClearAllFiltersAsync">
-                        &#10005; Clear all
+                        @T("BlogPage.ClearAllFilters")
                     </button>
                 </div>
             }
@@ -68,7 +68,7 @@
                 @if (pagedPosts.Items.Count == 0)
                 {
                     <div class="@Cls.Empty">
-                        <p>No posts found.</p>
+                        <p>@T("Common.NoPostsFound")</p>
                     </div>
                 }
                 else
@@ -107,11 +107,11 @@
                                     </span>
                                     <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mx-2")">·</span>
                                     <span>
-                                        @Icon("bi bi-calendar") @post.PublishedAt.ToString("MMMM dd, yyyy")
+                                        @Icon("bi bi-calendar") @PostnomicDateFormatter.LongDate(post.PublishedAt, Language)
                                     </span>
                                     <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mx-2")">·</span>
                                     <span>
-                                        @Icon("bi bi-chat") @post.CommentCount @(post.CommentCount == 1 ? "comment" : "comments")
+                                        @Icon("bi bi-chat") @post.CommentCount @Plural(post.CommentCount, "Common.Comment", "Common.Comments")
                                     </span>
                                 </div>
                                 @if (post.Tags.Count > 0)
@@ -138,7 +138,7 @@
                                 }
                                 <a href="@PostnomicRouteBuilder.BuildPost(BasePath, RouteStyle, Language, post.Slug)"
                                    class="@Cls.BtnOutline">
-                                    Read More →
+                                    @T("BlogPage.ReadMore")
                                 </a>
                             </div>
                         </article>
@@ -153,7 +153,7 @@
                                     <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "page-link")"
                                             @onclick="() => GoToPageAsync(currentPage - 1)"
                                             disabled="@(currentPage <= 1)">
-                                        ← Previous
+                                        @T("BlogPage.Pager.Previous")
                                     </button>
                                 </li>
                                 @for (int i = 1; i <= pagedPosts.TotalPages; i++)
@@ -169,7 +169,7 @@
                                     <button class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "page-link")"
                                             @onclick="() => GoToPageAsync(currentPage + 1)"
                                             disabled="@(currentPage >= pagedPosts.TotalPages)">
-                                        Next →
+                                        @T("BlogPage.Pager.Next")
                                     </button>
                                 </li>
                             </ul>
@@ -180,7 +180,7 @@
             else
             {
                 <div class="@Cls.Loading">
-                    <p><em>Loading posts…</em></p>
+                    <p><em>@T("BlogPage.LoadingPosts")</em></p>
                 </div>
             }
         </div>
@@ -188,16 +188,20 @@
         @* ── Right sidebar ── *@
         <div class="@Cls.Sidebar">
             <SearchBox ActiveSearchTerm="@filterSearch"
-                       OnFilterChanged="OnSearchChangedAsync" />
+                       OnFilterChanged="OnSearchChangedAsync"
+                       Language="@Language" />
 
             <TagCloud ActiveTagSlug="@filterTag"
-                      OnFilterChanged="OnTagFilterChangedAsync" />
+                      OnFilterChanged="OnTagFilterChangedAsync"
+                      Language="@Language" />
 
             <CategoryList ActiveCategorySlug="@filterCategory"
-                          OnFilterChanged="OnCategoryFilterChangedAsync" />
+                          OnFilterChanged="OnCategoryFilterChangedAsync"
+                          Language="@Language" />
 
             <AuthorList ActiveAuthorName="@filterAuthor"
-                        OnFilterChanged="OnAuthorFilterChangedAsync" />
+                        OnFilterChanged="OnAuthorFilterChangedAsync"
+                        Language="@Language" />
 
             <TopCommentedPosts Language="@Language" />
 
@@ -244,6 +248,20 @@
     private PostnomicMarkupStyle MarkupStyle =>
         BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
     private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    /// <summary>
+    /// Consumer-supplied overrides for the built-in UI chrome strings, if any. See
+    /// <see cref="PostnomicUiStringOverrides"/>.
+    /// </summary>
+    private PostnomicUiStringOverrides? UiStringOverrides =>
+        BlogContext?.Options.UiStrings ?? _injectedClientOptions.Value.UiStrings;
+
+    /// <summary>Resolves a built-in UI chrome string key for this page's <see cref="Language"/>.</summary>
+    private string T(string key) => PostnomicUiStrings.Get(key, Language, UiStringOverrides);
+
+    /// <summary>Resolves the singular or plural UI chrome string key for <paramref name="count"/>.</summary>
+    private string Plural(int count, string singularKey, string pluralKey) =>
+        PostnomicUiStrings.Pluralize(count, singularKey, pluralKey, Language, UiStringOverrides);
 
     /// <summary>
     /// Renders a small marker icon: a Bootstrap Icons <c>&lt;i&gt;</c> in Bootstrap mode, or a

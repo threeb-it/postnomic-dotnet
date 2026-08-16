@@ -24,7 +24,7 @@
     @if (post is null)
     {
         <div class="@Cls.Loading">
-            <p><em>Loading…</em></p>
+            <p><em>@T("Common.Loading")</em></p>
         </div>
     }
     else
@@ -33,7 +33,7 @@
             <div class="@Cls.Main">
                 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">
                     <a href="@PostnomicRouteBuilder.BuildIndex(BasePath, RouteStyle, Language)" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">
-                        ← Back to blog
+                        @T("Common.BackToBlog")
                     </a>
                 </div>
 
@@ -64,7 +64,7 @@
                         </span>
                         <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mx-2")">·</span>
                         <span>
-                            @Icon("bi bi-calendar") @post.PublishedAt.ToString("MMMM dd, yyyy")
+                            @Icon("bi bi-calendar") @PostnomicDateFormatter.LongDate(post.PublishedAt, Language)
                         </span>
                     </div>
 
@@ -97,9 +97,9 @@
                 {
                     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "postnomic-branding alert alert-light border text-center py-3 mt-4")" role="complementary">
                         <small class="text-muted">
-                            Powered by <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "fw-semibold text-decoration-none")">Postnomic</a>
-                            — The developer-first headless blog platform.
-                            <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">Upgrade to remove this banner</a>
+                            @T("PostPage.PoweredBy") <a href="https://postnomic.com" target="_blank" rel="noopener noreferrer" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "fw-semibold text-decoration-none")">Postnomic</a>
+                            @T("PostPage.TaglineSuffix")
+                            <a href="https://postnomic.com/#pricing" target="_blank" rel="noopener noreferrer" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">@T("PostPage.UpgradeToRemoveBanner")</a>
                         </small>
                     </div>
                 }
@@ -108,12 +108,12 @@
 
                 <section class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "comments-section mt-4 mb-5")">
                     <h3 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-4")">
-                        Comments (@post.Comments.Count)
+                        @TF("PostPage.CommentsHeading", post.Comments.Count)
                     </h3>
 
                     @if (post.Comments.Count == 0)
                     {
-                        <p class="text-muted">No comments yet.</p>
+                        <p class="text-muted">@T("PostPage.NoCommentsYet")</p>
                     }
                     else
                     {
@@ -123,6 +123,7 @@
                                          Depth="0"
                                          PostSlug="@PostSlug"
                                          Post="post"
+                                         Language="@Language"
                                          OnCommentPosted="HandleCommentPostedAsync" />
                         }
                     }
@@ -130,7 +131,7 @@
                     @if (post.CommentsEnabled)
                     {
                         <hr class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "my-4")" />
-                        <h4 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">Leave a comment</h4>
+                        <h4 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">@T("PostPage.LeaveAComment")</h4>
 
                         @if (!string.IsNullOrEmpty(commentSuccessMessage))
                         {
@@ -147,13 +148,13 @@
                             <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-form-row" : "row")">
                                 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-3")">
                                     <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
-                                        First name @if (post.CommentRequireFirstname) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
+                                        @T("Common.Form.FirstName") @if (post.CommentRequireFirstname) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                                     </label>
                                     <InputText @bind-Value="newComment.AuthorFirstname" class="@Cls.Field" />
                                 </div>
                                 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-3")">
                                     <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
-                                        Last name @if (post.CommentRequireLastname) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
+                                        @T("Common.Form.LastName") @if (post.CommentRequireLastname) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                                     </label>
                                     <InputText @bind-Value="newComment.AuthorLastname" class="@Cls.Field" />
                                 </div>
@@ -162,13 +163,13 @@
                             <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-form-row" : "row")">
                                 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-3")">
                                     <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
-                                        Email @if (post.CommentRequireEmail) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
+                                        @T("Common.Form.Email") @if (post.CommentRequireEmail) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                                     </label>
                                     <InputText @bind-Value="newComment.AuthorEmail" class="@Cls.Field" type="email" />
                                 </div>
                                 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "col-md-6 mb-3")">
                                     <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
-                                        Phone @if (post.CommentRequirePhone) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
+                                        @T("Common.Form.Phone") @if (post.CommentRequirePhone) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                                     </label>
                                     <InputText @bind-Value="newComment.AuthorPhone" class="@Cls.Field" type="tel" />
                                 </div>
@@ -176,35 +177,35 @@
 
                             <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">
                                 <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">
-                                    Subject @if (post.CommentRequireSubject) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
+                                    @T("Common.Form.Subject") @if (post.CommentRequireSubject) { <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span> }
                                 </label>
                                 <InputText @bind-Value="newComment.Subject" class="@Cls.Field" />
                             </div>
 
                             <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">
-                                <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">Comment <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span></label>
+                                <label class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "form-label")">@T("PostPage.Form.CommentLabel") <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "pn-required" : "text-danger")">*</span></label>
                                 <InputTextArea @bind-Value="newComment.Body" class="@Cls.Field" rows="4" />
                             </div>
 
                             <button type="submit" class="@Cls.BtnPrimary" disabled="@isSubmitting">
-                                @(isSubmitting ? "Submitting…" : "Post comment")
+                                @(isSubmitting ? T("Common.Submitting") : T("PostPage.PostComment"))
                             </button>
                         </EditForm>
                     }
                     else
                     {
-                        <p class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "text-muted" : "text-muted fst-italic mt-3")">Comments are closed for this post.</p>
+                        <p class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "text-muted" : "text-muted fst-italic mt-3")">@T("PostPage.CommentsClosed")</p>
                     }
                 </section>
             </div>
 
             @* ── Right sidebar ── *@
             <div class="@Cls.Sidebar">
-                <EstimatedReadTime PostContent="@post.Content" />
+                <EstimatedReadTime PostContent="@post.Content" Language="@Language" />
                 <TopCommentedPosts Language="@Language" />
                 <MostReadPosts Language="@Language" />
 
-                <PostnomicPromo Visible="ShowBranding" />
+                <PostnomicPromo Visible="ShowBranding" Language="@Language" />
             </div>
         </div>
     }
@@ -251,6 +252,19 @@
     private PostnomicMarkupStyle MarkupStyle =>
         BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
     private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    /// <summary>
+    /// Consumer-supplied overrides for the built-in UI chrome strings, if any. See
+    /// <see cref="PostnomicUiStringOverrides"/>.
+    /// </summary>
+    private PostnomicUiStringOverrides? UiStringOverrides =>
+        BlogContext?.Options.UiStrings ?? _injectedClientOptions.Value.UiStrings;
+
+    /// <summary>Resolves a built-in UI chrome string key for this page's <see cref="Language"/>.</summary>
+    private string T(string key) => PostnomicUiStrings.Get(key, Language, UiStringOverrides);
+
+    /// <summary>Resolves and formats a composite-format UI chrome string key (e.g. <c>"Comments ({0})"</c>).</summary>
+    private string TF(string key, params object?[] args) => PostnomicUiStrings.GetFormat(key, Language, UiStringOverrides, args);
 
     private MarkupString Icon(string bootstrapIconClass) => (MarkupString)(
         MarkupStyle == PostnomicMarkupStyle.Semantic
@@ -362,14 +376,14 @@
                 newComment = new CommentFormModel();
 
                 commentSuccessMessage = post?.CommentRequireModeration == true
-                    ? "Your comment has been submitted and is awaiting moderation."
-                    : "Your comment has been posted!";
+                    ? T("PostPage.CommentPostedModeration")
+                    : T("PostPage.CommentPosted");
 
                 await LoadPostAsync();
             }
             else
             {
-                commentErrorMessage = "Failed to post comment. Please try again.";
+                commentErrorMessage = T("PostPage.CommentPostFailed");
             }
         }
         catch (Exception ex)

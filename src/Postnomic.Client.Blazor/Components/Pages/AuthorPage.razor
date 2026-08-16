@@ -12,7 +12,7 @@
     @if (profile is null)
     {
         <div class="text-center py-5">
-            <p><em>Loading…</em></p>
+            <p><em>@T("Common.Loading")</em></p>
         </div>
     }
     else
@@ -22,7 +22,7 @@
             <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-4")">
                 <img src="@profile.HeaderImageUrl"
                      class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "w-100 rounded shadow-sm")"
-                     alt="@profile.Name header"
+                     alt="@TF("AuthorPage.HeaderImageAlt", profile.Name)"
                      style="max-height: 300px; object-fit: cover;" />
             </div>
         }
@@ -54,7 +54,7 @@
                                 }
                                 @if (!string.IsNullOrEmpty(profile.JobTitle) && !string.IsNullOrEmpty(profile.Company))
                                 {
-                                    <span> at </span>
+                                    <span>@T("AuthorPage.At")</span>
                                 }
                                 @if (!string.IsNullOrEmpty(profile.Company))
                                 {
@@ -75,13 +75,13 @@
                             <p>
                                 <a href="@profile.WebsiteUrl" target="_blank" rel="noopener noreferrer"
                                    class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">
-                                    @Icon("bi bi-globe") Website
+                                    @Icon("bi bi-globe") @T("AuthorPage.Website")
                                 </a>
                             </p>
                         }
 
                         <p class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-0")">
-                            <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.TagCategory : "badge bg-primary")">@profile.PostCount post@(profile.PostCount == 1 ? "" : "s")</span>
+                            <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.TagCategory : "badge bg-primary")">@profile.PostCount @Plural(profile.PostCount, "Common.Post", "Common.Posts")</span>
                         </p>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                 {
                     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Widget : "card shadow-sm mt-3")">
                         <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-body")">
-                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">Connect</h5>
+                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">@T("AuthorPage.Connect")</h5>
                             <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "d-flex flex-wrap gap-2")">
                                 @foreach (var link in profile.SocialLinks)
                                 {
@@ -108,7 +108,7 @@
                 {
                     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Widget : "card shadow-sm mt-3")">
                         <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-body")">
-                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">Skills</h5>
+                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">@T("AuthorPage.Skills")</h5>
                             <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "d-flex flex-wrap gap-1")">
                                 @foreach (var skill in profile.Skills)
                                 {
@@ -123,7 +123,7 @@
                 {
                     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Widget : "card shadow-sm mt-3")">
                         <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-body")">
-                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">Languages</h5>
+                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">@T("AuthorPage.Languages")</h5>
                             <ul class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "list-unstyled mb-0")">
                                 @foreach (var lang in profile.Languages)
                                 {
@@ -144,7 +144,7 @@
                 {
                     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Widget : "card shadow-sm mt-3")">
                         <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-body")">
-                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">Interests</h5>
+                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">@T("AuthorPage.Interests")</h5>
                             <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "d-flex flex-wrap gap-1")">
                                 @foreach (var interest in profile.Interests)
                                 {
@@ -161,7 +161,7 @@
                 {
                     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Card : "card shadow-sm mb-4")">
                         <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.CardBody : "card-body")">
-                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">About</h5>
+                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">@T("AuthorPage.About")</h5>
                             <div>@((MarkupString)profile.Bio)</div>
                         </div>
                     </div>
@@ -171,7 +171,7 @@
                 {
                     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Card : "card shadow-sm mb-4")">
                         <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.CardBody : "card-body")">
-                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">Certifications</h5>
+                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">@T("AuthorPage.Certifications")</h5>
                             @foreach (var cert in profile.Certifications)
                             {
                                 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "border-bottom py-2")">
@@ -183,10 +183,10 @@
                                     @if (cert.IssueDate.HasValue)
                                     {
                                         <br /><span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-muted small")">
-                                            Issued @cert.IssueDate.Value.ToString("MMM yyyy")
+                                            @T("AuthorPage.Issued") @PostnomicDateFormatter.MonthYear(cert.IssueDate.Value, Language)
                                             @if (cert.ExpirationDate.HasValue)
                                             {
-                                                <span> · Expires @cert.ExpirationDate.Value.ToString("MMM yyyy")</span>
+                                                <span> · @T("AuthorPage.Expires") @PostnomicDateFormatter.MonthYear(cert.ExpirationDate.Value, Language)</span>
                                             }
                                         </span>
                                     }
@@ -195,7 +195,7 @@
                                         <br />
                                         <a href="@cert.CredentialUrl" target="_blank" rel="noopener noreferrer"
                                            class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "small text-decoration-none")">
-                                            View credential
+                                            @T("AuthorPage.ViewCredential")
                                         </a>
                                     }
                                 </div>
@@ -208,7 +208,7 @@
                 {
                     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Card : "card shadow-sm mb-4")">
                         <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.CardBody : "card-body")">
-                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">Education</h5>
+                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">@T("AuthorPage.Education")</h5>
                             @foreach (var edu in profile.Education)
                             {
                                 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "border-bottom py-2")">
@@ -234,7 +234,7 @@
                                             }
                                             else
                                             {
-                                                <span> – Present</span>
+                                                <span> – @T("AuthorPage.Present")</span>
                                             }
                                         </span>
                                     }
@@ -248,7 +248,7 @@
                 {
                     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Card : "card shadow-sm mb-4")">
                         <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.CardBody : "card-body")">
-                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">Recent Posts</h5>
+                            <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title")">@T("AuthorPage.RecentPosts")</h5>
                             @foreach (var post in profile.RecentPosts)
                             {
                                 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "border-bottom py-2")">
@@ -256,7 +256,7 @@
                                         @post.Title
                                     </a>
                                     <br />
-                                    <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-muted small")">@post.PublishedAt.ToString("MMMM dd, yyyy")</span>
+                                    <span class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-muted small")">@PostnomicDateFormatter.LongDate(post.PublishedAt, Language)</span>
                                     @if (!string.IsNullOrEmpty(post.Excerpt))
                                     {
                                         <p class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-muted small mt-1 mb-0")">@post.Excerpt</p>
@@ -269,7 +269,7 @@
 
                 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "mb-3")">
                     <a href="@PostnomicRouteBuilder.BuildIndex(BasePath, RouteStyle, Language)" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">
-                        ← Back to blog
+                        @T("Common.BackToBlog")
                     </a>
                 </div>
             </div>
@@ -310,6 +310,23 @@
     private PostnomicMarkupStyle MarkupStyle =>
         BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
     private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    /// <summary>
+    /// Consumer-supplied overrides for the built-in UI chrome strings, if any. See
+    /// <see cref="PostnomicUiStringOverrides"/>.
+    /// </summary>
+    private PostnomicUiStringOverrides? UiStringOverrides =>
+        BlogContext?.Options.UiStrings ?? _injectedClientOptions.Value.UiStrings;
+
+    /// <summary>Resolves a built-in UI chrome string key for this page's <see cref="Language"/>.</summary>
+    private string T(string key) => PostnomicUiStrings.Get(key, Language, UiStringOverrides);
+
+    /// <summary>Resolves and formats a composite-format UI chrome string key (e.g. <c>"{0} header"</c>).</summary>
+    private string TF(string key, params object?[] args) => PostnomicUiStrings.GetFormat(key, Language, UiStringOverrides, args);
+
+    /// <summary>Resolves the singular or plural UI chrome string key for <paramref name="count"/>.</summary>
+    private string Plural(int count, string singularKey, string pluralKey) =>
+        PostnomicUiStrings.Pluralize(count, singularKey, pluralKey, Language, UiStringOverrides);
 
     private MarkupString Icon(string bootstrapIconClass) => (MarkupString)(
         MarkupStyle == PostnomicMarkupStyle.Semantic

@@ -361,7 +361,7 @@ These endpoints are ASP.NET Core-only (`Postnomic.Client.AspNetCore`); there is 
 
 ## Project Structure
 
-```
+```text
 src/
   Postnomic.Client.Abstractions/   # Interfaces and DTOs (no dependencies)
   Postnomic.Client/                # HTTP client implementation

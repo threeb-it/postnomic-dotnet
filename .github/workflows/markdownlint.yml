@@ -17,9 +17,16 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v6
       with:
-        node-version: 16.x
+        # 20 LTS, not 16. markdownlint-cli's dependency chain now uses the
+        # regexp `v` flag, which Node 16 cannot parse — so the job died with
+        # "SyntaxError: Invalid regular expression flags" before linting a
+        # single file. It had been failing on every PR since, unrelated to
+        # whatever the PR changed.
+        node-version: 20.x
     - name: Run Markdownlint
       run: |
         echo "::add-matcher::.github/workflows/markdownlint-problem-matcher.json"
-        npm i -g markdownlint-cli
+        # Pinned. An unpinned global install is what turned an upstream
+        # release into a red check on branches that never touched markdown.
+        npm i -g markdownlint-cli@0.45.0
         markdownlint --ignore '.dotnet/' '**/*.md'

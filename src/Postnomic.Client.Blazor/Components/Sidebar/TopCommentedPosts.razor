@@ -4,15 +4,15 @@
 <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.Widget : "card mb-4")">
     <div class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "card-body")">
         <h5 class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? Cls.WidgetTitle : "card-title fw-bold mb-3")">
-            @Icon("bi bi-chat-dots") Top Commented Posts
+            @Icon("bi bi-chat-dots") @T("TopCommentedPosts.Title")
         </h5>
         @if (posts is null)
         {
-            <p class="text-muted"><em>Loading…</em></p>
+            <p class="text-muted"><em>@T("Common.Loading")</em></p>
         }
         else if (posts.Count == 0)
         {
-            <p class="text-muted small">No posts found.</p>
+            <p class="text-muted small">@T("Common.NoPostsFound")</p>
         }
         else
         {
@@ -61,6 +61,16 @@
     private PostnomicMarkupStyle MarkupStyle =>
         BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
     private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    /// <summary>
+    /// Consumer-supplied overrides for the built-in UI chrome strings, if any. See
+    /// <see cref="PostnomicUiStringOverrides"/>.
+    /// </summary>
+    private PostnomicUiStringOverrides? UiStringOverrides =>
+        BlogContext?.Options.UiStrings ?? _injectedClientOptions.Value.UiStrings;
+
+    /// <summary>Resolves a built-in UI chrome string key for this component's <see cref="Language"/>.</summary>
+    private string T(string key) => PostnomicUiStrings.Get(key, Language, UiStringOverrides);
 
     private MarkupString Icon(string bootstrapIconClass) => (MarkupString)(
         MarkupStyle == PostnomicMarkupStyle.Semantic
