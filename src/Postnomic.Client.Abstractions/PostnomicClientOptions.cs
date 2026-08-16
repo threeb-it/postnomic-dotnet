@@ -82,6 +82,16 @@ public class PostnomicClientOptions
     /// opt into <see cref="PostnomicMarkupStyle.Semantic"/> to theme the blog via CSS variables.
     /// </summary>
     public PostnomicMarkupStyle MarkupStyle { get; set; } = PostnomicMarkupStyle.Bootstrap;
+
+    /// <summary>
+    /// Optional overrides for the Blazor blog components' built-in UI chrome strings (the pager,
+    /// the search box, comment-form labels, empty states, and similar SDK-authored copy — not a
+    /// post's own content). The SDK ships English and German built-ins; set this to replace
+    /// individual keys or add a language of your own without forking the package. <see langword="null"/>
+    /// (the default) renders the built-in strings as-is, selected by each page's own
+    /// <c>Language</c> parameter.
+    /// </summary>
+    public PostnomicUiStringOverrides? UiStrings { get; set; }
 }
 
 /// <summary>
