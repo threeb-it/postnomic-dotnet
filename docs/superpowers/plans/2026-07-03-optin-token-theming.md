@@ -167,7 +167,7 @@ git commit -m "feat(abstractions): opt-in MarkupStyle + PostnomicCssClasses reso
 **Interfaces:**
 - Produces: `_content/Postnomic.Client.Blazor/postnomic-blog.css` and `_content/Postnomic.Client.AspNetCore/postnomic-blog.css`; the `--pn-*` variable + `pn-*` class contract.
 
-**`--pn-*` variables (defaults) + classes:** as listed in the spec Part A.3. Style every`pn-*` class from`--pn-*` only. 2-col`.pn-layout` grid (`grid-template-columns: minmax(0,1fr) 320px; gap: var(--pn-space-lg)`; ≤768px →`1fr`), responsive rules prefixed`.pn-layout > `.`.pn-post-content` long-form typography.`.pn-masonry` columns collapse to 1 at ≤768px.
+**`--pn-*` variables (defaults) + classes:** as listed in the spec Part A.3. Style every `pn-*` class from `--pn-*` only. 2-col `.pn-layout` grid (`grid-template-columns: minmax(0,1fr) 320px; gap: var(--pn-space-lg)`; ≤768px → `1fr`), responsive rules prefixed `.pn-layout >`. `.pn-post-content` long-form typography. `.pn-masonry` columns collapse to 1 at ≤768px.
 
 - [ ] **Step 1: Write the failing test**
 
