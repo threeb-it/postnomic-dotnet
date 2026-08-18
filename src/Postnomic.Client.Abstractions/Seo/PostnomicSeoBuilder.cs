@@ -355,20 +355,116 @@ public static class PostnomicSeoBuilder
             ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
             : value.ToUniversalTime();
 
-    private static string BuildDescription(string? excerpt, string? content, string fallback)
+    // Meta descriptions target Google's practical display limit of ~155-160 characters; longer
+    // than that gets truncated in the SERP anyway, so 160 is where WE truncate on our own terms
+    // (a whole word, an ellipsis) rather than letting Google cut mid-word.
+    private const int DescriptionMaxLength = 160;
+
+    private static readonly Regex s_codeFence = new(@"```.*?```", RegexOptions.Singleline);
+    private static readonly Regex s_inlineCode = new(@"`[^`\r\n]*`");
+    private static readonly Regex s_markdownImage = new(@"!\[[^\]]*\]\([^)]*\)");
+    private static readonly Regex s_markdownLink = new(@"\[([^\]]*)\]\([^)]*\)");
+    private static readonly Regex s_heading = new(@"^ {0,3}#{1,6} +", RegexOptions.Multiline);
+    private static readonly Regex s_blockquote = new(@"^ {0,3}(?:> ?)+", RegexOptions.Multiline);
+    private static readonly Regex s_listMarker = new(@"^ {0,3}(?:[-*+]|\d+\.) +", RegexOptions.Multiline);
+    private static readonly Regex s_boldEmphasis = new(@"(\*\*|__)(.+?)\1");
+    private static readonly Regex s_strikethrough = new(@"~~(.+?)~~");
+    private static readonly Regex s_italicEmphasis = new(@"(?<!\w)(\*|_)(.+?)\1(?!\w)");
+    private static readonly Regex s_htmlTag = new("<[^>]+>");
+    private static readonly Regex s_whitespaceRun = new(@"\s+");
+
+    /// <summary>
+    /// Builds the meta/OpenGraph/Twitter description for a post.
+    /// <para>
+    /// An explicit <paramref name="excerpt"/> (author-supplied front matter) is always used
+    /// verbatim, untruncated — it's deliberate authored content, not something this builder should
+    /// silently mutate. A very long excerpt is the author's own call, not a defect here; a host
+    /// that wants a hard limit enforced can truncate <see cref="PostnomicPostDetail.Excerpt"/>
+    /// itself before it reaches this method.
+    /// </para>
+    /// <para>
+    /// Without an excerpt, this falls back to the post's own <paramref name="content"/>, which may
+    /// be Markdown OR HTML (posts in this SDK aren't guaranteed to be one or the other) — stripped
+    /// of both, whitespace-collapsed onto one line, freed of a leading repetition of the post's own
+    /// <paramref name="title"/> (a Markdown H1 duplicating the title is a common authoring pattern
+    /// and reads badly appended right after the real &lt;title&gt;/og:title), and truncated at a
+    /// word boundary to <see cref="DescriptionMaxLength"/> characters. Markdown images are removed
+    /// ENTIRELY, alt text included — alt text describes a picture, it doesn't summarize the post,
+    /// and leaving it in is exactly the "stray '!' followed by someone else's alt text" bug this
+    /// method exists to fix. Markdown links keep their visible text and drop the URL.
+    /// </para>
+    /// </summary>
+    private static string BuildDescription(string? excerpt, string? content, string title)
     {
         if (!string.IsNullOrWhiteSpace(excerpt))
             return excerpt;
 
-        var stripped = StripHtml(content);
-        return stripped.Length > 0 ? Truncate(stripped, 200) : fallback;
+        var plain = s_whitespaceRun.Replace(StripMarkdownAndHtml(content), " ").Trim();
+        plain = RemoveLeadingDuplicateTitle(plain, title);
+
+        return plain.Length > 0 ? TruncateAtWordBoundary(plain, DescriptionMaxLength) : title;
+    }
+
+    /// <summary>
+    /// Strips Markdown constructs (code fences/spans, images, links, headings, blockquotes, list
+    /// markers, bold/italic/strikethrough emphasis) as well as any literal HTML tags, in that
+    /// order — images and links are resolved before emphasis stripping so that e.g. a bold link's
+    /// <c>**</c> markers, once exposed by the link regex keeping only its text, still get cleaned
+    /// up by the emphasis pass that follows. Headings/blockquotes/list markers are line-anchored,
+    /// so this must run before whitespace is collapsed elsewhere (their regexes rely on the
+    /// original newlines to find each line's start). Returns "" for null/whitespace-only input;
+    /// otherwise the surviving plain text, NOT yet whitespace-collapsed or trimmed.
+    /// </summary>
+    private static string StripMarkdownAndHtml(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return "";
+
+        var result = s_codeFence.Replace(text, " ");
+        result = s_inlineCode.Replace(result, " ");
+        result = s_markdownImage.Replace(result, " ");
+        result = s_markdownLink.Replace(result, "$1");
+        result = s_heading.Replace(result, "");
+        result = s_blockquote.Replace(result, "");
+        result = s_listMarker.Replace(result, "");
+        result = s_boldEmphasis.Replace(result, "$2");
+        result = s_strikethrough.Replace(result, "$1");
+        result = s_italicEmphasis.Replace(result, "$2");
+        return s_htmlTag.Replace(result, " ");
+    }
+
+    /// <summary>
+    /// Drops a leading occurrence of <paramref name="title"/> from <paramref name="text"/>
+    /// (case-insensitive), along with a single separator character the two were likely joined by
+    /// (a colon, dash, en/em dash, period, or plain whitespace) — the shape left behind by a
+    /// Markdown H1 that repeats the post's own title once its <c>#</c> marker is stripped.
+    /// </summary>
+    private static string RemoveLeadingDuplicateTitle(string text, string title)
+    {
+        if (string.IsNullOrWhiteSpace(title) || !text.StartsWith(title, StringComparison.OrdinalIgnoreCase))
+            return text;
+
+        return text[title.Length..].TrimStart(' ', ':', '-', '–', '—', '.').TrimStart();
+    }
+
+    private static string TruncateAtWordBoundary(string text, int maxLength)
+    {
+        if (text.Length <= maxLength)
+            return text;
+
+        var cut = text[..maxLength];
+        var lastSpace = cut.LastIndexOf(' ');
+        if (lastSpace > 0)
+            cut = cut[..lastSpace];
+
+        return cut.TrimEnd() + "…";
     }
 
     private static string StripHtml(string? html)
     {
         if (string.IsNullOrWhiteSpace(html))
             return "";
-        return Regex.Replace(html, "<[^>]+>", " ").Trim();
+        return s_htmlTag.Replace(html, " ").Trim();
     }
 
     private static string Truncate(string text, int maxLength)

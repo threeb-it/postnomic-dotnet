@@ -396,4 +396,20 @@ public class SeoAlternateUrlOverrideRenderingTests : IAsyncLifetime
         Assert.Matches("hreflang=\"de\" href=\"https?://[^\"]+/blog/post/kurze-hoerbucher\"", html);
         Assert.Matches("hreflang=\"en\" href=\"https?://[^\"]+/blog/post/kurze-hoerbucher-en\"", html);
     }
+
+    [Fact]
+    public async Task GetPostPage_DescriptionFallback_DoesNotLeakMarkdownIntoTheMetaTag()
+    {
+        var response = await _client.GetAsync($"/blog/post/{SharedUrlSlug}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        var match = Regex.Match(html, "<meta name=\"description\" content=\"([^\"]*)\"");
+        Assert.True(match.Success);
+        var description = match.Groups[1].Value;
+
+        Assert.DoesNotContain("Geteilter Artikel", description);
+        Assert.DoesNotContain("!", description);
+        Assert.DoesNotContain("&#xA;", description);
+        Assert.Contains("eigentliche Textinhalt", description);
+    }
 }

@@ -397,4 +397,155 @@ public class PostnomicSeoBuilderTests
 
         Assert.Single(model.Alternates);
     }
+
+    // ── BuildDescription fallback (no excerpt) — Markdown + HTML stripping ────────────────────
+
+    [Fact]
+    public void ForPost_ExplicitExcerpt_IsUsedVerbatim_RegardlessOfLength()
+    {
+        // An excerpt is deliberately authored front matter, not a defect this builder should fix
+        // by truncating it — a host wanting a hard limit truncates PostnomicPostDetail.Excerpt
+        // itself before it reaches this method.
+        var longExcerpt = new string('x', 500);
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(excerpt: longExcerpt), blogInfo: null);
+
+        Assert.Equal(longExcerpt, model.Description);
+    }
+
+    [Fact]
+    public void ForPost_DescriptionFallback_NoExcerptNoContent_FallsBackToTitle()
+    {
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(title: "Hello World", content: null), blogInfo: null);
+
+        Assert.Equal("Hello World", model.Description);
+    }
+
+    [Fact]
+    public void ForPost_DescriptionFallback_MarkdownImage_IsRemovedEntirelyIncludingAltText()
+    {
+        // Regression for the exact live bug: a markdown image's alt text must NOT survive into the
+        // description — it describes a photo, not the post.
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(content:
+                "![Kopfhörer und eine Tasse Tee auf einem gemütlichen Tisch.](https://cdn.example.com/img.jpg) " +
+                "Langes Autofahren oder ein ruhiger Nachmittag zuhause?"),
+            blogInfo: null);
+
+        Assert.DoesNotContain("!", model.Description);
+        Assert.DoesNotContain("Kopfhörer", model.Description);
+        Assert.DoesNotContain("cdn.example.com", model.Description);
+        Assert.Contains("Langes Autofahren", model.Description);
+    }
+
+    [Fact]
+    public void ForPost_DescriptionFallback_MarkdownLink_KeepsVisibleTextDropsUrl()
+    {
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(content: "Mehr dazu in unseren [Hörbuch-Tipps](https://example.com/tipps)."),
+            blogInfo: null);
+
+        Assert.Contains("Hörbuch-Tipps", model.Description);
+        Assert.DoesNotContain("https://example.com/tipps", model.Description);
+        Assert.DoesNotContain("[", model.Description);
+        Assert.DoesNotContain("]", model.Description);
+    }
+
+    [Fact]
+    public void ForPost_DescriptionFallback_DropsLeadingMarkdownHeadingThatRepeatsTheTitle()
+    {
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(
+                title: "Kurze Hörbücher: 10 Empfehlungen unter fünf Stunden",
+                content: "# Kurze Hörbücher: 10 Empfehlungen unter fünf Stunden\n\n" +
+                    "Diese kurzen Hörbücher sind perfekt für kurze Zeitfenster."),
+            blogInfo: null);
+
+        Assert.DoesNotContain("Kurze Hörbücher: 10 Empfehlungen unter fünf Stunden", model.Description);
+        Assert.StartsWith("Diese kurzen Hörbücher", model.Description);
+    }
+
+    [Fact]
+    public void ForPost_DescriptionFallback_CollapsesNewlinesToSingleSpaces()
+    {
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(content: "Erster Satz.\n\n\nZweiter Satz."),
+            blogInfo: null);
+
+        Assert.DoesNotContain("\n", model.Description);
+        Assert.Contains("Erster Satz. Zweiter Satz.", model.Description);
+    }
+
+    [Fact]
+    public void ForPost_DescriptionFallback_StripsHtmlContentToo()
+    {
+        // Content may be HTML instead of Markdown — the pre-existing behavior this builder must
+        // not regress.
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(content: "<p>Some <strong>HTML</strong> content used as a description.</p>"),
+            blogInfo: null);
+
+        Assert.DoesNotContain("<", model.Description);
+        Assert.DoesNotContain(">", model.Description);
+        Assert.Contains("Some HTML content", model.Description);
+    }
+
+    [Fact]
+    public void ForPost_DescriptionFallback_LongContent_TruncatesAtWordBoundaryNear160Chars()
+    {
+        var word = "wortreich ";
+        var content = string.Concat(Enumerable.Repeat(word, 40)); // well over 160 chars
+
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world",
+            post: CreatePost(content: content), blogInfo: null);
+
+        Assert.NotNull(model.Description);
+        Assert.True(model.Description!.Length <= 161, $"Description was {model.Description.Length} chars.");
+        Assert.EndsWith("…", model.Description);
+        // Word-boundary truncation: no partial word glued to the ellipsis.
+        Assert.DoesNotContain(" wortreic…", model.Description);
+    }
+
+    [Fact]
+    public void ForPost_DescriptionFallback_RegressionFixture_ProducesACleanSingleLineDescription()
+    {
+        // Reconstructs the shape of the real broken production string (title-duplicating H1 +
+        // markdown image whose alt text leaked through + real prose), and asserts the fallback now
+        // produces exactly what's expected: no title repetition, no stray "!", no raw newlines,
+        // and the actual prose intact.
+        const string title = "Kurze Hörbücher: 10 Empfehlungen unter fünf Stunden";
+        var content =
+            "# Kurze Hörbücher: 10 Empfehlungen unter fünf Stunden\n\n" +
+            "![Kopfhörer und eine Tasse Tee auf einem gemütlichen Tisch – perfekte Zutaten für eine entspannte Auszeit.](https://cdn.example.com/img.jpg)\n\n" +
+            "Langes Autofahren oder ein ruhiger Nachmittag zuhause? Diese kurzen Hörbücher sind perfekt für kurze Zeitfenster und machen trotzdem Spaß von Anfang bis Ende.";
+
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "kurze-hoerbucher",
+            post: CreatePost(title: title, content: content), blogInfo: null);
+
+        Assert.NotNull(model.Description);
+        Assert.DoesNotContain(title, model.Description);
+        Assert.DoesNotContain("!", model.Description);
+        Assert.DoesNotContain("\n", model.Description);
+        Assert.DoesNotContain("&#xA;", model.Description);
+        Assert.StartsWith("Langes Autofahren", model.Description);
+    }
 }

@@ -436,6 +436,37 @@ public class SeoAndLanguageRoutingTests : BunitContext
             cut.Find("link[hreflang='en']").GetAttribute("href"));
     }
 
+    // ── PostPage — <HeadContent> SEO: description fallback (no excerpt) ─────
+
+    [Fact]
+    public void PostPage_HeadContent_DescriptionFallback_DoesNotLeakMarkdownIntoTheMetaTag()
+    {
+        UseOptions(PostnomicLanguageRouteStyle.Prefix);
+        var post = CreatePost(title: "Geteilter Artikel", excerpt: null) with
+        {
+            Content = "# Geteilter Artikel\n\n" +
+                "![Ein Bild, das nicht in der Beschreibung landen darf.](https://cdn.example.com/img.jpg)\n\n" +
+                "Dies ist der eigentliche Textinhalt, der in der Beschreibung erscheinen soll.",
+        };
+        SetupPost(post);
+
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.AddComponentParameter(2, nameof(PostPage.Language), "de");
+            builder.CloseComponent();
+        }));
+
+        var description = cut.Find("meta[name='description']").GetAttribute("content");
+
+        Assert.NotNull(description);
+        Assert.DoesNotContain("Geteilter Artikel", description);
+        Assert.DoesNotContain("!", description);
+        Assert.DoesNotContain("\n", description);
+        Assert.Contains("eigentliche Textinhalt", description);
+    }
+
     // ── AuthorPage — single <h1> ──────────────────────────────────────────────
 
     [Fact]
