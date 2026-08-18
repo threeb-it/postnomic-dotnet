@@ -1,3 +1,5 @@
+using Postnomic.Client.Abstractions.Models;
+
 namespace Postnomic.Client.Abstractions;
 
 /// <summary>
@@ -92,6 +94,47 @@ public class PostnomicClientOptions
     /// <c>Language</c> parameter.
     /// </summary>
     public PostnomicUiStringOverrides? UiStrings { get; set; }
+
+    /// <summary>
+    /// Optional host-supplied override for a blog post's hreflang alternates, called once per
+    /// post-detail render with the post being rendered.
+    /// <para>
+    /// <see cref="Postnomic.Client.Abstractions.PostnomicRouteBuilder.BuildPostAlternates"/> (the
+    /// default source of <see cref="Postnomic.Client.Abstractions.Seo.PostnomicSeoModel.Alternates"/>)
+    /// can only ever apply ONE <see cref="PostnomicLanguageRouteStyle"/> to the SAME post slug
+    /// across every language — see its own XML docs. It has no way to know a translation's real
+    /// slug, because neither <see cref="PostnomicPostDetail"/> nor the authoring-side translation
+    /// model carries a per-language slug field. In practice a blog's translations rarely follow
+    /// one predictable shape: the same slug may serve every language (content negotiated some
+    /// other way), a suffix may be appended for one language only, or a translation may carry a
+    /// wholly different, hand-translated slug — and under
+    /// <see cref="PostnomicLanguageRouteStyle.None"/> specifically, <c>BuildPostAlternates</c>
+    /// cannot distinguish any of these cases at all, since no language ever gets its own URL
+    /// segment. When any of that applies, set this to look up each language's real URL from
+    /// whatever store of translation slugs (or full URLs) the host application itself owns.
+    /// </para>
+    /// <para>
+    /// Return <see langword="null"/> for a post to fall back to <c>BuildPostAlternates</c>'s
+    /// composed alternates for that post specifically. Leaving this whole property unset (the
+    /// default) preserves the composed-alternates behavior for every post, unchanged.
+    /// </para>
+    /// <para>
+    /// The FIRST entry of a non-null result is used as the <c>hreflang="x-default"</c> target
+    /// (see <see cref="Postnomic.Client.Abstractions.Seo.PostnomicSeoModel.XDefaultUrl"/>), so
+    /// return the blog's default-language entry first, exactly like <c>BuildPostAlternates</c>
+    /// itself does.
+    /// </para>
+    /// <para>
+    /// When two or more languages genuinely share the exact same URL, include it only once — see
+    /// the "de-duplicated by URL" remarks on
+    /// <see cref="Postnomic.Client.Abstractions.Seo.PostnomicSeoBuilder.ForPost"/> for why a
+    /// second hreflang entry pointing at an identical URL is never emitted, even if this resolver
+    /// returns one.
+    /// </para>
+    /// Each URL may be root-relative (e.g. <c>"/blog/post/short-audiobooks-en"</c>) or absolute;
+    /// both are normalized the same way the composed alternates already are.
+    /// </summary>
+    public Func<PostnomicPostDetail, IReadOnlyList<(string Language, string Url)>?>? AlternateUrlResolver { get; set; }
 }
 
 /// <summary>

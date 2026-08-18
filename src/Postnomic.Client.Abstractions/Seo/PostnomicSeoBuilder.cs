@@ -74,7 +74,51 @@ public static class PostnomicSeoBuilder
         };
     }
 
-    /// <summary>Builds the SEO model for a single blog post page.</summary>
+    /// <summary>
+    /// Builds the SEO model for a single blog post page.
+    /// </summary>
+    /// <param name="baseUri">The blog's absolute base URI (scheme + host).</param>
+    /// <param name="basePath">The base path the blog is served at (e.g. <c>"/blog"</c>).</param>
+    /// <param name="style">The configured <see cref="PostnomicLanguageRouteStyle"/>.</param>
+    /// <param name="lang">The language variant being rendered, or <see langword="null"/> for the blog's default language.</param>
+    /// <param name="postSlug">The slug of the post being rendered.</param>
+    /// <param name="post">The post's full detail, as returned by the API.</param>
+    /// <param name="blogInfo">The blog's public metadata, used for <c>og:site_name</c> / the JSON-LD breadcrumb.</param>
+    /// <param name="alternateUrls">
+    /// Optional explicit (language, URL) pairs for this post's hreflang cluster, overriding
+    /// <see cref="PostnomicRouteBuilder.BuildPostAlternates"/>'s composed alternates entirely when
+    /// supplied. Pass <see langword="null"/> (the default) to keep the pre-existing
+    /// composed-alternates behavior unchanged — every existing call site that doesn't pass this
+    /// argument compiles and behaves exactly as before.
+    /// <para>
+    /// This exists because <c>BuildPostAlternates</c> can only ever apply one
+    /// <see cref="PostnomicLanguageRouteStyle"/> to the SAME <paramref name="postSlug"/> across
+    /// every language (see its own XML docs) — it has no way to know that a translation's real
+    /// slug differs from the original post's, because <paramref name="post"/> carries no
+    /// per-language slug field. Under <see cref="PostnomicLanguageRouteStyle.None"/> this is not
+    /// a rare edge case: NO language ever gets its own URL segment there, so every composed
+    /// alternate is the identical bare URL unless the host supplies the real ones here. Typically
+    /// sourced from <see cref="PostnomicClientOptions.AlternateUrlResolver"/> by the two hosting
+    /// models' adapters (<c>Postnomic.Client.AspNetCore.Seo.PostnomicSeo.ForPost</c> and
+    /// <c>Postnomic.Client.Blazor</c>'s <c>PostPage</c>), so a host application only has to set
+    /// that one option to affect both.
+    /// </para>
+    /// <para>
+    /// <b>The shared-URL case.</b> When two or more languages genuinely resolve to the exact same
+    /// URL (e.g. a post whose English and German editions were never split into separate URLs),
+    /// this method keeps only the FIRST entry for that URL and silently drops the rest, whether
+    /// they came from this override or from the composed fallback. Emitting
+    /// <c>hreflang="de"</c> and <c>hreflang="en"</c> as two separate <c>&lt;link&gt;</c> tags that
+    /// point at the identical URL is not meaningful markup: hreflang exists to tell a search
+    /// engine about DIFFERENT URLs for different languages, and Google's own guidance is that it
+    /// cannot infer a language split from a single crawled URL, no matter how many hreflang values
+    /// claim otherwise. So rather than assert a false multi-URL cluster, this method treats that
+    /// URL as belonging to whichever language reaches it first in list order — which, for both the
+    /// composed fallback and a well-behaved <see cref="PostnomicClientOptions.AlternateUrlResolver"/>,
+    /// is the blog's default language — keeping <see cref="PostnomicSeoModel.XDefaultUrl"/>
+    /// coherent (its first-entry contract) as a side effect, without any extra bookkeeping.
+    /// </para>
+    /// </param>
     public static PostnomicSeoModel ForPost(
         string baseUri,
         string basePath,
@@ -82,7 +126,8 @@ public static class PostnomicSeoBuilder
         string? lang,
         string postSlug,
         PostnomicPostDetail post,
-        PostnomicBlogInfo? blogInfo)
+        PostnomicBlogInfo? blogInfo,
+        IReadOnlyList<(string Language, string Url)>? alternateUrls = null)
     {
         // Self-referential canonical: canonicalize to the URL of the language variant actually
         // being rendered (lang), not the blog's default-language URL.
@@ -92,10 +137,10 @@ public static class PostnomicSeoBuilder
             ? post.CanonicalUrl!
             : ToAbsoluteUrl(baseUri, PostnomicRouteBuilder.BuildPost(basePath, style, lang, postSlug));
         var image = ToAbsoluteUrlOrNull(baseUri, post.CoverImageUrl);
-        var alternates = PostnomicRouteBuilder
-            .BuildPostAlternates(basePath, style, post.AvailableLanguages, postSlug, post.Language)
-            .Select(a => (a.Language, ToAbsoluteUrl(baseUri, a.Url)))
-            .ToList();
+        var rawAlternates = alternateUrls ?? PostnomicRouteBuilder
+            .BuildPostAlternates(basePath, style, post.AvailableLanguages, postSlug, post.Language);
+        var alternates = DeduplicateAlternatesByUrl(
+            rawAlternates.Select(a => (a.Language, ToAbsoluteUrl(baseUri, a.Url))));
 
         var description = BuildDescription(post.Excerpt, post.Content, post.Title);
 
@@ -250,6 +295,28 @@ public static class PostnomicSeoBuilder
         => string.IsNullOrEmpty(pathOrUrl) ? null : ToAbsoluteUrl(baseUri, pathOrUrl);
 
     /// <summary>
+    /// Collapses a sequence of (language, absolute URL) alternates so no two entries share the
+    /// same URL, keeping the FIRST occurrence and dropping the rest. See the "shared-URL case"
+    /// remarks on <see cref="ForPost"/> for why: a duplicate URL under two different hreflang
+    /// values isn't a real language split, it's the same document claimed twice, and Google can't
+    /// tell the two apart from a single crawled URL regardless of how many hreflang links point at
+    /// it. Comparison is ordinal case-insensitive since these are already-absolute URLs.
+    /// </summary>
+    private static List<(string Language, string Url)> DeduplicateAlternatesByUrl(
+        IEnumerable<(string Language, string Url)> alternates)
+    {
+        var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var deduplicated = new List<(string Language, string Url)>();
+        foreach (var alternate in alternates)
+        {
+            if (seenUrls.Add(alternate.Url))
+                deduplicated.Add(alternate);
+        }
+
+        return deduplicated;
+    }
+
+    /// <summary>
     /// Maps a bare ISO-639-1 language code (e.g. <c>"de"</c>) to the OpenGraph-conventional
     /// <c>xx_XX</c> locale form used by <c>og:locale</c> (e.g. <c>"de_DE"</c>). <c>de</c> and
     /// <c>en</c> map to their well-known region variants (<c>de_DE</c>, <c>en_US</c>); any other
@@ -288,20 +355,116 @@ public static class PostnomicSeoBuilder
             ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
             : value.ToUniversalTime();
 
-    private static string BuildDescription(string? excerpt, string? content, string fallback)
+    // Meta descriptions target Google's practical display limit of ~155-160 characters; longer
+    // than that gets truncated in the SERP anyway, so 160 is where WE truncate on our own terms
+    // (a whole word, an ellipsis) rather than letting Google cut mid-word.
+    private const int DescriptionMaxLength = 160;
+
+    private static readonly Regex s_codeFence = new(@"```.*?```", RegexOptions.Singleline);
+    private static readonly Regex s_inlineCode = new(@"`[^`\r\n]*`");
+    private static readonly Regex s_markdownImage = new(@"!\[[^\]]*\]\([^)]*\)");
+    private static readonly Regex s_markdownLink = new(@"\[([^\]]*)\]\([^)]*\)");
+    private static readonly Regex s_heading = new(@"^ {0,3}#{1,6} +", RegexOptions.Multiline);
+    private static readonly Regex s_blockquote = new(@"^ {0,3}(?:> ?)+", RegexOptions.Multiline);
+    private static readonly Regex s_listMarker = new(@"^ {0,3}(?:[-*+]|\d+\.) +", RegexOptions.Multiline);
+    private static readonly Regex s_boldEmphasis = new(@"(\*\*|__)(.+?)\1");
+    private static readonly Regex s_strikethrough = new(@"~~(.+?)~~");
+    private static readonly Regex s_italicEmphasis = new(@"(?<!\w)(\*|_)(.+?)\1(?!\w)");
+    private static readonly Regex s_htmlTag = new("<[^>]+>");
+    private static readonly Regex s_whitespaceRun = new(@"\s+");
+
+    /// <summary>
+    /// Builds the meta/OpenGraph/Twitter description for a post.
+    /// <para>
+    /// An explicit <paramref name="excerpt"/> (author-supplied front matter) is always used
+    /// verbatim, untruncated — it's deliberate authored content, not something this builder should
+    /// silently mutate. A very long excerpt is the author's own call, not a defect here; a host
+    /// that wants a hard limit enforced can truncate <see cref="PostnomicPostDetail.Excerpt"/>
+    /// itself before it reaches this method.
+    /// </para>
+    /// <para>
+    /// Without an excerpt, this falls back to the post's own <paramref name="content"/>, which may
+    /// be Markdown OR HTML (posts in this SDK aren't guaranteed to be one or the other) — stripped
+    /// of both, whitespace-collapsed onto one line, freed of a leading repetition of the post's own
+    /// <paramref name="title"/> (a Markdown H1 duplicating the title is a common authoring pattern
+    /// and reads badly appended right after the real &lt;title&gt;/og:title), and truncated at a
+    /// word boundary to <see cref="DescriptionMaxLength"/> characters. Markdown images are removed
+    /// ENTIRELY, alt text included — alt text describes a picture, it doesn't summarize the post,
+    /// and leaving it in is exactly the "stray '!' followed by someone else's alt text" bug this
+    /// method exists to fix. Markdown links keep their visible text and drop the URL.
+    /// </para>
+    /// </summary>
+    private static string BuildDescription(string? excerpt, string? content, string title)
     {
         if (!string.IsNullOrWhiteSpace(excerpt))
             return excerpt;
 
-        var stripped = StripHtml(content);
-        return stripped.Length > 0 ? Truncate(stripped, 200) : fallback;
+        var plain = s_whitespaceRun.Replace(StripMarkdownAndHtml(content), " ").Trim();
+        plain = RemoveLeadingDuplicateTitle(plain, title);
+
+        return plain.Length > 0 ? TruncateAtWordBoundary(plain, DescriptionMaxLength) : title;
+    }
+
+    /// <summary>
+    /// Strips Markdown constructs (code fences/spans, images, links, headings, blockquotes, list
+    /// markers, bold/italic/strikethrough emphasis) as well as any literal HTML tags, in that
+    /// order — images and links are resolved before emphasis stripping so that e.g. a bold link's
+    /// <c>**</c> markers, once exposed by the link regex keeping only its text, still get cleaned
+    /// up by the emphasis pass that follows. Headings/blockquotes/list markers are line-anchored,
+    /// so this must run before whitespace is collapsed elsewhere (their regexes rely on the
+    /// original newlines to find each line's start). Returns "" for null/whitespace-only input;
+    /// otherwise the surviving plain text, NOT yet whitespace-collapsed or trimmed.
+    /// </summary>
+    private static string StripMarkdownAndHtml(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return "";
+
+        var result = s_codeFence.Replace(text, " ");
+        result = s_inlineCode.Replace(result, " ");
+        result = s_markdownImage.Replace(result, " ");
+        result = s_markdownLink.Replace(result, "$1");
+        result = s_heading.Replace(result, "");
+        result = s_blockquote.Replace(result, "");
+        result = s_listMarker.Replace(result, "");
+        result = s_boldEmphasis.Replace(result, "$2");
+        result = s_strikethrough.Replace(result, "$1");
+        result = s_italicEmphasis.Replace(result, "$2");
+        return s_htmlTag.Replace(result, " ");
+    }
+
+    /// <summary>
+    /// Drops a leading occurrence of <paramref name="title"/> from <paramref name="text"/>
+    /// (case-insensitive), along with a single separator character the two were likely joined by
+    /// (a colon, dash, en/em dash, period, or plain whitespace) — the shape left behind by a
+    /// Markdown H1 that repeats the post's own title once its <c>#</c> marker is stripped.
+    /// </summary>
+    private static string RemoveLeadingDuplicateTitle(string text, string title)
+    {
+        if (string.IsNullOrWhiteSpace(title) || !text.StartsWith(title, StringComparison.OrdinalIgnoreCase))
+            return text;
+
+        return text[title.Length..].TrimStart(' ', ':', '-', '–', '—', '.').TrimStart();
+    }
+
+    private static string TruncateAtWordBoundary(string text, int maxLength)
+    {
+        if (text.Length <= maxLength)
+            return text;
+
+        var cut = text[..maxLength];
+        var lastSpace = cut.LastIndexOf(' ');
+        if (lastSpace > 0)
+            cut = cut[..lastSpace];
+
+        return cut.TrimEnd() + "…";
     }
 
     private static string StripHtml(string? html)
     {
         if (string.IsNullOrWhiteSpace(html))
             return "";
-        return Regex.Replace(html, "<[^>]+>", " ").Trim();
+        return s_htmlTag.Replace(html, " ").Trim();
     }
 
     private static string Truncate(string text, int maxLength)

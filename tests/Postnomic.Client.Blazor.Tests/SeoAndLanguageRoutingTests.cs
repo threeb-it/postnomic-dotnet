@@ -36,10 +36,18 @@ public class SeoAndLanguageRoutingTests : BunitContext
             .Returns(Task.CompletedTask);
     }
 
-    private void UseOptions(PostnomicLanguageRouteStyle style, string basePath = "/blog")
+    private void UseOptions(
+        PostnomicLanguageRouteStyle style,
+        string basePath = "/blog",
+        Func<PostnomicPostDetail, IReadOnlyList<(string Language, string Url)>?>? alternateUrlResolver = null)
     {
         Services.AddSingleton<IOptions<PostnomicClientOptions>>(
-            Options.Create(new PostnomicClientOptions { BasePath = basePath, LanguageRouteStyle = style }));
+            Options.Create(new PostnomicClientOptions
+            {
+                BasePath = basePath,
+                LanguageRouteStyle = style,
+                AlternateUrlResolver = alternateUrlResolver,
+            }));
     }
 
     private static PostnomicPostDetail CreatePost(
@@ -52,20 +60,20 @@ public class SeoAndLanguageRoutingTests : BunitContext
         string? coverImageUrl = null,
         ICollection<PostnomicTag>? tags = null,
         DateTime? publishedAt = null) => new()
-    {
-        Slug = "hello-world",
-        Title = title,
-        AuthorName = author,
-        AuthorSlug = authorSlug,
-        PublishedAt = publishedAt ?? new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
-        Excerpt = excerpt,
-        Content = "<p>Body content.</p>",
-        CoverImageUrl = coverImageUrl,
-        Language = language,
-        AvailableLanguages = availableLanguages ?? ["en", "de"],
-        Tags = tags ?? [],
-        CommentsEnabled = false,
-    };
+        {
+            Slug = "hello-world",
+            Title = title,
+            AuthorName = author,
+            AuthorSlug = authorSlug,
+            PublishedAt = publishedAt ?? new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
+            Excerpt = excerpt,
+            Content = "<p>Body content.</p>",
+            CoverImageUrl = coverImageUrl,
+            Language = language,
+            AvailableLanguages = availableLanguages ?? ["en", "de"],
+            Tags = tags ?? [],
+            CommentsEnabled = false,
+        };
 
     private void SetupPost(PostnomicPostDetail post)
     {
@@ -378,6 +386,85 @@ public class SeoAndLanguageRoutingTests : BunitContext
 
         // Assert
         Assert.Equal("de_DE", cut.Find("meta[property='og:locale']").GetAttribute("content"));
+    }
+
+    // ── PostPage — <HeadContent> SEO: AlternateUrlResolver override ─────────
+
+    [Fact]
+    public void PostPage_HeadContent_NoneStyle_WithoutResolver_SharedUrlAcrossLanguages_RendersOnlyOneAlternate()
+    {
+        // Reproduces the live production defect: under None style no language ever gets its own
+        // URL segment, so without a resolver every language's composed alternate is the identical
+        // bare URL — that must now collapse to one honest hreflang entry, not two duplicates.
+        UseOptions(PostnomicLanguageRouteStyle.None);
+        SetupPost(CreatePost());
+
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.CloseComponent();
+        }));
+
+        // "x-default" is always rendered separately (PostnomicSeoModel.XDefaultUrl); only the
+        // per-language hreflang alternates are what got de-duplicated.
+        Assert.Single(cut.FindAll("link[rel='alternate']:not([hreflang='x-default'])"));
+    }
+
+    [Fact]
+    public void PostPage_HeadContent_AlternateUrlResolverConfigured_RendersTheResolvedPerLanguageUrls()
+    {
+        UseOptions(PostnomicLanguageRouteStyle.None, alternateUrlResolver: post =>
+        [
+            ("de", "/blog/post/kurze-hoerbucher"),
+            ("en", "/blog/post/kurze-hoerbucher-en"),
+        ]);
+        SetupPost(CreatePost());
+
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.CloseComponent();
+        }));
+
+        Assert.Equal(
+            "http://localhost/blog/post/kurze-hoerbucher",
+            cut.Find("link[hreflang='de']").GetAttribute("href"));
+        Assert.Equal(
+            "http://localhost/blog/post/kurze-hoerbucher-en",
+            cut.Find("link[hreflang='en']").GetAttribute("href"));
+    }
+
+    // ── PostPage — <HeadContent> SEO: description fallback (no excerpt) ─────
+
+    [Fact]
+    public void PostPage_HeadContent_DescriptionFallback_DoesNotLeakMarkdownIntoTheMetaTag()
+    {
+        UseOptions(PostnomicLanguageRouteStyle.Prefix);
+        var post = CreatePost(title: "Geteilter Artikel", excerpt: null) with
+        {
+            Content = "# Geteilter Artikel\n\n" +
+                "![Ein Bild, das nicht in der Beschreibung landen darf.](https://cdn.example.com/img.jpg)\n\n" +
+                "Dies ist der eigentliche Textinhalt, der in der Beschreibung erscheinen soll.",
+        };
+        SetupPost(post);
+
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.AddComponentParameter(2, nameof(PostPage.Language), "de");
+            builder.CloseComponent();
+        }));
+
+        var description = cut.Find("meta[name='description']").GetAttribute("content");
+
+        Assert.NotNull(description);
+        Assert.DoesNotContain("Geteilter Artikel", description);
+        Assert.DoesNotContain("!", description);
+        Assert.DoesNotContain("\n", description);
+        Assert.Contains("eigentliche Textinhalt", description);
     }
 
     // ── AuthorPage — single <h1> ──────────────────────────────────────────────

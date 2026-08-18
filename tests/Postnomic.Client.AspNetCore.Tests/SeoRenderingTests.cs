@@ -264,3 +264,152 @@ public class SeoRenderingTests : IAsyncLifetime
         Assert.Contains("Jane Doe", html);
     }
 }
+
+/// <summary>
+/// End-to-end integration tests for the two live-production SEO defects fixed together: (1)
+/// self-referential hreflang alternates under <see cref="PostnomicLanguageRouteStyle.None"/> (no
+/// language ever gets its own URL segment, so every alternate collapsed onto one URL) are now
+/// either de-duplicated to a single honest entry, or — when the host configures
+/// <see cref="PostnomicClientOptions.AlternateUrlResolver"/> — resolved to the real per-language
+/// URLs; and (2) the auto-derived meta description no longer leaks raw Markdown (a duplicated
+/// title heading, a stray image's alt text, literal newlines) into <c>&lt;meta
+/// name="description"&gt;</c>.
+/// </summary>
+public class SeoAlternateUrlOverrideRenderingTests : IAsyncLifetime
+{
+    private const string SharedUrlSlug = "geteilter-artikel";
+    private const string OverriddenSlug = "kurze-hoerbucher";
+
+    private IHost _host = null!;
+    private HttpClient _client = null!;
+
+    public async Task InitializeAsync()
+    {
+        var blogServiceMock = new Mock<IPostnomicBlogService>();
+
+        blogServiceMock
+            .Setup(s => s.GetPostAsync(SharedUrlSlug, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicPostDetail
+            {
+                Slug = SharedUrlSlug,
+                Title = "Geteilter Artikel",
+                // Markdown content: a duplicated H1, a markdown image (alt text must not leak into
+                // the description), and real prose that should survive.
+                Content = "# Geteilter Artikel\n\n" +
+                    "![Ein Bild, das nicht in der Beschreibung landen darf.](https://cdn.example.com/img.jpg)\n\n" +
+                    "Dies ist der eigentliche Textinhalt, der in der Beschreibung erscheinen soll.",
+                AuthorName = "Jane Doe",
+                PublishedAt = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                Language = "de",
+                AvailableLanguages = ["de", "en"],
+            });
+
+        blogServiceMock
+            .Setup(s => s.GetPostAsync(OverriddenSlug, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicPostDetail
+            {
+                Slug = OverriddenSlug,
+                Title = "Kurze Hörbücher",
+                Excerpt = "Ein kurzer Teaser.",
+                AuthorName = "Jane Doe",
+                PublishedAt = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                Language = "de",
+                AvailableLanguages = ["de", "en"],
+            });
+
+        blogServiceMock
+            .Setup(s => s.GetBlogAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicBlogInfo { Name = "SEO Test Blog", Slug = "seo-test-blog" });
+
+        blogServiceMock
+            .Setup(s => s.GetTopCommentedPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        blogServiceMock
+            .Setup(s => s.GetMostReadPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var hostBuilder = new HostBuilder()
+            .ConfigureWebHost(webHost =>
+            {
+                webHost.UseTestServer();
+                webHost.UseContentRoot(AppContext.BaseDirectory);
+
+                webHost.ConfigureServices(services =>
+                {
+                    services.AddLocalization();
+                    services.AddRazorPages().AddViewLocalization();
+
+                    services.AddPostnomicBlog(options =>
+                    {
+                        options.BaseUrl = "https://api.postnomic.example";
+                        options.ApiKey = "test-key";
+                        options.BlogSlug = "seo-test-blog";
+                        options.BasePath = "/blog";
+                        // None style: no language ever gets its own URL segment — the exact shape
+                        // of the live production defect (kurze-hoerbucher / kurze-hoerbucher-en).
+                        options.LanguageRouteStyle = PostnomicLanguageRouteStyle.None;
+                        options.AlternateUrlResolver = post => post.Slug == OverriddenSlug
+                            ? [("de", "/blog/post/kurze-hoerbucher"), ("en", "/blog/post/kurze-hoerbucher-en")]
+                            : null;
+                    });
+
+                    services.AddSingleton(blogServiceMock.Object);
+                });
+
+                webHost.Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints => endpoints.MapRazorPages());
+                });
+            });
+
+        _host = await hostBuilder.StartAsync();
+        _client = _host.GetTestClient();
+    }
+
+    public async Task DisposeAsync()
+    {
+        _client.Dispose();
+        await _host.StopAsync();
+        _host.Dispose();
+    }
+
+    [Fact]
+    public async Task GetPostPage_SharedUrlAcrossLanguages_RendersOnlyOneHreflangAlternate_NotADuplicate()
+    {
+        var response = await _client.GetAsync($"/blog/post/{SharedUrlSlug}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        var hreflangCount = Regex.Matches(html, "rel=\"alternate\" hreflang=\"[a-z]{2}\"").Count;
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(1, hreflangCount);
+    }
+
+    [Fact]
+    public async Task GetPostPage_WithAlternateUrlResolverConfigured_RendersTheResolvedPerLanguageUrls()
+    {
+        var response = await _client.GetAsync($"/blog/post/{OverriddenSlug}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Matches("hreflang=\"de\" href=\"https?://[^\"]+/blog/post/kurze-hoerbucher\"", html);
+        Assert.Matches("hreflang=\"en\" href=\"https?://[^\"]+/blog/post/kurze-hoerbucher-en\"", html);
+    }
+
+    [Fact]
+    public async Task GetPostPage_DescriptionFallback_DoesNotLeakMarkdownIntoTheMetaTag()
+    {
+        var response = await _client.GetAsync($"/blog/post/{SharedUrlSlug}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        var match = Regex.Match(html, "<meta name=\"description\" content=\"([^\"]*)\"");
+        Assert.True(match.Success);
+        var description = match.Groups[1].Value;
+
+        Assert.DoesNotContain("Geteilter Artikel", description);
+        Assert.DoesNotContain("!", description);
+        Assert.DoesNotContain("&#xA;", description);
+        Assert.Contains("eigentliche Textinhalt", description);
+    }
+}
