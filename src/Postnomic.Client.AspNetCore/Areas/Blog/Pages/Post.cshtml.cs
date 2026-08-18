@@ -236,6 +236,25 @@ public class PostModel(
         }
     }
 
+    /// <summary>
+    /// Host-supplied override for this post's hreflang alternates, resolved from the current
+    /// blog's <see cref="PostnomicClientOptions.AlternateUrlResolver"/> (if configured) and passed
+    /// to <see cref="Postnomic.Client.AspNetCore.Seo.PostnomicSeo.ForPost"/>. Null when no resolver
+    /// is configured for this blog, or the resolver itself returns null for this post — in either
+    /// case <c>PostnomicSeoBuilder.ForPost</c> falls back to its composed alternates, unaffected.
+    /// </summary>
+    public IReadOnlyList<(string Language, string Url)>? AlternateUrls
+    {
+        get
+        {
+            var blogName = blogResolver.ResolveBlogName(HttpContext.Request.Path.Value ?? "");
+            var resolver = blogName is not null
+                ? optionsMonitor.Get(blogName).AlternateUrlResolver
+                : defaultClientOptions.Value.AlternateUrlResolver;
+            return Post is null ? null : resolver?.Invoke(Post);
+        }
+    }
+
     private async Task<IActionResult> LoadPostAsync(CancellationToken cancellationToken)
     {
         var blogService = ResolveBlogService();

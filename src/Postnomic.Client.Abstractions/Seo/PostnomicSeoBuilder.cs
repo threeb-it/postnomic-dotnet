@@ -74,7 +74,51 @@ public static class PostnomicSeoBuilder
         };
     }
 
-    /// <summary>Builds the SEO model for a single blog post page.</summary>
+    /// <summary>
+    /// Builds the SEO model for a single blog post page.
+    /// </summary>
+    /// <param name="baseUri">The blog's absolute base URI (scheme + host).</param>
+    /// <param name="basePath">The base path the blog is served at (e.g. <c>"/blog"</c>).</param>
+    /// <param name="style">The configured <see cref="PostnomicLanguageRouteStyle"/>.</param>
+    /// <param name="lang">The language variant being rendered, or <see langword="null"/> for the blog's default language.</param>
+    /// <param name="postSlug">The slug of the post being rendered.</param>
+    /// <param name="post">The post's full detail, as returned by the API.</param>
+    /// <param name="blogInfo">The blog's public metadata, used for <c>og:site_name</c> / the JSON-LD breadcrumb.</param>
+    /// <param name="alternateUrls">
+    /// Optional explicit (language, URL) pairs for this post's hreflang cluster, overriding
+    /// <see cref="PostnomicRouteBuilder.BuildPostAlternates"/>'s composed alternates entirely when
+    /// supplied. Pass <see langword="null"/> (the default) to keep the pre-existing
+    /// composed-alternates behavior unchanged — every existing call site that doesn't pass this
+    /// argument compiles and behaves exactly as before.
+    /// <para>
+    /// This exists because <c>BuildPostAlternates</c> can only ever apply one
+    /// <see cref="PostnomicLanguageRouteStyle"/> to the SAME <paramref name="postSlug"/> across
+    /// every language (see its own XML docs) — it has no way to know that a translation's real
+    /// slug differs from the original post's, because <paramref name="post"/> carries no
+    /// per-language slug field. Under <see cref="PostnomicLanguageRouteStyle.None"/> this is not
+    /// a rare edge case: NO language ever gets its own URL segment there, so every composed
+    /// alternate is the identical bare URL unless the host supplies the real ones here. Typically
+    /// sourced from <see cref="PostnomicClientOptions.AlternateUrlResolver"/> by the two hosting
+    /// models' adapters (<c>Postnomic.Client.AspNetCore.Seo.PostnomicSeo.ForPost</c> and
+    /// <c>Postnomic.Client.Blazor</c>'s <c>PostPage</c>), so a host application only has to set
+    /// that one option to affect both.
+    /// </para>
+    /// <para>
+    /// <b>The shared-URL case.</b> When two or more languages genuinely resolve to the exact same
+    /// URL (e.g. a post whose English and German editions were never split into separate URLs),
+    /// this method keeps only the FIRST entry for that URL and silently drops the rest, whether
+    /// they came from this override or from the composed fallback. Emitting
+    /// <c>hreflang="de"</c> and <c>hreflang="en"</c> as two separate <c>&lt;link&gt;</c> tags that
+    /// point at the identical URL is not meaningful markup: hreflang exists to tell a search
+    /// engine about DIFFERENT URLs for different languages, and Google's own guidance is that it
+    /// cannot infer a language split from a single crawled URL, no matter how many hreflang values
+    /// claim otherwise. So rather than assert a false multi-URL cluster, this method treats that
+    /// URL as belonging to whichever language reaches it first in list order — which, for both the
+    /// composed fallback and a well-behaved <see cref="PostnomicClientOptions.AlternateUrlResolver"/>,
+    /// is the blog's default language — keeping <see cref="PostnomicSeoModel.XDefaultUrl"/>
+    /// coherent (its first-entry contract) as a side effect, without any extra bookkeeping.
+    /// </para>
+    /// </param>
     public static PostnomicSeoModel ForPost(
         string baseUri,
         string basePath,
@@ -82,7 +126,8 @@ public static class PostnomicSeoBuilder
         string? lang,
         string postSlug,
         PostnomicPostDetail post,
-        PostnomicBlogInfo? blogInfo)
+        PostnomicBlogInfo? blogInfo,
+        IReadOnlyList<(string Language, string Url)>? alternateUrls = null)
     {
         // Self-referential canonical: canonicalize to the URL of the language variant actually
         // being rendered (lang), not the blog's default-language URL.
@@ -92,10 +137,10 @@ public static class PostnomicSeoBuilder
             ? post.CanonicalUrl!
             : ToAbsoluteUrl(baseUri, PostnomicRouteBuilder.BuildPost(basePath, style, lang, postSlug));
         var image = ToAbsoluteUrlOrNull(baseUri, post.CoverImageUrl);
-        var alternates = PostnomicRouteBuilder
-            .BuildPostAlternates(basePath, style, post.AvailableLanguages, postSlug, post.Language)
-            .Select(a => (a.Language, ToAbsoluteUrl(baseUri, a.Url)))
-            .ToList();
+        var rawAlternates = alternateUrls ?? PostnomicRouteBuilder
+            .BuildPostAlternates(basePath, style, post.AvailableLanguages, postSlug, post.Language);
+        var alternates = DeduplicateAlternatesByUrl(
+            rawAlternates.Select(a => (a.Language, ToAbsoluteUrl(baseUri, a.Url))));
 
         var description = BuildDescription(post.Excerpt, post.Content, post.Title);
 
@@ -248,6 +293,28 @@ public static class PostnomicSeoBuilder
     /// </summary>
     public static string? ToAbsoluteUrlOrNull(string baseUri, string? pathOrUrl)
         => string.IsNullOrEmpty(pathOrUrl) ? null : ToAbsoluteUrl(baseUri, pathOrUrl);
+
+    /// <summary>
+    /// Collapses a sequence of (language, absolute URL) alternates so no two entries share the
+    /// same URL, keeping the FIRST occurrence and dropping the rest. See the "shared-URL case"
+    /// remarks on <see cref="ForPost"/> for why: a duplicate URL under two different hreflang
+    /// values isn't a real language split, it's the same document claimed twice, and Google can't
+    /// tell the two apart from a single crawled URL regardless of how many hreflang links point at
+    /// it. Comparison is ordinal case-insensitive since these are already-absolute URLs.
+    /// </summary>
+    private static List<(string Language, string Url)> DeduplicateAlternatesByUrl(
+        IEnumerable<(string Language, string Url)> alternates)
+    {
+        var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var deduplicated = new List<(string Language, string Url)>();
+        foreach (var alternate in alternates)
+        {
+            if (seenUrls.Add(alternate.Url))
+                deduplicated.Add(alternate);
+        }
+
+        return deduplicated;
+    }
 
     /// <summary>
     /// Maps a bare ISO-639-1 language code (e.g. <c>"de"</c>) to the OpenGraph-conventional

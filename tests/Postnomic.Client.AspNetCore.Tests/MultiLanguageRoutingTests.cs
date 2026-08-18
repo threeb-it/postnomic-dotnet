@@ -134,6 +134,75 @@ public class MultiLanguageRoutingTests
         Assert.Empty(sut.AlternateLanguageUrls);
     }
 
+    // ── PostModel — AlternateUrls (host-supplied hreflang override) ───────────
+
+    [Fact]
+    public void AlternateUrls_NoResolverConfigured_IsNull()
+    {
+        var mock = new Mock<IPostnomicBlogService>();
+        var sut = CreateSut(mock, new PostnomicClientOptions { BasePath = "/blog" });
+        sut.PostSlug = "slug";
+
+        Assert.Null(sut.AlternateUrls);
+    }
+
+    [Fact]
+    public async Task AlternateUrls_ResolverConfigured_ReturnsTheResolversResultForTheLoadedPost()
+    {
+        var mock = new Mock<IPostnomicBlogService>();
+        mock.Setup(s => s.GetBlogAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicBlogInfo { Name = "Test Blog", Slug = "test-blog" });
+        mock.Setup(s => s.GetTopCommentedPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<PostnomicPopularPost>());
+        mock.Setup(s => s.GetMostReadPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<PostnomicPopularPost>());
+        mock.Setup(s => s.GetPostAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicPostDetail
+            {
+                Slug = "kurze-hoerbucher",
+                Title = "Title",
+                AuthorName = "Jane Doe",
+                PublishedAt = new DateTime(2025, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+                Language = "de",
+                AvailableLanguages = ["de", "en"]
+            });
+
+        var options = new PostnomicClientOptions
+        {
+            BasePath = "/blog",
+            AlternateUrlResolver = post => post.Slug == "kurze-hoerbucher"
+                ? [("de", "/blog/post/kurze-hoerbucher"), ("en", "/blog/post/kurze-hoerbucher-en")]
+                : null,
+        };
+        var sut = CreateSut(mock, options);
+        sut.PostSlug = "kurze-hoerbucher";
+
+        await sut.OnGetAsync();
+
+        Assert.NotNull(sut.AlternateUrls);
+        Assert.Equal(
+        [
+            ("de", "/blog/post/kurze-hoerbucher"),
+            ("en", "/blog/post/kurze-hoerbucher-en"),
+        ], sut.AlternateUrls);
+    }
+
+    [Fact]
+    public void AlternateUrls_ResolverConfigured_ButPostNotYetLoaded_IsNull()
+    {
+        // Before OnGetAsync runs, Post is null — the resolver must not be invoked with a null post.
+        var mock = new Mock<IPostnomicBlogService>();
+        var options = new PostnomicClientOptions
+        {
+            BasePath = "/blog",
+            AlternateUrlResolver = _ => throw new InvalidOperationException("Should not be invoked."),
+        };
+        var sut = CreateSut(mock, options);
+        sut.PostSlug = "slug";
+
+        Assert.Null(sut.AlternateUrls);
+    }
+
     // ── Helpers — convention resolution ───────────────────────────────────────
 
     private static IPageRouteModelConvention ResolveConvention(string basePath)
@@ -196,7 +265,7 @@ public class MultiLanguageRoutingTests
 
     // ── Helpers — PostModel construction ──────────────────────────────────────
 
-    private static PostModel CreateSut(Mock<IPostnomicBlogService> mock)
+    private static PostModel CreateSut(Mock<IPostnomicBlogService> mock, PostnomicClientOptions? options = null)
     {
         var resolver = new Mock<IPostnomicBlogResolver>();
         resolver.Setup(r => r.ResolveBlogName(It.IsAny<string>())).Returns((string?)null);
@@ -204,7 +273,7 @@ public class MultiLanguageRoutingTests
             mock.Object,
             Mock.Of<IServiceProvider>(),
             resolver.Object,
-            Options.Create(new PostnomicClientOptions { BasePath = "/blog" }),
+            Options.Create(options ?? new PostnomicClientOptions { BasePath = "/blog" }),
             Mock.Of<IOptionsMonitor<PostnomicClientOptions>>(),
             TestStringLocalizers.Post());
 

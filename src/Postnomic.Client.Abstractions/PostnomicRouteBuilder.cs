@@ -38,6 +38,22 @@ public static class PostnomicRouteBuilder
     /// (no-language-segment) URL; every other language gets its segment placed according to
     /// <paramref name="style"/>.
     /// </para>
+    /// <para>
+    /// Under <see cref="PostnomicLanguageRouteStyle.None"/> specifically, NO language ever gets
+    /// its own URL segment, so this method composes the exact same bare URL for every language in
+    /// <paramref name="availableLanguages"/> — every entry collapses onto one identical URL. That
+    /// is not a defect in this method; it is the only honest answer this method can give, because
+    /// it composes a URL purely from <paramref name="basePath"/> + <paramref name="style"/> +
+    /// <paramref name="postSlug"/>, and under <see cref="PostnomicLanguageRouteStyle.None"/> none
+    /// of those vary by language. A translation whose real URL differs (a different slug, a
+    /// suffixed one, or a wholly different route) cannot be derived from this data — only the
+    /// host application knows it. Hosts in that situation should set
+    /// <see cref="PostnomicClientOptions.AlternateUrlResolver"/> rather than expect this method to
+    /// invent a URL shape it has no basis for; <see cref="Seo.PostnomicSeoBuilder.ForPost"/>
+    /// reads that override when composing <see cref="Seo.PostnomicSeoModel.Alternates"/>, and
+    /// also de-duplicates by URL so this method's collapsed output never reaches hreflang as
+    /// duplicate entries when no override is supplied.
+    /// </para>
     /// </summary>
     public static IReadOnlyList<(string Language, string Url)> BuildPostAlternates(
         string basePath,

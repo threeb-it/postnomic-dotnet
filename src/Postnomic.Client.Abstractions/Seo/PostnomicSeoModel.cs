@@ -40,7 +40,11 @@ public sealed record PostnomicSeoModel
 
     /// <summary>
     /// hreflang alternates for this page: one (language code, absolute URL) pair per available
-    /// language. Never <see langword="null"/>; may be empty.
+    /// language. Never <see langword="null"/>; may be empty. For post pages,
+    /// <c>PostnomicSeoBuilder.ForPost</c> de-duplicates this list by URL — two languages that
+    /// genuinely resolve to the same URL never both appear here, since a duplicate URL under two
+    /// hreflang values isn't a meaningful language split (see <c>ForPost</c>'s XML docs for the
+    /// full reasoning).
     /// </summary>
     public IReadOnlyList<(string Lang, string Url)> Alternates { get; init; } = [];
 

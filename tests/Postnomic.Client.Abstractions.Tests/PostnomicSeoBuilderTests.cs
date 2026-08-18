@@ -18,16 +18,21 @@ public class PostnomicSeoBuilderTests
         string language = "de",
         IReadOnlyList<string>? availableLanguages = null,
         DateTime? publishedAt = null,
-        string? canonicalUrl = null) => new()
-    {
-        Slug = "hello-world",
-        Title = "Hello World",
-        AuthorName = "Jane Doe",
-        PublishedAt = publishedAt ?? new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
-        Language = language,
-        AvailableLanguages = availableLanguages ?? ["en", "de"],
-        CanonicalUrl = canonicalUrl,
-    };
+        string? canonicalUrl = null,
+        string title = "Hello World",
+        string? excerpt = null,
+        string? content = null) => new()
+        {
+            Slug = "hello-world",
+            Title = title,
+            AuthorName = "Jane Doe",
+            PublishedAt = publishedAt ?? new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
+            Language = language,
+            AvailableLanguages = availableLanguages ?? ["en", "de"],
+            CanonicalUrl = canonicalUrl,
+            Excerpt = excerpt,
+            Content = content,
+        };
 
     // ── CanonicalUrl (cross-posted posts canonicalize to their primary blog) ──────────────────
 
@@ -260,5 +265,136 @@ public class PostnomicSeoBuilderTests
             lang: "de", postSlug: "hello-world", post: CreatePost(), blogInfo: null);
 
         Assert.StartsWith("https://example.com/", model.CanonicalUrl);
+    }
+
+    // ── ForPost(alternateUrls) — explicit host-supplied hreflang overrides ────────────────────
+
+    [Fact]
+    public void ForPost_NoAlternateUrlsArgument_ComposedAlternatesAreUnchanged()
+    {
+        // Every existing call site (none of which pass the new argument) must keep compiling and
+        // behaving exactly as before.
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.Prefix,
+            lang: "de", postSlug: "hello-world", post: CreatePost(), blogInfo: null);
+
+        Assert.Equal(
+        [
+            ("en", "https://example.com/en/blog/post/hello-world"),
+            ("de", "https://example.com/de/blog/post/hello-world"),
+        ], model.Alternates);
+    }
+
+    [Fact]
+    public void ForPost_ExplicitAlternateUrls_OverrideComposedAlternatesEntirely()
+    {
+        // Reproduces the live defect: under None style, PostnomicRouteBuilder.BuildPostAlternates
+        // cannot compose distinct URLs per language at all (see its own XML docs), so a host whose
+        // translations have real, differing slugs (a common shape: "kurze-hoerbucher" (de) vs.
+        // "short-audiobooks-en" (en)) has to supply them explicitly.
+        var alternateUrls = new List<(string Language, string Url)>
+        {
+            ("de", "/blog/post/kurze-hoerbucher"),
+            ("en", "/blog/post/kurze-hoerbucher-en"),
+        };
+
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.None,
+            lang: null, postSlug: "kurze-hoerbucher",
+            post: CreatePost(language: "de", availableLanguages: ["de", "en"]),
+            blogInfo: null,
+            alternateUrls: alternateUrls);
+
+        Assert.Equal(
+        [
+            ("de", "https://example.com/blog/post/kurze-hoerbucher"),
+            ("en", "https://example.com/blog/post/kurze-hoerbucher-en"),
+        ], model.Alternates);
+    }
+
+    [Fact]
+    public void ForPost_ExplicitAlternateUrls_RootRelativeUrlsAreConvertedToAbsolute()
+    {
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.None,
+            lang: null, postSlug: "hello-world", post: CreatePost(),
+            blogInfo: null,
+            alternateUrls: [("de", "/blog/post/hello-world")]);
+
+        Assert.Equal("https://example.com/blog/post/hello-world", model.Alternates[0].Url);
+    }
+
+    [Fact]
+    public void ForPost_ExplicitAlternateUrls_XDefaultUsesTheFirstEntry()
+    {
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.None,
+            lang: null, postSlug: "kurze-hoerbucher",
+            post: CreatePost(),
+            blogInfo: null,
+            alternateUrls:
+            [
+                ("de", "/blog/post/kurze-hoerbucher"),
+                ("en", "/blog/post/kurze-hoerbucher-en"),
+            ]);
+
+        Assert.Equal("https://example.com/blog/post/kurze-hoerbucher", model.XDefaultUrl);
+    }
+
+    // ── ForPost — the shared-URL hreflang case (de-duplication by URL) ────────────────────────
+
+    [Fact]
+    public void ForPost_ComposedAlternates_NoneStyle_MultipleLanguagesCollapseToOneEntry()
+    {
+        // The live defect this whole fix targets: under None style, BuildPostAlternates composes
+        // the identical bare URL for every language (it has no way to do otherwise — see its own
+        // XML docs), so without an override the previously-duplicate hreflang="de" + hreflang="en"
+        // pointing at the same URL must now collapse to a single, honest entry instead.
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.None,
+            lang: null, postSlug: "kurze-hoerbucher",
+            post: CreatePost(language: "de", availableLanguages: ["de", "en"]),
+            blogInfo: null);
+
+        Assert.Equal([("de", "https://example.com/blog/post/kurze-hoerbucher")], model.Alternates);
+    }
+
+    [Fact]
+    public void ForPost_ExplicitAlternateUrls_SharedUrlAcrossLanguages_KeepsOnlyTheFirstOccurrence()
+    {
+        // The 22-posts-out-of-32 case from production: one URL genuinely serves both languages.
+        // Emitting hreflang="de" and hreflang="en" both pointing at that same URL isn't meaningful
+        // markup (see ForPost's XML docs), so only the first (default-language) entry survives.
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.None,
+            lang: null, postSlug: "geteilter-artikel",
+            post: CreatePost(),
+            blogInfo: null,
+            alternateUrls:
+            [
+                ("de", "/blog/post/geteilter-artikel"),
+                ("en", "/blog/post/geteilter-artikel"),
+            ]);
+
+        Assert.Equal([("de", "https://example.com/blog/post/geteilter-artikel")], model.Alternates);
+        // x-default stays coherent — it's still the (only remaining) first entry.
+        Assert.Equal("https://example.com/blog/post/geteilter-artikel", model.XDefaultUrl);
+    }
+
+    [Fact]
+    public void ForPost_ExplicitAlternateUrls_SharedUrlComparisonIsCaseInsensitive()
+    {
+        var model = PostnomicSeoBuilder.ForPost(
+            "https://example.com", "/blog", PostnomicLanguageRouteStyle.None,
+            lang: null, postSlug: "hello-world",
+            post: CreatePost(),
+            blogInfo: null,
+            alternateUrls:
+            [
+                ("de", "https://example.com/blog/post/hello-world"),
+                ("en", "https://EXAMPLE.com/BLOG/post/hello-world"),
+            ]);
+
+        Assert.Single(model.Alternates);
     }
 }

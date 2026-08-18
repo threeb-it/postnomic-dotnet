@@ -19,7 +19,8 @@ public static class PostnomicSeo
     /// <summary>Builds the SEO model for a single blog post page.</summary>
     public static PostnomicSeoModel ForPost(HttpRequest request, PostModel model)
         => PostnomicSeoBuilder.ForPost(
-            BaseUri(request), model.BasePath, model.RouteStyle, model.Lang, model.PostSlug, model.Post, model.BlogInfo);
+            BaseUri(request), model.BasePath, model.RouteStyle, model.Lang, model.PostSlug, model.Post, model.BlogInfo,
+            model.AlternateUrls);
 
     /// <summary>Builds the SEO model for an author profile page.</summary>
     public static PostnomicSeoModel ForAuthor(HttpRequest request, AuthorModel model)

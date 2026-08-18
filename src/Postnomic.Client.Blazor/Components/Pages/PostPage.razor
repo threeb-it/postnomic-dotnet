@@ -275,10 +275,22 @@
         ?? BlogContext?.Options.ShowBranding
         ?? _injectedClientOptions.Value.ShowBranding;
 
+    /// <summary>
+    /// Host-supplied override for this post's hreflang alternates, resolved from
+    /// <see cref="PostnomicClientOptions.AlternateUrlResolver"/> (mirrors
+    /// <c>Postnomic.Client.AspNetCore</c>'s <c>PostModel.AlternateUrls</c>, so both hosting models
+    /// honor the same option).
+    /// </summary>
+    private IReadOnlyList<(string Language, string Url)>? AlternateUrls =>
+        post is null
+            ? null
+            : (BlogContext?.Options ?? _injectedClientOptions.Value).AlternateUrlResolver?.Invoke(post);
+
     /// <summary>The SEO data for this post, or <see langword="null"/> until the post has loaded.</summary>
     private PostnomicSeoModel? Seo => post is null
         ? null
-        : PostnomicSeoBuilder.ForPost(Navigation.BaseUri, BasePath, RouteStyle, Language, PostSlug, post, blogInfo);
+        : PostnomicSeoBuilder.ForPost(
+            Navigation.BaseUri, BasePath, RouteStyle, Language, PostSlug, post, blogInfo, AlternateUrls);
 
     /// <inheritdoc />
     protected override async Task OnInitializedAsync()

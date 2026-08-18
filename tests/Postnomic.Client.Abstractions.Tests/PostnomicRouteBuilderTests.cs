@@ -8,7 +8,7 @@ public class PostnomicRouteBuilderTests
     [Theory]
     [InlineData(PostnomicLanguageRouteStyle.Suffix, "de", "/blog/de/post/hello")]
     [InlineData(PostnomicLanguageRouteStyle.Prefix, "de", "/de/blog/post/hello")]
-    [InlineData(PostnomicLanguageRouteStyle.None,   "de", "/blog/post/hello")]
+    [InlineData(PostnomicLanguageRouteStyle.None, "de", "/blog/post/hello")]
     [InlineData(PostnomicLanguageRouteStyle.Suffix, null, "/blog/post/hello")]
     public void BuildPost_shapes(PostnomicLanguageRouteStyle style, string? lang, string expected)
         => Assert.Equal(expected, PostnomicRouteBuilder.BuildPost("/blog", style, lang, "hello"));
@@ -80,6 +80,25 @@ public class PostnomicRouteBuilderTests
         {
             ("EN", "/blog/post/hello"),
             ("de", "/blog/de/post/hello"),
+        }, alternates);
+    }
+
+    [Fact]
+    public void BuildPostAlternates_NoneStyle_AllLanguagesCollapseOntoTheIdenticalBareUrl()
+    {
+        // Documented, not a defect: under None style NO language ever gets its own URL segment, so
+        // this method composes the exact same bare URL for every language — it has no other basis
+        // to compose from. Callers who need distinct per-language URLs here must supply them via
+        // PostnomicClientOptions.AlternateUrlResolver instead of expecting this method to invent
+        // one; PostnomicSeoBuilder.ForPost is what actually de-duplicates this collapsed output
+        // before it reaches hreflang (see PostnomicSeoBuilderTests for that coverage).
+        var alternates = PostnomicRouteBuilder.BuildPostAlternates(
+            "/blog", PostnomicLanguageRouteStyle.None, ["de", "en"], "hello");
+
+        Assert.Equal(new[]
+        {
+            ("de", "/blog/post/hello"),
+            ("en", "/blog/post/hello"),
         }, alternates);
     }
 
