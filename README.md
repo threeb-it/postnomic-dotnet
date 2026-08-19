@@ -147,6 +147,15 @@ builder.Services.AddPostnomicBlog(options =>
 | `LanguageRouteStyle` | `PostnomicLanguageRouteStyle` | `Suffix` | Where the language code appears in generated URLs. See [Language route style](#language-route-style) below. |
 | `MarkupStyle` | `PostnomicMarkupStyle` | `Bootstrap` | CSS class vocabulary emitted by Postnomic-rendered markup. See [Theming / MarkupStyle](#theming--markupstyle) below. |
 | `Cache` | `PostnomicCacheOptions?` | `null` | Optional client-side in-memory caching. |
+| `AlternateUrlResolver` | `Func<...>?` | `null` | **Obsolete** -- superseded by `IPostnomicAlternateUrlProvider`. See [Per-post hreflang alternates](docs/hreflang-alternates.md). |
+
+> **Every SDK service takes `IOptions<PostnomicClientOptions>`** -- `PostnomicBlogService`,
+> `CachingPostnomicBlogService`, `PostnomicAuthoringService`, both auth handlers, and the typed
+> `HttpClient` registrations behind them. So **no options callback may depend on a service that
+> touches the SDK**: configuring options with the DI-aware `OptionsBuilder.Configure<TDep>`
+> overload self-recurses and throws
+> `ValueFactory attempted to access the Value property of this instance.`
+> Full reference: [Client options](docs/client-options.md).
 
 ### Multi-Blog Support
 
@@ -246,6 +255,46 @@ Every Blog area page (`Postnomic.Client.AspNetCore`) and every Blazor page compo
 - **OpenGraph** -- `og:type`, `og:title`, `og:description`, `og:url`, `og:image`, `og:site_name`, `og:locale` (`de_DE`/`en_US`/...), and `article:published_time` / `article:author` / `article:tag` on post pages
 - **Twitter Card** -- `summary_large_image`
 - **JSON-LD** -- a `@graph` of `BlogPosting` (post pages), `Blog` + `ItemList` (index), or `ProfilePage` (author pages), plus a `BreadcrumbList` on every page type
+
+### Per-post hreflang alternates
+
+The SDK composes hreflang alternates by applying your `LanguageRouteStyle` to the post's own slug.
+That is correct only when every translation shares the original's slug -- and a translated slug is
+**not** derivable from the original's. It may be identical, suffixed, or fully translated
+(`kurze-hoerbuecher` -> `short-audiobooks`).
+
+When your translations don't all share one slug, supply the real URLs by implementing
+`IPostnomicAlternateUrlProvider`:
+
+```csharp
+public sealed class BlogAlternateUrlProvider(IPostnomicBlogService blog)
+    : IPostnomicAlternateUrlProvider
+{
+    public async ValueTask<IReadOnlyList<(string Language, string Url)>?> GetAlternatesAsync(
+        PostnomicPostDetail post, CancellationToken cancellationToken = default)
+    {
+        var alternates = new List<(string Language, string Url)>();
+        foreach (var language in post.AvailableLanguages)
+        {
+            var translated = await blog.GetPostAsync(post.Slug, language, cancellationToken);
+            if (translated is not null)
+                alternates.Add((language, $"/blog/post/{translated.Slug}"));
+        }
+
+        return alternates.Count > 0 ? alternates : null;
+    }
+}
+```
+
+```csharp
+builder.Services.AddPostnomicAlternateUrlProvider<BlogAlternateUrlProvider>();
+```
+
+The SDK resolves it from DI at render time, so it may depend on `IPostnomicBlogService` -- unlike an
+options callback, which cannot. It's async, so no cache-warming pass is needed. It works identically
+in both hosting models.
+
+Full guide: **[Per-post hreflang alternates](docs/hreflang-alternates.md)**.
 
 ### ASP.NET Core (Razor Pages)
 
@@ -400,6 +449,13 @@ This project is licensed under the MIT License -- see the [LICENSE](LICENSE) fil
 - [Postnomic Website](https://www.postnomic.com)
 - [API Documentation](https://www.postnomic.com/Support)
 - [Report an Issue](https://github.com/threeb-it/postnomic-dotnet/issues)
+
+### Guides
+
+- [Per-post hreflang alternates](docs/hreflang-alternates.md) -- translated slugs, the provider seam, multi-blog
+- [Client options reference](docs/client-options.md) -- every option, and the DI constraint on options callbacks
+- [Migration 1.8 -> 1.9](docs/migration-1.8-to-1.9.md) -- what's obsolete and what replaces it
+- [Troubleshooting](docs/troubleshooting.md) -- keyed on the exception text
 
 ---
 

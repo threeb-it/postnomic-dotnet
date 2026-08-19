@@ -229,4 +229,64 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Registers <typeparamref name="TProvider"/> as the host's
+    /// <see cref="IPostnomicAlternateUrlProvider"/> for the single unnamed default blog — the
+    /// supported way to supply a post's real per-language URLs.
+    /// <para>
+    /// The provider is resolved from DI at the point of render, so <typeparamref name="TProvider"/>
+    /// may depend on <see cref="IPostnomicBlogService"/> or any other SDK service. Do <b>not</b>
+    /// instead configure <see cref="PostnomicClientOptions.AlternateUrlResolver"/> through
+    /// <c>OptionsBuilder.Configure&lt;TDep&gt;</c> with an SDK-touching dependency: every SDK
+    /// service consumes <c>IOptions&lt;PostnomicClientOptions&gt;</c>, so that shape self-recurses
+    /// and throws <c>InvalidOperationException: ValueFactory attempted to access the Value
+    /// property of this instance.</c>
+    /// </para>
+    /// </summary>
+    /// <typeparam name="TProvider">The host's provider implementation.</typeparam>
+    /// <param name="services">The service collection to add the provider to.</param>
+    /// <param name="lifetime">
+    /// The provider's service lifetime. Defaults to <see cref="ServiceLifetime.Scoped"/>, which
+    /// suits a provider that caches per request or per Blazor circuit.
+    /// </param>
+    /// <returns>The same <paramref name="services"/> instance for fluent chaining.</returns>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddPostnomicAlternateUrlProvider&lt;BlogAlternateUrlProvider&gt;();
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddPostnomicAlternateUrlProvider<TProvider>(
+        this IServiceCollection services,
+        ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        where TProvider : class, IPostnomicAlternateUrlProvider
+    {
+        services.Add(new ServiceDescriptor(typeof(IPostnomicAlternateUrlProvider), typeof(TProvider), lifetime));
+        return services;
+    }
+
+    /// <summary>
+    /// Registers <typeparamref name="TProvider"/> as the <see cref="IPostnomicAlternateUrlProvider"/>
+    /// for one named blog in a multi-blog host, as a keyed service — mirroring how a named blog's
+    /// <see cref="IPostnomicBlogService"/> is registered. A blog with no provider of its own falls
+    /// back to an unkeyed provider, if one is registered.
+    /// </summary>
+    /// <typeparam name="TProvider">The host's provider implementation.</typeparam>
+    /// <param name="services">The service collection to add the provider to.</param>
+    /// <param name="name">The blog name passed to <c>AddPostnomicBlog(name, ...)</c>.</param>
+    /// <param name="lifetime">
+    /// The provider's service lifetime. Defaults to <see cref="ServiceLifetime.Scoped"/>.
+    /// </param>
+    /// <returns>The same <paramref name="services"/> instance for fluent chaining.</returns>
+    public static IServiceCollection AddPostnomicAlternateUrlProvider<TProvider>(
+        this IServiceCollection services,
+        string name,
+        ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        where TProvider : class, IPostnomicAlternateUrlProvider
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        services.Add(new ServiceDescriptor(
+            typeof(IPostnomicAlternateUrlProvider), name, typeof(TProvider), lifetime));
+        return services;
+    }
 }

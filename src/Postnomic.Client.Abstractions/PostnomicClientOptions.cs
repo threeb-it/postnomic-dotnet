@@ -96,8 +96,17 @@ public class PostnomicClientOptions
     public PostnomicUiStringOverrides? UiStrings { get; set; }
 
     /// <summary>
+    /// <b>Obsolete — use <see cref="IPostnomicAlternateUrlProvider"/> instead.</b> This callback
+    /// is synchronous, so it cannot make the API call needed to discover a translation's real
+    /// slug, and it cannot be configured through <c>OptionsBuilder.Configure&lt;TDep&gt;</c> with
+    /// any dependency that touches the SDK (see the remarks on
+    /// <see cref="IPostnomicAlternateUrlProvider"/> for why). It remains fully supported until the
+    /// next major version; a registered <see cref="IPostnomicAlternateUrlProvider"/> takes
+    /// precedence over it.
+    /// <para>
     /// Optional host-supplied override for a blog post's hreflang alternates, called once per
     /// post-detail render with the post being rendered.
+    /// </para>
     /// <para>
     /// <see cref="Postnomic.Client.Abstractions.PostnomicRouteBuilder.BuildPostAlternates"/> (the
     /// default source of <see cref="Postnomic.Client.Abstractions.Seo.PostnomicSeoModel.Alternates"/>)
@@ -134,6 +143,14 @@ public class PostnomicClientOptions
     /// Each URL may be root-relative (e.g. <c>"/blog/post/short-audiobooks-en"</c>) or absolute;
     /// both are normalized the same way the composed alternates already are.
     /// </summary>
+    [Obsolete(
+        "Set AlternateUrlResolver is obsolete and will be removed in a future major version. " +
+        "Implement IPostnomicAlternateUrlProvider and register it with " +
+        "services.AddPostnomicAlternateUrlProvider<TProvider>() instead. The replacement is " +
+        "async and is resolved from dependency injection at the point of render, so it may " +
+        "depend on IPostnomicBlogService; this callback cannot, because every SDK service " +
+        "consumes IOptions<PostnomicClientOptions> and the resulting cycle throws " +
+        "\"ValueFactory attempted to access the Value property of this instance.\"")]
     public Func<PostnomicPostDetail, IReadOnlyList<(string Language, string Url)>?>? AlternateUrlResolver { get; set; }
 }
 

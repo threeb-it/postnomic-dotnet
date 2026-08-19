@@ -1,7 +1,12 @@
+// These tests deliberately exercise the obsolete PostnomicClientOptions.AlternateUrlResolver,
+// which must keep working until it is removed in a future major version.
+#pragma warning disable CS0618
+
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
+using Postnomic.Client;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
 using Postnomic.Client.Blazor.Components.Pages;
@@ -436,6 +441,59 @@ public class SeoAndLanguageRoutingTests : BunitContext
             cut.Find("link[hreflang='en']").GetAttribute("href"));
     }
 
+    // ── PostPage — <HeadContent> SEO: IPostnomicAlternateUrlProvider (the supported seam) ──
+
+    /// <summary>
+    /// The Blazor half of the lockstep pair: a DI-registered
+    /// <see cref="IPostnomicAlternateUrlProvider"/> that depends on
+    /// <see cref="IPostnomicBlogService"/> reaches the rendered hreflang links, asynchronously and
+    /// with no cache-warming. The ASP.NET Core equivalent asserts the same two URLs.
+    /// </summary>
+    [Fact]
+    public void PostPage_HeadContent_AlternateUrlProviderRegistered_RendersTheResolvedPerLanguageUrls()
+    {
+        UseOptions(PostnomicLanguageRouteStyle.None);
+        Services.AddPostnomicAlternateUrlProvider<BlogServiceBackedAlternateUrlProvider>();
+        SetupPost(CreatePost());
+
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.CloseComponent();
+        }));
+
+        Assert.Equal(
+            "http://localhost/blog/post/kurze-hoerbucher",
+            cut.Find("link[hreflang='de']").GetAttribute("href"));
+        Assert.Equal(
+            "http://localhost/blog/post/kurze-hoerbucher-en",
+            cut.Find("link[hreflang='en']").GetAttribute("href"));
+    }
+
+    /// <summary>A registered provider wins over the obsolete options callback.</summary>
+    [Fact]
+    public void PostPage_HeadContent_ProviderTakesPrecedenceOverTheObsoleteResolver()
+    {
+        UseOptions(PostnomicLanguageRouteStyle.None, alternateUrlResolver: _ =>
+        [
+            ("de", "/blog/post/legacy-de"),
+        ]);
+        Services.AddPostnomicAlternateUrlProvider<BlogServiceBackedAlternateUrlProvider>();
+        SetupPost(CreatePost());
+
+        var cut = Render(HeadOutletTestHelper.WithHeadOutlet(builder =>
+        {
+            builder.OpenComponent<PostPage>(0);
+            builder.AddComponentParameter(1, nameof(PostPage.PostSlug), "hello-world");
+            builder.CloseComponent();
+        }));
+
+        Assert.Equal(
+            "http://localhost/blog/post/kurze-hoerbucher",
+            cut.Find("link[hreflang='de']").GetAttribute("href"));
+    }
+
     // ── PostPage — <HeadContent> SEO: description fallback (no excerpt) ─────
 
     [Fact]
@@ -622,3 +680,28 @@ public class SeoAndLanguageRoutingTests : BunitContext
         Assert.Contains("\"@type\":\"Blog\"", cut.Markup);
     }
 }
+
+/// <summary>
+/// A host provider shaped like a real one — it takes the SDK's own
+/// <see cref="IPostnomicBlogService"/>, which is precisely what the obsolete options-callback
+/// wiring could not do.
+/// </summary>
+internal sealed class BlogServiceBackedAlternateUrlProvider(IPostnomicBlogService blogService)
+    : IPostnomicAlternateUrlProvider
+{
+    public IPostnomicBlogService BlogService { get; } = blogService;
+
+    public ValueTask<IReadOnlyList<(string Language, string Url)>?> GetAlternatesAsync(
+        PostnomicPostDetail post,
+        CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<(string, string)> alternates =
+        [
+            ("de", "/blog/post/kurze-hoerbucher"),
+            ("en", "/blog/post/kurze-hoerbucher-en"),
+        ];
+        return ValueTask.FromResult<IReadOnlyList<(string Language, string Url)>?>(alternates);
+    }
+}
+
+#pragma warning restore CS0618

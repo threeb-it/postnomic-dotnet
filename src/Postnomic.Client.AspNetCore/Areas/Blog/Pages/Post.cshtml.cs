@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using Postnomic.Client;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
 
@@ -237,23 +238,19 @@ public class PostModel(
     }
 
     /// <summary>
-    /// Host-supplied override for this post's hreflang alternates, resolved from the current
-    /// blog's <see cref="PostnomicClientOptions.AlternateUrlResolver"/> (if configured) and passed
-    /// to <see cref="Postnomic.Client.AspNetCore.Seo.PostnomicSeo.ForPost"/>. Null when no resolver
-    /// is configured for this blog, or the resolver itself returns null for this post — in either
-    /// case <c>PostnomicSeoBuilder.ForPost</c> falls back to its composed alternates, unaffected.
+    /// This post's host-supplied hreflang alternates, resolved once while the page loads and
+    /// passed to <see cref="Postnomic.Client.AspNetCore.Seo.PostnomicSeo.ForPost"/>.
+    /// <para>
+    /// This is page <b>output</b>, not an input seam: set it by registering an
+    /// <see cref="IPostnomicAlternateUrlProvider"/> with
+    /// <c>services.AddPostnomicAlternateUrlProvider&lt;TProvider&gt;()</c>, which the SDK resolves
+    /// from DI for the blog this request belongs to. Null when no provider (and no obsolete
+    /// <see cref="PostnomicClientOptions.AlternateUrlResolver"/>) is configured for this blog, or
+    /// when the provider returns null for this post — in either case
+    /// <c>PostnomicSeoBuilder.ForPost</c> falls back to its composed alternates, unaffected.
+    /// </para>
     /// </summary>
-    public IReadOnlyList<(string Language, string Url)>? AlternateUrls
-    {
-        get
-        {
-            var blogName = blogResolver.ResolveBlogName(HttpContext.Request.Path.Value ?? "");
-            var resolver = blogName is not null
-                ? optionsMonitor.Get(blogName).AlternateUrlResolver
-                : defaultClientOptions.Value.AlternateUrlResolver;
-            return Post is null ? null : resolver?.Invoke(Post);
-        }
-    }
+    public IReadOnlyList<(string Language, string Url)>? AlternateUrls { get; private set; }
 
     private async Task<IActionResult> LoadPostAsync(CancellationToken cancellationToken)
     {
@@ -274,8 +271,27 @@ public class PostModel(
         TopCommented = await topCommentedTask;
         MostRead = await mostReadTask;
         EstimatedReadMinutes = CalculateReadTime(post.Content);
+        AlternateUrls = await ResolveAlternateUrlsAsync(post, cancellationToken);
 
         return Page();
+    }
+
+    /// <summary>
+    /// Resolves this post's hreflang alternates for the blog this request belongs to, using the
+    /// same precedence as the Blazor hosting model so both emit identical SEO output. See
+    /// <see cref="PostnomicAlternateUrls.ResolveAsync"/>.
+    /// </summary>
+    private async Task<IReadOnlyList<(string Language, string Url)>?> ResolveAlternateUrlsAsync(
+        PostnomicPostDetail post,
+        CancellationToken cancellationToken)
+    {
+        var blogName = blogResolver.ResolveBlogName(HttpContext.Request.Path.Value ?? "");
+        var options = blogName is not null
+            ? optionsMonitor.Get(blogName)
+            : defaultClientOptions.Value;
+
+        return await PostnomicAlternateUrls.ResolveAsync(
+            serviceProvider, options, blogName, post, cancellationToken);
     }
 
     private void ValidateCommentFields()

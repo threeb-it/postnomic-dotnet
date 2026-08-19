@@ -1,3 +1,7 @@
+// These tests deliberately exercise the obsolete PostnomicClientOptions.AlternateUrlResolver,
+// which must keep working until it is removed in a future major version.
+#pragma warning disable CS0618
+
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
@@ -6,6 +10,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Moq;
+using Postnomic.Client;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
 using Postnomic.Client.AspNetCore;
@@ -413,3 +418,122 @@ public class SeoAlternateUrlOverrideRenderingTests : IAsyncLifetime
         Assert.Contains("eigentliche Textinhalt", description);
     }
 }
+
+/// <summary>
+/// The ASP.NET Core half of the lockstep pair: a DI-registered
+/// <see cref="IPostnomicAlternateUrlProvider"/> that depends on <see cref="IPostnomicBlogService"/>
+/// reaches the rendered hreflang links. The Blazor equivalent
+/// (<c>PostPage_HeadContent_AlternateUrlProviderRegistered_RendersTheResolvedPerLanguageUrls</c>)
+/// asserts the same two URLs, so both hosting models stay in lockstep.
+/// </summary>
+public class SeoAlternateUrlProviderRenderingTests : IAsyncLifetime
+{
+    private const string Slug = "kurze-hoerbucher";
+
+    private IHost _host = null!;
+    private HttpClient _client = null!;
+
+    /// <summary>
+    /// Depends on the SDK's own blog service — the shape the obsolete options callback could not
+    /// express without self-recursion.
+    /// </summary>
+    private sealed class BlogServiceBackedAlternateUrlProvider(IPostnomicBlogService blogService)
+        : IPostnomicAlternateUrlProvider
+    {
+        public IPostnomicBlogService BlogService { get; } = blogService;
+
+        public ValueTask<IReadOnlyList<(string Language, string Url)>?> GetAlternatesAsync(
+            PostnomicPostDetail post,
+            CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<(string, string)> alternates =
+            [
+                ("de", "/blog/post/kurze-hoerbucher"),
+                ("en", "/blog/post/kurze-hoerbucher-en"),
+            ];
+            return ValueTask.FromResult<IReadOnlyList<(string Language, string Url)>?>(alternates);
+        }
+    }
+
+    public async Task InitializeAsync()
+    {
+        var blogServiceMock = new Mock<IPostnomicBlogService>();
+        blogServiceMock
+            .Setup(s => s.GetPostAsync(Slug, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicPostDetail
+            {
+                Slug = Slug,
+                Title = "Kurze Hörbücher",
+                AuthorName = "Autor",
+                Excerpt = "Ein kurzer Teaser.",
+                Content = "<p>Inhalt.</p>",
+                PublishedAt = new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
+                Language = "de",
+                AvailableLanguages = ["de", "en"],
+            });
+
+        blogServiceMock
+            .Setup(s => s.GetBlogAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PostnomicBlogInfo { Name = "SEO Test Blog", Slug = "seo-test-blog" });
+        blogServiceMock
+            .Setup(s => s.GetTopCommentedPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        blogServiceMock
+            .Setup(s => s.GetMostReadPostsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var hostBuilder = new HostBuilder()
+            .ConfigureWebHost(webHost =>
+            {
+                webHost.UseTestServer();
+                webHost.UseContentRoot(AppContext.BaseDirectory);
+
+                webHost.ConfigureServices(services =>
+                {
+                    services.AddLocalization();
+                    services.AddRazorPages().AddViewLocalization();
+
+                    services.AddPostnomicBlog(options =>
+                    {
+                        options.BaseUrl = "https://api.postnomic.example";
+                        options.ApiKey = "test-key";
+                        options.BlogSlug = "seo-test-blog";
+                        options.BasePath = "/blog";
+                        options.LanguageRouteStyle = PostnomicLanguageRouteStyle.None;
+                    });
+
+                    services.AddPostnomicAlternateUrlProvider<BlogServiceBackedAlternateUrlProvider>();
+                    services.AddSingleton(blogServiceMock.Object);
+                });
+
+                webHost.Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints => endpoints.MapRazorPages());
+                });
+            });
+
+        _host = await hostBuilder.StartAsync();
+        _client = _host.GetTestClient();
+    }
+
+    public async Task DisposeAsync()
+    {
+        _client.Dispose();
+        await _host.StopAsync();
+        _host.Dispose();
+    }
+
+    [Fact]
+    public async Task GetPostPage_WithAlternateUrlProviderRegistered_RendersTheResolvedPerLanguageUrls()
+    {
+        var response = await _client.GetAsync($"/blog/post/{Slug}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Matches("hreflang=\"de\" href=\"https?://[^\"]+/blog/post/kurze-hoerbucher\"", html);
+        Assert.Matches("hreflang=\"en\" href=\"https?://[^\"]+/blog/post/kurze-hoerbucher-en\"", html);
+    }
+}
+
+#pragma warning restore CS0618
