@@ -1,3 +1,7 @@
+// These tests deliberately exercise the obsolete PostnomicClientOptions.AlternateUrlResolver,
+// which must keep working until it is removed in a future major version.
+#pragma warning disable CS0618
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -295,3 +299,5 @@ public class MultiLanguageRoutingTests
         return model;
     }
 }
+
+#pragma warning restore CS0618
