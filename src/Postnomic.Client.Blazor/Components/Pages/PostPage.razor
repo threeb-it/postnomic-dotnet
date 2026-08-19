@@ -2,6 +2,7 @@
 @inject IPostnomicBlogService _injectedBlogService
 @inject NavigationManager Navigation
 @inject IOptions<PostnomicClientOptions> _injectedClientOptions
+@inject IServiceProvider _services
 @implements IDisposable
 
 <PageTitle>@(post?.Title ?? "Post")</PageTitle>
@@ -276,21 +277,25 @@
         ?? _injectedClientOptions.Value.ShowBranding;
 
     /// <summary>
-    /// Host-supplied override for this post's hreflang alternates, resolved from
-    /// <see cref="PostnomicClientOptions.AlternateUrlResolver"/> (mirrors
-    /// <c>Postnomic.Client.AspNetCore</c>'s <c>PostModel.AlternateUrls</c>, so both hosting models
-    /// honor the same option).
+    /// This post's host-supplied hreflang alternates, resolved once from DI after the post loads
+    /// (mirrors <c>Postnomic.Client.AspNetCore</c>'s <c>PostModel.AlternateUrls</c>, so both
+    /// hosting models emit identical SEO output).
+    /// <para>
+    /// Deliberately NOT a <c>[Parameter]</c>: the supported seam is an
+    /// <see cref="IPostnomicAlternateUrlProvider"/> registered with
+    /// <c>services.AddPostnomicAlternateUrlProvider&lt;TProvider&gt;()</c>, which is async and so
+    /// can make the API call a translated slug requires. A synchronous component parameter would
+    /// force the host to resolve alternates before render and reintroduce exactly the
+    /// cache-warming workaround this replaces.
+    /// </para>
     /// </summary>
-    private IReadOnlyList<(string Language, string Url)>? AlternateUrls =>
-        post is null
-            ? null
-            : (BlogContext?.Options ?? _injectedClientOptions.Value).AlternateUrlResolver?.Invoke(post);
+    private IReadOnlyList<(string Language, string Url)>? alternateUrls;
 
     /// <summary>The SEO data for this post, or <see langword="null"/> until the post has loaded.</summary>
     private PostnomicSeoModel? Seo => post is null
         ? null
         : PostnomicSeoBuilder.ForPost(
-            Navigation.BaseUri, BasePath, RouteStyle, Language, PostSlug, post, blogInfo, AlternateUrls);
+            Navigation.BaseUri, BasePath, RouteStyle, Language, PostSlug, post, blogInfo, alternateUrls);
 
     /// <inheritdoc />
     protected override async Task OnInitializedAsync()
@@ -353,11 +358,19 @@
             await Task.WhenAll(postTask, blogInfoTask);
             post = await postTask;
             blogInfo = await blogInfoTask;
+            alternateUrls = post is null
+                ? null
+                : await PostnomicAlternateUrls.ResolveAsync(
+                    _services,
+                    BlogContext?.Options ?? _injectedClientOptions.Value,
+                    BlogContext?.BlogName,
+                    post);
         }
         catch
         {
             post = null;
             blogInfo = null;
+            alternateUrls = null;
         }
     }
 
