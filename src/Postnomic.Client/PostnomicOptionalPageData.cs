@@ -1,19 +1,22 @@
 using Microsoft.Extensions.Logging;
 
-namespace Postnomic.Client.AspNetCore.Resilience;
+namespace Postnomic.Client;
 
 /// <summary>
 /// Loads a piece of <b>decorative</b> page data — a sidebar widget — so that a failing widget
-/// degrades to an empty fallback instead of taking the whole page down with it.
+/// degrades to an empty fallback instead of taking the whole page down with it. Shared by both
+/// hosting models: the Razor Pages Area in <c>Postnomic.Client.AspNetCore</c> and the Blazor
+/// components in <c>Postnomic.Client.Blazor</c>.
 /// <para>
 /// The blog page fans out to several API calls in parallel. Before this helper existed they all
 /// ran under a single bare <c>Task.WhenAll</c>, so one failing tag list turned a partially
 /// available backend into a hard 500 for the visitor (and one error per widget in the host's
 /// error tracker). Essential data — the post list, the blog metadata, the post itself — is
-/// deliberately <i>not</i> routed through here: when that fails the request must still fail.
+/// deliberately <i>not</i> routed through here: when that fails, the page must still fail in
+/// whatever way that hosting model already failed.
 /// </para>
 /// </summary>
-internal static class PostnomicOptionalPageData
+public static class PostnomicOptionalPageData
 {
     /// <summary>
     /// Invokes <paramref name="load"/> and returns its result, or <paramref name="fallback"/> when

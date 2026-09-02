@@ -8,7 +8,6 @@ using Microsoft.Extensions.Options;
 using Postnomic.Client;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
-using Postnomic.Client.AspNetCore.Resilience;
 
 namespace Postnomic.Client.AspNetCore.Areas.Blog.Pages;
 
