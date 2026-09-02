@@ -12,6 +12,10 @@ on:
 
 jobs:
   build-test-pack:
+    # Deliberate: the verification workflows (ci.yml, markdownlint.yml) run on
+    # Dependabot PRs, but the release path does not. Keeping this guard here
+    # means a Dependabot merge to main never pushes packages. Do not remove it
+    # without deciding that bot-authored commits may publish.
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
