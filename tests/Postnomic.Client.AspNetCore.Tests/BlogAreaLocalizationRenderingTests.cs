@@ -30,7 +30,7 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
     private IHost _host = null!;
     private HttpClient _client = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var blogServiceMock = new Mock<IPostnomicBlogService>();
 
@@ -152,7 +152,7 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         _client = _host.GetTestClient();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _host.StopAsync();
@@ -165,8 +165,8 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         using var request = new HttpRequestMessage(HttpMethod.Get, "/blog");
         request.Headers.Add("Accept-Language", "de");
 
-        using var response = await _client.SendAsync(request);
-        var html = await response.Content.ReadAsStringAsync();
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("Weiterlesen", html);
         Assert.DoesNotContain("Read More", html);
@@ -175,7 +175,7 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
     [Fact]
     public async Task DefaultCulture_RendersEnglishChrome()
     {
-        var html = await _client.GetStringAsync("/blog");
+        var html = await _client.GetStringAsync("/blog", TestContext.Current.CancellationToken);
 
         Assert.Contains("Read More", html);
         Assert.DoesNotContain("Weiterlesen", html);
@@ -187,8 +187,8 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/blog/post/{Slug}");
         request.Headers.Add("Accept-Language", "de");
 
-        using var response = await _client.SendAsync(request);
-        var html = await response.Content.ReadAsStringAsync();
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("Meistkommentiert", html);
         Assert.Contains("Meistgelesen", html);
@@ -216,7 +216,7 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
     [Fact]
     public async Task DefaultCulture_PostPage_RendersEnglishSidebarWidgets()
     {
-        var html = await _client.GetStringAsync($"/blog/post/{Slug}");
+        var html = await _client.GetStringAsync($"/blog/post/{Slug}", TestContext.Current.CancellationToken);
 
         Assert.Contains("Top Commented", html);
         Assert.Contains("Most Read", html);
@@ -240,8 +240,8 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/blog/author/{AuthorSlug}");
         request.Headers.Add("Accept-Language", "de");
 
-        using var response = await _client.SendAsync(request);
-        var html = await response.Content.ReadAsStringAsync();
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("Vernetzen", html);
         Assert.Contains("Fähigkeiten", html);
@@ -252,7 +252,7 @@ public class BlogAreaLocalizationRenderingTests : IAsyncLifetime
     [Fact]
     public async Task DefaultCulture_AuthorPage_RendersEnglishChrome()
     {
-        var html = await _client.GetStringAsync($"/blog/author/{AuthorSlug}");
+        var html = await _client.GetStringAsync($"/blog/author/{AuthorSlug}", TestContext.Current.CancellationToken);
 
         Assert.Contains(">Connect<", html);
         Assert.Contains(">Skills<", html);

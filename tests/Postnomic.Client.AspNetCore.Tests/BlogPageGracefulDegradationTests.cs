@@ -38,7 +38,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreateIndexModel(mock);
 
         // Act
-        var result = await sut.OnGetAsync();
+        var result = await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<PageResult>(result);
@@ -56,7 +56,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreateIndexModel(mock);
 
         // Act
-        var result = await sut.OnGetAsync();
+        var result = await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<PageResult>(result);
@@ -82,7 +82,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreateIndexModel(mock);
 
         // Act
-        var result = await sut.OnGetAsync();
+        var result = await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert — the page and its actual content survive a total sidebar outage.
         Assert.IsType<PageResult>(result);
@@ -107,7 +107,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreateIndexModel(mock);
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(sut.Tags);
@@ -128,7 +128,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreateIndexModel(mock, logger: logger.Object);
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert — degraded, but never silently.
         VerifyWarningLogged(logger, Times.Once());
@@ -142,7 +142,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreateIndexModel(CreateHealthyIndexService(), logger: logger.Object);
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         VerifyWarningLogged(logger, Times.Never());
@@ -162,7 +162,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreateIndexModel(mock);
 
         // Act & Assert — there is no meaningful blog index without the posts.
-        await Assert.ThrowsAsync<HttpRequestException>(() => sut.OnGetAsync());
+        await Assert.ThrowsAsync<HttpRequestException>(() => sut.OnGetAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreateIndexModel(mock);
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => sut.OnGetAsync());
+        await Assert.ThrowsAsync<HttpRequestException>(() => sut.OnGetAsync(TestContext.Current.CancellationToken));
     }
 
     // ── Index page: cancellation ──────────────────────────────────────────────
@@ -231,7 +231,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreatePostModel(mock);
 
         // Act
-        var result = await sut.OnGetAsync();
+        var result = await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<PageResult>(result);
@@ -250,7 +250,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreatePostModel(mock, new PostnomicClientOptions { BasePath = "/blog", ShowBranding = true });
 
         // Act
-        var result = await sut.OnGetAsync();
+        var result = await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<PageResult>(result);
@@ -273,7 +273,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreatePostModel(mock, logger: logger.Object);
 
         // Act
-        var result = await sut.OnGetAsync();
+        var result = await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<PageResult>(result);
@@ -293,7 +293,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreatePostModel(mock);
 
         // Act
-        var result = await sut.OnGetAsync();
+        var result = await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<NotFoundResult>(result);
@@ -309,7 +309,7 @@ public class BlogPageGracefulDegradationTests
         var sut = CreatePostModel(mock);
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => sut.OnGetAsync());
+        await Assert.ThrowsAsync<HttpRequestException>(() => sut.OnGetAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]

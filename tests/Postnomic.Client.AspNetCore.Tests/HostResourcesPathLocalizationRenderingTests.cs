@@ -44,7 +44,7 @@ public class HostResourcesPathLocalizationRenderingTests : IAsyncLifetime
     private IHost _host = null!;
     private HttpClient _client = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var blogServiceMock = new Mock<IPostnomicBlogService>();
 
@@ -132,7 +132,7 @@ public class HostResourcesPathLocalizationRenderingTests : IAsyncLifetime
         _client = _host.GetTestClient();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _host.StopAsync();
@@ -145,9 +145,9 @@ public class HostResourcesPathLocalizationRenderingTests : IAsyncLifetime
         using var request = new HttpRequestMessage(HttpMethod.Get, "/blog");
         request.Headers.Add("Accept-Language", "de");
 
-        using var response = await _client.SendAsync(request);
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("Weiterlesen", html);
         Assert.DoesNotContain("ReadMore", html);
@@ -159,9 +159,9 @@ public class HostResourcesPathLocalizationRenderingTests : IAsyncLifetime
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "/blog");
 
-        using var response = await _client.SendAsync(request);
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("Read More", html);
         Assert.DoesNotContain("ReadMore", html);

@@ -127,7 +127,7 @@ public class PostPageModelTests
         _sut.PostSlug = "test-post";
 
         // Act
-        var result = await _sut.OnGetAsync();
+        var result = await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<PageResult>(result);
@@ -141,7 +141,7 @@ public class PostPageModelTests
         _sut.PostSlug = "loaded-post";
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(_sut.Post);
@@ -156,7 +156,7 @@ public class PostPageModelTests
         _sut.PostSlug = "missing-post";
 
         // Act
-        var result = await _sut.OnGetAsync();
+        var result = await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<NotFoundResult>(result);
@@ -175,7 +175,7 @@ public class PostPageModelTests
             });
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(_sut.TopCommented);
@@ -194,7 +194,7 @@ public class PostPageModelTests
             });
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(_sut.MostRead);
@@ -207,7 +207,7 @@ public class PostPageModelTests
         SetupPost(CreateDetail(content: null));
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, _sut.EstimatedReadMinutes);
@@ -222,7 +222,7 @@ public class PostPageModelTests
         SetupPost(CreateDetail(content: content));
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(expectedMinutes, _sut.EstimatedReadMinutes);
@@ -251,7 +251,7 @@ public class PostPageModelTests
             });
 
         // Act
-        var result = await _sut.OnPostAsync();
+        var result = await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<PageResult>(result);
@@ -280,7 +280,7 @@ public class PostPageModelTests
             });
 
         // Act
-        await _sut.OnPostAsync();
+        await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Contains("moderation", _sut.CommentSubmitSuccessMessage);
@@ -307,7 +307,7 @@ public class PostPageModelTests
             });
 
         // Act
-        await _sut.OnPostAsync();
+        await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Contains("published", _sut.CommentSubmitSuccessMessage);
@@ -329,7 +329,7 @@ public class PostPageModelTests
             .ReturnsAsync((PostnomicComment?)null);
 
         // Act
-        var result = await _sut.OnPostAsync();
+        var result = await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<PageResult>(result);
@@ -346,7 +346,7 @@ public class PostPageModelTests
         _sut.CommentInput = new CommentInputModel { Body = "Body" };
 
         // Act
-        var result = await _sut.OnPostAsync();
+        var result = await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<NotFoundResult>(result);
@@ -379,7 +379,7 @@ public class PostPageModelTests
             });
 
         // Act
-        await _sut.OnPostAsync();
+        await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -399,7 +399,7 @@ public class PostPageModelTests
         };
 
         // Act
-        await _sut.OnPostAsync();
+        await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(_sut.ModelState.IsValid);
@@ -419,7 +419,7 @@ public class PostPageModelTests
         };
 
         // Act
-        await _sut.OnPostAsync();
+        await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(_sut.ModelState.IsValid);
@@ -438,7 +438,7 @@ public class PostPageModelTests
         };
 
         // Act
-        await _sut.OnPostAsync();
+        await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(_sut.ModelState.IsValid);
@@ -469,7 +469,7 @@ public class PostPageModelTests
             });
 
         // Act
-        await _sut.OnPostAsync();
+        await _sut.OnPostAsync(TestContext.Current.CancellationToken);
 
         // Assert — form should be reset to defaults
         Assert.Equal(string.Empty, _sut.CommentInput.Body);
@@ -517,7 +517,7 @@ public class PostPageModelTests
         sut.PostSlug = "test-post";
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(sut.ShowBranding,
@@ -544,7 +544,7 @@ public class PostPageModelTests
         sut.PostSlug = "test-post";
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(sut.ShowBranding,
@@ -570,7 +570,7 @@ public class PostPageModelTests
         sut.PostSlug = "test-post";
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert: server value (false) wins over client config (true)
         Assert.False(sut.ShowBranding,
@@ -590,7 +590,7 @@ public class PostPageModelTests
         _sut.PostSlug = "gitkraken-tips";
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("https://a.example.com/blog/gitkraken-tips", _sut.CanonicalUrl);
@@ -604,7 +604,7 @@ public class PostPageModelTests
         _sut.PostSlug = "gitkraken-tips";
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var expected = PostnomicRouteBuilder.BuildPost(_sut.BasePath, _sut.RouteStyle, lang: null, _sut.PostSlug);

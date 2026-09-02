@@ -57,8 +57,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(blog);
 
         // Act
-        var first = await _sut.GetBlogAsync();
-        var second = await _sut.GetBlogAsync();
+        var first = await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
+        var second = await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(first);
@@ -76,7 +76,7 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(blog);
 
         // Act
-        var result = await _sut.GetBlogAsync();
+        var result = await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -98,8 +98,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(tags);
 
         // Act
-        var first = await _sut.GetTagsAsync();
-        var second = await _sut.GetTagsAsync();
+        var first = await _sut.GetTagsAsync(TestContext.Current.CancellationToken);
+        var second = await _sut.GetTagsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(first);
@@ -121,8 +121,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(categories);
 
         // Act
-        var first = await _sut.GetCategoriesAsync();
-        var second = await _sut.GetCategoriesAsync();
+        var first = await _sut.GetCategoriesAsync(TestContext.Current.CancellationToken);
+        var second = await _sut.GetCategoriesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(first);
@@ -144,8 +144,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(authors);
 
         // Act
-        var first = await _sut.GetAuthorsAsync();
-        var second = await _sut.GetAuthorsAsync();
+        var first = await _sut.GetAuthorsAsync(TestContext.Current.CancellationToken);
+        var second = await _sut.GetAuthorsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(first);
@@ -165,8 +165,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(profile);
 
         // Act
-        var first = await _sut.GetAuthorProfileAsync(authorSlug);
-        var second = await _sut.GetAuthorProfileAsync(authorSlug);
+        var first = await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
+        var second = await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(first);
@@ -190,10 +190,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(profileJohn);
 
         // Act — call each author twice
-        var jane1 = await _sut.GetAuthorProfileAsync("jane-doe");
-        var jane2 = await _sut.GetAuthorProfileAsync("jane-doe");
-        var john1 = await _sut.GetAuthorProfileAsync("john-smith");
-        var john2 = await _sut.GetAuthorProfileAsync("john-smith");
+        var jane1 = await _sut.GetAuthorProfileAsync("jane-doe", TestContext.Current.CancellationToken);
+        var jane2 = await _sut.GetAuthorProfileAsync("jane-doe", TestContext.Current.CancellationToken);
+        var john1 = await _sut.GetAuthorProfileAsync("john-smith", TestContext.Current.CancellationToken);
+        var john2 = await _sut.GetAuthorProfileAsync("john-smith", TestContext.Current.CancellationToken);
 
         // Assert — inner called once per distinct slug
         Assert.Equal("Jane Doe", jane1!.Name);
@@ -219,8 +219,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(pagedResult);
 
         // Act
-        var first = await _sut.GetPostsAsync(page: 1, pageSize: 5);
-        var second = await _sut.GetPostsAsync(page: 1, pageSize: 5);
+        var first = await _sut.GetPostsAsync(page: 1, pageSize: 5, cancellationToken: TestContext.Current.CancellationToken);
+        var second = await _sut.GetPostsAsync(page: 1, pageSize: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(first);
@@ -243,8 +243,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(page2Result);
 
         // Act
-        await _sut.GetPostsAsync(page: 1, pageSize: 5);
-        await _sut.GetPostsAsync(page: 2, pageSize: 5);
+        await _sut.GetPostsAsync(page: 1, pageSize: 5, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostsAsync(page: 2, pageSize: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — inner called once for each distinct page
         _innerMock.Verify(
@@ -268,10 +268,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(dotnetResult);
 
         // Act — call each tag combination twice
-        await _sut.GetPostsAsync(tag: "csharp");
-        await _sut.GetPostsAsync(tag: "csharp");
-        await _sut.GetPostsAsync(tag: "dotnet");
-        await _sut.GetPostsAsync(tag: "dotnet");
+        await _sut.GetPostsAsync(tag: "csharp", cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostsAsync(tag: "csharp", cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostsAsync(tag: "dotnet", cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostsAsync(tag: "dotnet", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — inner called once per distinct filter value
         _innerMock.Verify(
@@ -294,8 +294,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(post);
 
         // Act
-        var first = await _sut.GetPostAsync(postSlug);
-        var second = await _sut.GetPostAsync(postSlug);
+        var first = await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
+        var second = await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(first);
@@ -319,10 +319,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(postB);
 
         // Act — each post fetched twice
-        var a1 = await _sut.GetPostAsync("post-a");
-        var a2 = await _sut.GetPostAsync("post-a");
-        var b1 = await _sut.GetPostAsync("post-b");
-        var b2 = await _sut.GetPostAsync("post-b");
+        var a1 = await _sut.GetPostAsync("post-a", cancellationToken: TestContext.Current.CancellationToken);
+        var a2 = await _sut.GetPostAsync("post-a", cancellationToken: TestContext.Current.CancellationToken);
+        var b1 = await _sut.GetPostAsync("post-b", cancellationToken: TestContext.Current.CancellationToken);
+        var b2 = await _sut.GetPostAsync("post-b", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — inner called once per distinct slug
         Assert.Equal("Post A", a1!.Title);
@@ -341,10 +341,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         _innerMock.Setup(s => s.GetPostAsync("slug", "de", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPostDetail { Slug = "slug", Title = "DE", AuthorName = "a" });
 
-        await _sut.GetPostAsync("slug", "en");
-        await _sut.GetPostAsync("slug", "en");
-        await _sut.GetPostAsync("slug", "de");
-        await _sut.GetPostAsync("slug", "de");
+        await _sut.GetPostAsync("slug", "en", TestContext.Current.CancellationToken);
+        await _sut.GetPostAsync("slug", "en", TestContext.Current.CancellationToken);
+        await _sut.GetPostAsync("slug", "de", TestContext.Current.CancellationToken);
+        await _sut.GetPostAsync("slug", "de", TestContext.Current.CancellationToken);
 
         _innerMock.Verify(s => s.GetPostAsync("slug", "en", It.IsAny<CancellationToken>()), Times.Once);
         _innerMock.Verify(s => s.GetPostAsync("slug", "de", It.IsAny<CancellationToken>()), Times.Once);
@@ -358,10 +358,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         _innerMock.Setup(s => s.GetPostsAsync(1, 5, null, null, null, null, "de", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPagedResult<PostnomicPostSummary> { Items = [], Page = 1, PageSize = 5, TotalCount = 0, TotalPages = 0 });
 
-        await _sut.GetPostsAsync(language: "en");
-        await _sut.GetPostsAsync(language: "en");
-        await _sut.GetPostsAsync(language: "de");
-        await _sut.GetPostsAsync(language: "de");
+        await _sut.GetPostsAsync(language: "en", cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostsAsync(language: "en", cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostsAsync(language: "de", cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostsAsync(language: "de", cancellationToken: TestContext.Current.CancellationToken);
 
         _innerMock.Verify(s => s.GetPostsAsync(1, 5, null, null, null, null, "en", It.IsAny<CancellationToken>()), Times.Once);
         _innerMock.Verify(s => s.GetPostsAsync(1, 5, null, null, null, null, "de", It.IsAny<CancellationToken>()), Times.Once);
@@ -381,8 +381,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(posts);
 
         // Act
-        var first = await _sut.GetTopCommentedPostsAsync();
-        var second = await _sut.GetTopCommentedPostsAsync();
+        var first = await _sut.GetTopCommentedPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var second = await _sut.GetTopCommentedPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(first);
@@ -411,10 +411,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(top5);
 
         // Act — each count fetched twice
-        await _sut.GetTopCommentedPostsAsync(count: 3);
-        await _sut.GetTopCommentedPostsAsync(count: 3);
-        await _sut.GetTopCommentedPostsAsync(count: 5);
-        await _sut.GetTopCommentedPostsAsync(count: 5);
+        await _sut.GetTopCommentedPostsAsync(count: 3, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetTopCommentedPostsAsync(count: 3, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetTopCommentedPostsAsync(count: 5, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetTopCommentedPostsAsync(count: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — inner called once per distinct count
         _innerMock.Verify(s => s.GetTopCommentedPostsAsync(3, It.IsAny<CancellationToken>()), Times.Once);
@@ -435,8 +435,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(posts);
 
         // Act
-        var first = await _sut.GetMostReadPostsAsync();
-        var second = await _sut.GetMostReadPostsAsync();
+        var first = await _sut.GetMostReadPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var second = await _sut.GetMostReadPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(first);
@@ -454,10 +454,10 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync([]);
 
         // Act
-        await _sut.GetMostReadPostsAsync(count: 3);
-        await _sut.GetMostReadPostsAsync(count: 3);
-        await _sut.GetMostReadPostsAsync(count: 10);
-        await _sut.GetMostReadPostsAsync(count: 10);
+        await _sut.GetMostReadPostsAsync(count: 3, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetMostReadPostsAsync(count: 3, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetMostReadPostsAsync(count: 10, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetMostReadPostsAsync(count: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _innerMock.Verify(s => s.GetMostReadPostsAsync(3, It.IsAny<CancellationToken>()), Times.Once);
@@ -482,9 +482,9 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(comment);
 
         // Act — call three times; inner must be called every time (no caching)
-        await _sut.CreateCommentAsync(postSlug, request);
-        await _sut.CreateCommentAsync(postSlug, request);
-        await _sut.CreateCommentAsync(postSlug, request);
+        await _sut.CreateCommentAsync(postSlug, request, TestContext.Current.CancellationToken);
+        await _sut.CreateCommentAsync(postSlug, request, TestContext.Current.CancellationToken);
+        await _sut.CreateCommentAsync(postSlug, request, TestContext.Current.CancellationToken);
 
         // Assert
         _innerMock.Verify(
@@ -502,8 +502,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .Returns(Task.CompletedTask);
 
         // Act — call twice; both must reach the inner service
-        await _sut.RecordPageViewAsync("session-1", "my-post", "https://referrer.com");
-        await _sut.RecordPageViewAsync("session-1", "my-post", "https://referrer.com");
+        await _sut.RecordPageViewAsync("session-1", "my-post", "https://referrer.com", TestContext.Current.CancellationToken);
+        await _sut.RecordPageViewAsync("session-1", "my-post", "https://referrer.com", TestContext.Current.CancellationToken);
 
         // Assert
         _innerMock.Verify(
@@ -522,8 +522,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .Returns(Task.CompletedTask);
 
         // Act — call twice; both must reach the inner service
-        await _sut.UpdateReadDurationAsync("session-1", 120);
-        await _sut.UpdateReadDurationAsync("session-1", 120);
+        await _sut.UpdateReadDurationAsync("session-1", 120, TestContext.Current.CancellationToken);
+        await _sut.UpdateReadDurationAsync("session-1", 120, TestContext.Current.CancellationToken);
 
         // Assert
         _innerMock.Verify(
@@ -559,14 +559,14 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync(comment);
 
         // Prime cache
-        await _sut.GetPostAsync(postSlug);
+        await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
         _innerMock.Verify(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()), Times.Once);
 
         // Act — create a comment, which should bust the post detail cache
-        await _sut.CreateCommentAsync(postSlug, request);
+        await _sut.CreateCommentAsync(postSlug, request, TestContext.Current.CancellationToken);
 
         // Fetch post again — must call inner again because the cache was invalidated
-        await _sut.GetPostAsync(postSlug);
+        await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — inner called a second time for GetPostAsync after invalidation
         _innerMock.Verify(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()), Times.Exactly(2));
@@ -586,13 +586,13 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync((PostnomicComment?)null);
 
         // Prime cache
-        await _sut.GetPostAsync(postSlug);
+        await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act — failed comment creation
-        await _sut.CreateCommentAsync(postSlug, request);
+        await _sut.CreateCommentAsync(postSlug, request, TestContext.Current.CancellationToken);
 
         // Fetch post again — cache should still be warm (inner must NOT be called again)
-        await _sut.GetPostAsync(postSlug);
+        await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — inner called only once; cache was not invalidated
         _innerMock.Verify(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()), Times.Once);
@@ -615,19 +615,19 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         _innerMock.Setup(s => s.GetCategoriesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(categories);
         _innerMock.Setup(s => s.GetAuthorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(authors);
 
-        await _sut.GetBlogAsync();
-        await _sut.GetTagsAsync();
-        await _sut.GetCategoriesAsync();
-        await _sut.GetAuthorsAsync();
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
+        await _sut.GetTagsAsync(TestContext.Current.CancellationToken);
+        await _sut.GetCategoriesAsync(TestContext.Current.CancellationToken);
+        await _sut.GetAuthorsAsync(TestContext.Current.CancellationToken);
 
         // Act
         _sut.InvalidateAll();
 
         // Fetch again after invalidation — each must hit the inner service
-        await _sut.GetBlogAsync();
-        await _sut.GetTagsAsync();
-        await _sut.GetCategoriesAsync();
-        await _sut.GetAuthorsAsync();
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
+        await _sut.GetTagsAsync(TestContext.Current.CancellationToken);
+        await _sut.GetCategoriesAsync(TestContext.Current.CancellationToken);
+        await _sut.GetAuthorsAsync(TestContext.Current.CancellationToken);
 
         // Assert — inner was called twice for each (once before invalidate, once after)
         _innerMock.Verify(s => s.GetBlogAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
@@ -643,12 +643,12 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         _innerMock.Setup(s => s.GetBlogAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicBlogInfo { Name = "Blog", Slug = BlogSlug });
 
-        await _sut.GetBlogAsync();    // primes cache
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);    // primes cache
         _sut.InvalidateAll();         // clears cache
 
         // Act — two more calls after invalidation
-        await _sut.GetBlogAsync();
-        await _sut.GetBlogAsync();
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
 
         // Assert — inner called once before invalidation + once more after (second call re-cached)
         _innerMock.Verify(s => s.GetBlogAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
@@ -668,15 +668,15 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         _innerMock.Setup(s => s.GetPostAsync(slugA, null, It.IsAny<CancellationToken>())).ReturnsAsync(postA);
         _innerMock.Setup(s => s.GetPostAsync(slugB, null, It.IsAny<CancellationToken>())).ReturnsAsync(postB);
 
-        await _sut.GetPostAsync(slugA);
-        await _sut.GetPostAsync(slugB);
+        await _sut.GetPostAsync(slugA, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostAsync(slugB, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act — invalidate only post A
         _sut.InvalidatePost(slugA);
 
         // Fetch both again
-        await _sut.GetPostAsync(slugA);
-        await _sut.GetPostAsync(slugB);
+        await _sut.GetPostAsync(slugA, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostAsync(slugB, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — post A re-fetched (2×), post B still cached (1×)
         _innerMock.Verify(s => s.GetPostAsync(slugA, null, It.IsAny<CancellationToken>()), Times.Exactly(2));
@@ -693,14 +693,14 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         _innerMock.Setup(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PostnomicPostDetail { Slug = postSlug, Title = "T", AuthorName = "A" });
 
-        await _sut.GetBlogAsync();
-        await _sut.GetPostAsync(postSlug);
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
+        await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act — invalidate just the post
         _sut.InvalidatePost(postSlug);
 
         // Blog info should still come from cache
-        await _sut.GetBlogAsync();
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
 
         // Assert — blog info not re-fetched (still cached), post re-fetched
         _innerMock.Verify(s => s.GetBlogAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -721,19 +721,19 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         _innerMock.Setup(s => s.GetAuthorsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([new PostnomicAuthor { Name = "Jane", PostCount = 3 }]);
 
-        await _sut.GetBlogAsync();
-        await _sut.GetTagsAsync();
-        await _sut.GetCategoriesAsync();
-        await _sut.GetAuthorsAsync();
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
+        await _sut.GetTagsAsync(TestContext.Current.CancellationToken);
+        await _sut.GetCategoriesAsync(TestContext.Current.CancellationToken);
+        await _sut.GetAuthorsAsync(TestContext.Current.CancellationToken);
 
         // Act
         _sut.InvalidateMetadata();
 
         // Fetch all metadata again
-        await _sut.GetBlogAsync();
-        await _sut.GetTagsAsync();
-        await _sut.GetCategoriesAsync();
-        await _sut.GetAuthorsAsync();
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
+        await _sut.GetTagsAsync(TestContext.Current.CancellationToken);
+        await _sut.GetCategoriesAsync(TestContext.Current.CancellationToken);
+        await _sut.GetAuthorsAsync(TestContext.Current.CancellationToken);
 
         // Assert — each metadata entry re-fetched after invalidation
         _innerMock.Verify(s => s.GetBlogAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
@@ -751,13 +751,13 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         _innerMock.Setup(s => s.GetAuthorProfileAsync(authorSlug, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
 
-        await _sut.GetAuthorProfileAsync(authorSlug);
+        await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Act
         _sut.InvalidateMetadata();
 
         // Fetch again — must hit the inner service
-        await _sut.GetAuthorProfileAsync(authorSlug);
+        await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Assert
         _innerMock.Verify(
@@ -779,15 +779,15 @@ public class CachingPostnomicBlogServiceTests : IDisposable
                 It.IsAny<string?>(), It.IsAny<string?>(), null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateEmptyPagedResult());
 
-        await _sut.GetPostAsync(postSlug);
-        await _sut.GetPostsAsync();
+        await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Act — only metadata should be cleared
         _sut.InvalidateMetadata();
 
         // Fetch posts and post detail again — should still come from cache
-        await _sut.GetPostAsync(postSlug);
-        await _sut.GetPostsAsync();
+        await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
+        await _sut.GetPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — post detail and post list NOT re-fetched (still cached)
         _innerMock.Verify(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()), Times.Once);
@@ -808,8 +808,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync((PostnomicBlogInfo?)null);
 
         // Act
-        var first = await _sut.GetBlogAsync();
-        var second = await _sut.GetBlogAsync();
+        var first = await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
+        var second = await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
 
         // Assert — null result is cached; inner called only once
         Assert.Null(first);
@@ -826,8 +826,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync((PostnomicPostDetail?)null);
 
         // Act
-        var first = await _sut.GetPostAsync(postSlug);
-        var second = await _sut.GetPostAsync(postSlug);
+        var first = await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
+        var second = await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — null result is cached; inner called only once
         Assert.Null(first);
@@ -846,8 +846,8 @@ public class CachingPostnomicBlogServiceTests : IDisposable
             .ReturnsAsync((PostnomicAuthorProfile?)null);
 
         // Act
-        var first = await _sut.GetAuthorProfileAsync(authorSlug);
-        var second = await _sut.GetAuthorProfileAsync(authorSlug);
+        var first = await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
+        var second = await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Assert — null result is cached; inner called only once
         Assert.Null(first);

@@ -60,7 +60,7 @@ public class PostnomicPersonalAccessTokenHandlerTests
         var client = BuildClient("pnp_my-secret-token", out var getCaptured);
 
         // Act
-        await client.GetAsync("/test");
+        await client.GetAsync("/test", TestContext.Current.CancellationToken);
 
         // Assert
         var request = getCaptured();
@@ -77,7 +77,7 @@ public class PostnomicPersonalAccessTokenHandlerTests
         var client = BuildClient(null, out var getCaptured);
 
         // Act
-        await client.GetAsync("/test");
+        await client.GetAsync("/test", TestContext.Current.CancellationToken);
 
         // Assert
         var request = getCaptured();
@@ -92,7 +92,7 @@ public class PostnomicPersonalAccessTokenHandlerTests
         var client = BuildClient("   ", out var getCaptured);
 
         // Act
-        await client.GetAsync("/test");
+        await client.GetAsync("/test", TestContext.Current.CancellationToken);
 
         // Assert
         var request = getCaptured();
@@ -109,7 +109,7 @@ public class PostnomicPersonalAccessTokenHandlerTests
         // Act
         var requestMessage = new HttpRequestMessage(HttpMethod.Get, "/test");
         requestMessage.Headers.Add("X-Custom-Header", "custom-value");
-        await client.SendAsync(requestMessage);
+        await client.SendAsync(requestMessage, TestContext.Current.CancellationToken);
 
         // Assert
         var captured = getCaptured();
@@ -136,9 +136,9 @@ public class PostnomicPersonalAccessTokenHandlerTests
         var client = new HttpClient(handler) { BaseAddress = new Uri("https://api.example.com/") };
 
         // Act
-        await client.GetAsync("/one");
-        await client.GetAsync("/two");
-        await client.GetAsync("/three");
+        await client.GetAsync("/one", TestContext.Current.CancellationToken);
+        await client.GetAsync("/two", TestContext.Current.CancellationToken);
+        await client.GetAsync("/three", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, capturedTokens.Count);
