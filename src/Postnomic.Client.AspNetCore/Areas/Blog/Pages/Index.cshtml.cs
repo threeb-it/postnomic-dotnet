@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
+using Postnomic.Client.AspNetCore.Resilience;
 
 namespace Postnomic.Client.AspNetCore.Areas.Blog.Pages;
 
@@ -17,7 +19,8 @@ public class IndexModel(
     IServiceProvider serviceProvider,
     IPostnomicBlogResolver blogResolver,
     IOptions<PostnomicClientOptions> defaultClientOptions,
-    IOptionsMonitor<PostnomicClientOptions> optionsMonitor) : PageModel
+    IOptionsMonitor<PostnomicClientOptions> optionsMonitor,
+    ILogger<IndexModel>? logger = null) : PageModel
 {
     // ── Query parameters ──────────────────────────────────────────────────────
 
@@ -101,21 +104,37 @@ public class IndexModel(
 
     /// <summary>
     /// Loads all page data in parallel and returns the page for rendering.
+    /// <para>
+    /// The post list and the blog metadata are essential: if either fails the request fails, because
+    /// there is no meaningful page without them. Every other call feeds a decorative sidebar widget
+    /// and degrades to an empty list on failure — a visitor still gets the posts when the tag list
+    /// is down. Cancellation of <paramref name="cancellationToken"/> (the visitor navigated away)
+    /// always propagates and is never mistaken for a widget failure.
+    /// </para>
     /// </summary>
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken = default)
     {
         var blogService = ResolveBlogService();
 
+        // Essential — a failure here must still surface as a failure.
         var postsTask = blogService.GetPostsAsync(
             PageNumber, PageSize, Tag, Category, Author, Search,
             language: Lang,
             cancellationToken: cancellationToken);
         var blogTask = blogService.GetBlogAsync(cancellationToken);
-        var tagsTask = blogService.GetTagsAsync(cancellationToken);
-        var categoriesTask = blogService.GetCategoriesAsync(cancellationToken);
-        var authorsTask = blogService.GetAuthorsAsync(cancellationToken);
-        var topCommentedTask = blogService.GetTopCommentedPostsAsync(cancellationToken: cancellationToken);
-        var mostReadTask = blogService.GetMostReadPostsAsync(cancellationToken: cancellationToken);
+
+        // Decorative — sidebar widgets, started in parallel with the essential calls and each
+        // wrapped so that one failing widget renders empty instead of 500-ing the whole page.
+        var tagsTask = Optional(
+            () => blogService.GetTagsAsync(cancellationToken), new List<PostnomicTag>(), "tags", cancellationToken);
+        var categoriesTask = Optional(
+            () => blogService.GetCategoriesAsync(cancellationToken), new List<PostnomicCategory>(), "categories", cancellationToken);
+        var authorsTask = Optional(
+            () => blogService.GetAuthorsAsync(cancellationToken), new List<PostnomicAuthor>(), "authors", cancellationToken);
+        var topCommentedTask = Optional(
+            () => blogService.GetTopCommentedPostsAsync(cancellationToken: cancellationToken), new List<PostnomicPopularPost>(), "top-commented", cancellationToken);
+        var mostReadTask = Optional(
+            () => blogService.GetMostReadPostsAsync(cancellationToken: cancellationToken), new List<PostnomicPopularPost>(), "most-read", cancellationToken);
 
         await Task.WhenAll(postsTask, blogTask, tagsTask, categoriesTask, authorsTask,
             topCommentedTask, mostReadTask);
@@ -130,6 +149,9 @@ public class IndexModel(
 
         return Page();
     }
+
+    private Task<T> Optional<T>(Func<Task<T>> load, T fallback, string widget, CancellationToken cancellationToken)
+        => PostnomicOptionalPageData.LoadAsync(load, fallback, widget, logger, cancellationToken);
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
