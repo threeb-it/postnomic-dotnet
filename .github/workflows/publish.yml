@@ -12,16 +12,20 @@ on:
 
 jobs:
   build-test-pack:
+    # Deliberate: the verification workflows (ci.yml, markdownlint.yml) run on
+    # Dependabot PRs, but the release path does not. Keeping this guard here
+    # means a Dependabot merge to main never pushes packages. Do not remove it
+    # without deciding that bot-authored commits may publish.
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0  # MinVer needs full history
         fetch-tags: true  # MinVer needs tags to determine version
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: '10.0.x'
 
@@ -38,7 +42,7 @@ jobs:
       run: dotnet pack Postnomic.Client.slnx -c Release --no-build -o ./artifacts
 
     - name: Upload packages
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: nuget-packages
         path: ./artifacts/*.nupkg
@@ -49,13 +53,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Download packages
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: nuget-packages
         path: ./artifacts
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: '10.0.x'
 
@@ -75,16 +79,16 @@ jobs:
     runs-on: ubuntu-latest
     environment: nuget-publish
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download packages
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: nuget-packages
         path: ./artifacts
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: '10.0.x'
 

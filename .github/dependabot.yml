@@ -1,0 +1,55 @@
+# Dependabot configuration
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+#
+# Mirrors the parent repo (threeb-it/Postnomic) so both behave the same way.
+#
+# Only two ecosystems are active:
+#   - github-actions : workflows under .github/workflows
+#   - nuget          : the .NET solution (Central Package Management via
+#                      Directory.Packages.props)
+#
+# Docker / npm / pip are intentionally omitted — there is no Dockerfile,
+# package.json or Python manifest in the repo. `dotnet-sdk` is also omitted:
+# global.json exists here (unlike the parent), but the workflows install the
+# SDK from an explicit `dotnet-version: '10.0.x'`, so an SDK bump PR would be
+# pure churn against a file CI does not read.
+#
+# `groups` batches every detected update into a single PR per ecosystem per
+# run instead of one PR per package, which kept drowning the review queue.
+#
+# Two deliberate differences from the parent's file:
+#   - No `reviewers:` key. GitHub retired that option (2025-08-08) and now
+#     silently ignores it; .github/CODEOWNERS already routes every PR here to
+#     @threeb-it/core-contributers.
+#   - No `labels:` key. Dependabot only applies labels that already exist in
+#     the repository and silently drops the rest; this repo does not have the
+#     parent's "dependabot" / "* dependencies" labels, so the defaults
+#     Dependabot creates itself are used instead.
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "[github-actions] "
+    assignees:
+      - "thimobuchheister"
+    groups:
+      github-actions-all:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "[nuget] "
+    assignees:
+      - "thimobuchheister"
+    groups:
+      nuget-all:
+        patterns:
+          - "*"
