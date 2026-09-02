@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
+using Postnomic.Client.AspNetCore.Resilience;
 
 namespace Postnomic.Client.AspNetCore.Areas.Blog.Pages;
 
@@ -17,8 +19,12 @@ public class IndexModel(
     IServiceProvider serviceProvider,
     IPostnomicBlogResolver blogResolver,
     IOptions<PostnomicClientOptions> defaultClientOptions,
-    IOptionsMonitor<PostnomicClientOptions> optionsMonitor) : PageModel
+    IOptionsMonitor<PostnomicClientOptions> optionsMonitor,
+    ILogger<IndexModel>? logger = null) : PageModel
 {
+    /// <summary>Largest accepted <see cref="PageSize"/>; anything above is clamped down to it.</summary>
+    private const int MaxPageSize = 100;
+
     // ── Query parameters ──────────────────────────────────────────────────────
 
     /// <summary>The 1-based page number to display. Defaults to <c>1</c>.</summary>
@@ -101,21 +107,39 @@ public class IndexModel(
 
     /// <summary>
     /// Loads all page data in parallel and returns the page for rendering.
+    /// <para>
+    /// The post list and the blog metadata are essential: if either fails the request fails, because
+    /// there is no meaningful page without them. Every other call feeds a decorative sidebar widget
+    /// and degrades to an empty list on failure — a visitor still gets the posts when the tag list
+    /// is down. Cancellation of <paramref name="cancellationToken"/> (the visitor navigated away)
+    /// always propagates and is never mistaken for a widget failure.
+    /// </para>
     /// </summary>
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken = default)
     {
+        NormalizePaging();
+
         var blogService = ResolveBlogService();
 
+        // Essential — a failure here must still surface as a failure.
         var postsTask = blogService.GetPostsAsync(
             PageNumber, PageSize, Tag, Category, Author, Search,
             language: Lang,
             cancellationToken: cancellationToken);
         var blogTask = blogService.GetBlogAsync(cancellationToken);
-        var tagsTask = blogService.GetTagsAsync(cancellationToken);
-        var categoriesTask = blogService.GetCategoriesAsync(cancellationToken);
-        var authorsTask = blogService.GetAuthorsAsync(cancellationToken);
-        var topCommentedTask = blogService.GetTopCommentedPostsAsync(cancellationToken: cancellationToken);
-        var mostReadTask = blogService.GetMostReadPostsAsync(cancellationToken: cancellationToken);
+
+        // Decorative — sidebar widgets, started in parallel with the essential calls and each
+        // wrapped so that one failing widget renders empty instead of 500-ing the whole page.
+        var tagsTask = Optional(
+            () => blogService.GetTagsAsync(cancellationToken), new List<PostnomicTag>(), "tags", cancellationToken);
+        var categoriesTask = Optional(
+            () => blogService.GetCategoriesAsync(cancellationToken), new List<PostnomicCategory>(), "categories", cancellationToken);
+        var authorsTask = Optional(
+            () => blogService.GetAuthorsAsync(cancellationToken), new List<PostnomicAuthor>(), "authors", cancellationToken);
+        var topCommentedTask = Optional(
+            () => blogService.GetTopCommentedPostsAsync(cancellationToken: cancellationToken), new List<PostnomicPopularPost>(), "top-commented", cancellationToken);
+        var mostReadTask = Optional(
+            () => blogService.GetMostReadPostsAsync(cancellationToken: cancellationToken), new List<PostnomicPopularPost>(), "most-read", cancellationToken);
 
         await Task.WhenAll(postsTask, blogTask, tagsTask, categoriesTask, authorsTask,
             topCommentedTask, mostReadTask);
@@ -129,6 +153,20 @@ public class IndexModel(
         MostRead = await mostReadTask;
 
         return Page();
+    }
+
+    private Task<T> Optional<T>(Func<Task<T>> load, T fallback, string widget, CancellationToken cancellationToken)
+        => PostnomicOptionalPageData.LoadAsync(load, fallback, widget, logger, cancellationToken);
+
+    /// <summary>
+    /// Clamps the query-bound paging values into a sane range before they reach the API or the
+    /// generated links. <c>?p=</c> and <c>?PageSize=</c> arrive straight from the URL, so a crawler
+    /// (or a typo) can otherwise ask for page -3 or 100000 posts at once.
+    /// </summary>
+    private void NormalizePaging()
+    {
+        PageNumber = Math.Max(1, PageNumber);
+        PageSize = Math.Clamp(PageSize, 1, MaxPageSize);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -198,14 +236,28 @@ public class IndexModel(
         !string.IsNullOrWhiteSpace(Search);
 
     /// <summary>
+    /// Clamps a pagination target into the range the current result set actually has.
+    /// Never below page 1; never beyond <c>Posts.TotalPages</c> once the posts are loaded
+    /// (before that the upper bound is unknown, so only the lower bound is enforced).
+    /// The view calls <c>PageUrl(PageNumber - 1)</c> and <c>PageUrl(PageNumber + 1)</c>
+    /// unconditionally for the prev/next arrows, which is exactly how out-of-range links escaped.
+    /// </summary>
+    private int ClampTargetPage(int targetPage)
+    {
+        var clamped = Math.Max(1, targetPage);
+        var totalPages = Posts.TotalPages;
+        return totalPages > 0 ? Math.Min(clamped, totalPages) : clamped;
+    }
+
+    /// <summary>
     /// Builds a route-value dictionary for a pagination link, preserving the current filter
     /// query parameters while changing only the page number.
     /// </summary>
-    /// <param name="targetPage">The target page number.</param>
+    /// <param name="targetPage">The target page number; clamped into range.</param>
     public Dictionary<string, string?> PageRouteValues(int targetPage) => new()
     {
-        ["p"] = targetPage.ToString(),
-        [nameof(PageSize)] = PageSize.ToString(),
+        ["p"] = ClampTargetPage(targetPage).ToString(),
+        [nameof(PageSize)] = Math.Clamp(PageSize, 1, MaxPageSize).ToString(),
         [nameof(Tag)] = Tag,
         [nameof(Category)] = Category,
         [nameof(Author)] = Author,
@@ -214,10 +266,15 @@ public class IndexModel(
 
     /// <summary>
     /// Builds a full URL for a pagination link, including the base path and query parameters.
+    /// The target page is clamped into range — see <see cref="ClampTargetPage"/>.
     /// </summary>
     public string PageUrl(int targetPage)
     {
-        var parts = new List<string> { $"p={targetPage}", $"PageSize={PageSize}" };
+        var parts = new List<string>
+        {
+            $"p={ClampTargetPage(targetPage)}",
+            $"PageSize={Math.Clamp(PageSize, 1, MaxPageSize)}"
+        };
         if (!string.IsNullOrWhiteSpace(Tag)) parts.Add($"Tag={Uri.EscapeDataString(Tag)}");
         if (!string.IsNullOrWhiteSpace(Category)) parts.Add($"Category={Uri.EscapeDataString(Category)}");
         if (!string.IsNullOrWhiteSpace(Author)) parts.Add($"Author={Uri.EscapeDataString(Author)}");

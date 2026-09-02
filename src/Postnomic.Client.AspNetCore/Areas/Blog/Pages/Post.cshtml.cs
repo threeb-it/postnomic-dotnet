@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Postnomic.Client;
 using Postnomic.Client.Abstractions;
 using Postnomic.Client.Abstractions.Models;
+using Postnomic.Client.AspNetCore.Resilience;
 
 namespace Postnomic.Client.AspNetCore.Areas.Blog.Pages;
 
@@ -20,7 +22,8 @@ public class PostModel(
     IPostnomicBlogResolver blogResolver,
     IOptions<PostnomicClientOptions> defaultClientOptions,
     IOptionsMonitor<PostnomicClientOptions> optionsMonitor,
-    IStringLocalizer<PostModel> localizer) : PageModel
+    IStringLocalizer<PostModel> localizer,
+    ILogger<PostModel>? logger = null) : PageModel
 {
     // ── Route parameter ───────────────────────────────────────────────────────
 
@@ -252,14 +255,29 @@ public class PostModel(
     /// </summary>
     public IReadOnlyList<(string Language, string Url)>? AlternateUrls { get; private set; }
 
+    /// <summary>
+    /// Loads the post and its surrounding page data in parallel.
+    /// <para>
+    /// The post itself is essential: <see langword="null"/> still means 404, and a thrown failure
+    /// still fails the request. Everything else — blog metadata (only feeds the optional branding
+    /// flag, which falls back to client options) and the two sidebar widgets — is decorative and
+    /// degrades to empty rather than 500-ing a page whose actual content loaded fine.
+    /// </para>
+    /// </summary>
     private async Task<IActionResult> LoadPostAsync(CancellationToken cancellationToken)
     {
         var blogService = ResolveBlogService();
 
+        // Essential — no post, no page.
         var postTask = blogService.GetPostAsync(PostSlug, language: Lang, cancellationToken: cancellationToken);
-        var blogInfoTask = blogService.GetBlogAsync(cancellationToken);
-        var topCommentedTask = blogService.GetTopCommentedPostsAsync(cancellationToken: cancellationToken);
-        var mostReadTask = blogService.GetMostReadPostsAsync(cancellationToken: cancellationToken);
+
+        // Decorative — started in parallel, each degrading independently.
+        var blogInfoTask = Optional<PostnomicBlogInfo?>(
+            () => blogService.GetBlogAsync(cancellationToken), null, "blog-info", cancellationToken);
+        var topCommentedTask = Optional(
+            () => blogService.GetTopCommentedPostsAsync(cancellationToken: cancellationToken), new List<PostnomicPopularPost>(), "top-commented", cancellationToken);
+        var mostReadTask = Optional(
+            () => blogService.GetMostReadPostsAsync(cancellationToken: cancellationToken), new List<PostnomicPopularPost>(), "most-read", cancellationToken);
 
         await Task.WhenAll(postTask, blogInfoTask, topCommentedTask, mostReadTask);
 
@@ -271,10 +289,14 @@ public class PostModel(
         TopCommented = await topCommentedTask;
         MostRead = await mostReadTask;
         EstimatedReadMinutes = CalculateReadTime(post.Content);
-        AlternateUrls = await ResolveAlternateUrlsAsync(post, cancellationToken);
+        AlternateUrls = await Optional<IReadOnlyList<(string Language, string Url)>?>(
+            () => ResolveAlternateUrlsAsync(post, cancellationToken), null, "alternate-urls", cancellationToken);
 
         return Page();
     }
+
+    private Task<T> Optional<T>(Func<Task<T>> load, T fallback, string widget, CancellationToken cancellationToken)
+        => PostnomicOptionalPageData.LoadAsync(load, fallback, widget, logger, cancellationToken);
 
     /// <summary>
     /// Resolves this post's hreflang alternates for the blog this request belongs to, using the
