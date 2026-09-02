@@ -143,7 +143,7 @@ public class AlternateUrlProviderTests
         Assert.NotNull(options);
 
         var alternates = await PostnomicAlternateUrls.ResolveAsync(
-            scope.ServiceProvider, options, blogName: null, Post);
+            scope.ServiceProvider, options, blogName: null, Post, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(alternates);
         Assert.Equal(
@@ -184,7 +184,7 @@ public class AlternateUrlProviderTests
 #pragma warning restore CS0618
 
         var alternates = await PostnomicAlternateUrls.ResolveAsync(
-            scope.ServiceProvider, options, blogName: null, Post);
+            scope.ServiceProvider, options, blogName: null, Post, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal([("de", "/legacy/kurze-hoerbuecher")], alternates);
     }
@@ -205,7 +205,7 @@ public class AlternateUrlProviderTests
 #pragma warning restore CS0618
 
         var alternates = await PostnomicAlternateUrls.ResolveAsync(
-            scope.ServiceProvider, options, blogName: null, Post);
+            scope.ServiceProvider, options, blogName: null, Post, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(alternates);
         Assert.Equal("/blog/post/kurze-hoerbuecher", alternates[0].Url);
@@ -230,7 +230,7 @@ public class AlternateUrlProviderTests
 #pragma warning restore CS0618
 
         var alternates = await PostnomicAlternateUrls.ResolveAsync(
-            scope.ServiceProvider, options, blogName: null, Post);
+            scope.ServiceProvider, options, blogName: null, Post, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Null(alternates);
     }
@@ -244,7 +244,7 @@ public class AlternateUrlProviderTests
         using var scope = root.CreateScope();
 
         var alternates = await PostnomicAlternateUrls.ResolveAsync(
-            scope.ServiceProvider, OptionsOf(scope.ServiceProvider), blogName: null, Post);
+            scope.ServiceProvider, OptionsOf(scope.ServiceProvider), blogName: null, Post, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Null(alternates);
     }
@@ -263,7 +263,7 @@ public class AlternateUrlProviderTests
         using var scope = root.CreateScope();
 
         var alternates = await PostnomicAlternateUrls.ResolveAsync(
-            scope.ServiceProvider, OptionsOf(scope.ServiceProvider), "second-blog", Post);
+            scope.ServiceProvider, OptionsOf(scope.ServiceProvider), "second-blog", Post, TestContext.Current.CancellationToken);
 
         Assert.Equal([("de", "/keyed")], alternates);
     }
@@ -279,7 +279,7 @@ public class AlternateUrlProviderTests
         using var scope = root.CreateScope();
 
         var alternates = await PostnomicAlternateUrls.ResolveAsync(
-            scope.ServiceProvider, OptionsOf(scope.ServiceProvider), "blog-with-no-provider", Post);
+            scope.ServiceProvider, OptionsOf(scope.ServiceProvider), "blog-with-no-provider", Post, TestContext.Current.CancellationToken);
 
         Assert.NotNull(alternates);
         Assert.Equal("/blog/post/kurze-hoerbuecher", alternates[0].Url);

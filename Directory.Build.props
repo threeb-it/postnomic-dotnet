@@ -20,6 +20,15 @@
 		<MinVerTagPrefix>v</MinVerTagPrefix>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<!-- xUnit.net v3 test projects are executables; keep them on VSTest (see Directory.Packages.props). -->
+		<IsTestingPlatformApplication>false</IsTestingPlatformApplication>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="/"/>
 		<None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="/"/>

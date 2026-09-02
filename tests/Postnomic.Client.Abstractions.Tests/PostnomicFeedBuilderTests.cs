@@ -11,7 +11,7 @@ public class PostnomicFeedBuilderTests
     private static Mock<IPostnomicBlogService> Svc()
     {
         var m = new Mock<IPostnomicBlogService>();
-        m.Setup(s => s.GetPostsAsync(It.IsAny<int>(), It.IsAny<int>(), null, null, null, null, null, default))
+        m.Setup(s => s.GetPostsAsync(It.IsAny<int>(), It.IsAny<int>(), null, null, null, null, null, It.IsAny<CancellationToken>()))
          .ReturnsAsync(new PostnomicPagedResult<PostnomicPostSummary>
          {
              Items = [ new PostnomicPostSummary { Slug="hello", Title="Hello", Language="en",
@@ -26,7 +26,8 @@ public class PostnomicFeedBuilderTests
     public async Task Sitemap_uses_absolute_base_url()
     {
         var xml = await PostnomicFeedBuilder.BuildSitemapAsync(
-            Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None);
+            Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None,
+            TestContext.Current.CancellationToken);
         Assert.Contains("https://www.outastory.com/blog/post/hello", xml);
         Assert.DoesNotContain("file:", xml);
     }
@@ -36,7 +37,7 @@ public class PostnomicFeedBuilderTests
     {
         var xml = await PostnomicFeedBuilder.BuildRssAsync(
             Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None,
-            "OutaStory | Blog", "desc");
+            "OutaStory | Blog", "desc", TestContext.Current.CancellationToken);
         Assert.Contains("<title>OutaStory | Blog</title>", xml);
         Assert.Contains("https://www.outastory.com/blog/post/hello", xml);
     }
@@ -49,7 +50,7 @@ public class PostnomicFeedBuilderTests
     {
         var xml = await PostnomicFeedBuilder.BuildRssAsync(
             Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None,
-            "OutaStory | Blog", "desc");
+            "OutaStory | Blog", "desc", TestContext.Current.CancellationToken);
 
         Assert.StartsWith("<?xml version=\"1.0\" encoding=\"utf-8\"?>", xml);
         Assert.DoesNotContain("encoding=\"utf-16\"", xml.ToLowerInvariant());
@@ -59,7 +60,8 @@ public class PostnomicFeedBuilderTests
     public async Task Sitemap_declares_utf8_encoding_in_xml_prolog()
     {
         var xml = await PostnomicFeedBuilder.BuildSitemapAsync(
-            Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None);
+            Svc().Object, "https://www.outastory.com", "/blog", PostnomicLanguageRouteStyle.None,
+            TestContext.Current.CancellationToken);
 
         Assert.StartsWith("<?xml version=\"1.0\" encoding=\"utf-8\"?>", xml);
         Assert.DoesNotContain("encoding=\"utf-16\"", xml.ToLowerInvariant());

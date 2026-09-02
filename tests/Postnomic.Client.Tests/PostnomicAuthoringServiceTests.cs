@@ -56,7 +56,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.Created, JsonContent.Create(created));
 
         // Act
-        var result = await _sut.CreatePostAsync(request);
+        var result = await _sut.CreatePostAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(created.PublicId, result.PublicId);
@@ -80,7 +80,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(published));
 
         // Act
-        var result = await _sut.CreatePostAsync(request);
+        var result = await _sut.CreatePostAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(PostnomicPostStatus.Published, result.Status);
@@ -99,7 +99,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.Created, JsonContent.Create(draft));
 
         // Act
-        var result = await _sut.CreatePostAsync(request);
+        var result = await _sut.CreatePostAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — no expectation set on /publish, so any call there would 404 from MockHttp
         // and surface as a thrown exception; reaching this line proves it wasn't called.
@@ -118,7 +118,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
                 "A post with this slug already exists on this blog.", Encoding.UTF8, "text/plain"));
 
         // Act
-        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.CreatePostAsync(request));
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.CreatePostAsync(request, TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.Conflict, ex.StatusCode);
@@ -136,7 +136,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.Created, JsonContent.Create(CreatePost()));
 
         // Act
-        await _sut.CreatePostAsync(request);
+        await _sut.CreatePostAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -157,7 +157,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(updated));
 
         // Act
-        var result = await _sut.UpdatePostAsync(postId, request);
+        var result = await _sut.UpdatePostAsync(postId, request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Updated", result.Title);
@@ -176,7 +176,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.NotFound, new StringContent("Post not found.", Encoding.UTF8, "text/plain"));
 
         // Act
-        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.UpdatePostAsync(postId, request));
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.UpdatePostAsync(postId, request, TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
@@ -197,7 +197,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(post));
 
         // Act
-        var result = await _sut.GetPostAsync(postId);
+        var result = await _sut.GetPostAsync(postId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -215,7 +215,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.NotFound);
 
         // Act
-        var result = await _sut.GetPostAsync(postId);
+        var result = await _sut.GetPostAsync(postId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -232,7 +232,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.Forbidden);
 
         // Act
-        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.GetPostAsync(postId));
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.GetPostAsync(postId, TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.Forbidden, ex.StatusCode);
@@ -252,7 +252,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(published));
 
         // Act
-        var result = await _sut.PublishPostAsync(postId);
+        var result = await _sut.PublishPostAsync(postId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(PostnomicPostStatus.Published, result.Status);
@@ -272,7 +272,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
                 Encoding.UTF8, "text/plain"));
 
         // Act
-        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.PublishPostAsync(postId));
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.PublishPostAsync(postId, TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.Conflict, ex.StatusCode);
@@ -291,7 +291,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(unpublished));
 
         // Act
-        var result = await _sut.UnpublishPostAsync(postId);
+        var result = await _sut.UnpublishPostAsync(postId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(PostnomicPostStatus.Unpublished, result.Status);
@@ -310,7 +310,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(archived));
 
         // Act
-        var result = await _sut.ArchivePostAsync(postId);
+        var result = await _sut.ArchivePostAsync(postId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(PostnomicPostStatus.Archived, result.Status);
@@ -342,7 +342,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
         using var content = new MemoryStream([1, 2, 3, 4]);
 
         // Act
-        var result = await _sut.UploadImageAsync(content, "cover.jpg", "image/jpeg");
+        var result = await _sut.UploadImageAsync(content, "cover.jpg", "image/jpeg", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("cover.jpg", result.Name);
@@ -363,7 +363,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
         using var content = new MemoryStream([1, 2, 3]);
 
         // Act
-        await _sut.UploadImageAsync(content, "a.jpg", "image/jpeg", path: "posts/2026-08");
+        await _sut.UploadImageAsync(content, "a.jpg", "image/jpeg", path: "posts/2026-08", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -382,7 +382,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
 
         // Act
         var ex = await Assert.ThrowsAsync<PostnomicApiException>(
-            () => _sut.UploadImageAsync(content, "malware.exe", "application/octet-stream"));
+            () => _sut.UploadImageAsync(content, "malware.exe", "application/octet-stream", cancellationToken: TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, ex.StatusCode);
@@ -401,7 +401,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
 
         // Act
         var ex = await Assert.ThrowsAsync<PostnomicApiException>(
-            () => _sut.UploadImageAsync(content, "a.jpg", "image/jpeg"));
+            () => _sut.UploadImageAsync(content, "a.jpg", "image/jpeg", cancellationToken: TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, ex.StatusCode);
@@ -425,7 +425,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(translations));
 
         // Act
-        var result = await _sut.GetPostTranslationsAsync(postId);
+        var result = await _sut.GetPostTranslationsAsync(postId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -444,7 +444,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(new List<PostnomicPostTranslation>()));
 
         // Act
-        await _sut.GetPostTranslationsAsync(postId);
+        await _sut.GetPostTranslationsAsync(postId, TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -461,7 +461,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(new List<PostnomicPostTranslation>()));
 
         // Act
-        var result = await _sut.GetPostTranslationsAsync(postId);
+        var result = await _sut.GetPostTranslationsAsync(postId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -480,7 +480,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.NotFound, new StringContent("Post not found.", Encoding.UTF8, "text/plain"));
 
         // Act
-        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.GetPostTranslationsAsync(postId));
+        var ex = await Assert.ThrowsAsync<PostnomicApiException>(() => _sut.GetPostTranslationsAsync(postId, TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
@@ -513,7 +513,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(translation));
 
         // Act
-        var result = await _sut.SetPostTranslationAsync(postId, language, request);
+        var result = await _sut.SetPostTranslationAsync(postId, language, request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(language, result.Language);
@@ -537,7 +537,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(translation));
 
         // Act
-        await _sut.SetPostTranslationAsync(postId, language, request);
+        await _sut.SetPostTranslationAsync(postId, language, request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -559,7 +559,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
 
         // Act
         var ex = await Assert.ThrowsAsync<PostnomicApiException>(
-            () => _sut.SetPostTranslationAsync(postId, language, request));
+            () => _sut.SetPostTranslationAsync(postId, language, request, TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, ex.StatusCode);
@@ -581,7 +581,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
 
         // Act
         var ex = await Assert.ThrowsAsync<PostnomicApiException>(
-            () => _sut.SetPostTranslationAsync(postId, language, request));
+            () => _sut.SetPostTranslationAsync(postId, language, request, TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.Conflict, ex.StatusCode);
@@ -602,7 +602,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.NoContent);
 
         // Act
-        await _sut.DeletePostTranslationAsync(postId, language);
+        await _sut.DeletePostTranslationAsync(postId, language, TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -620,7 +620,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
             .Respond(HttpStatusCode.NoContent);
 
         // Act
-        await _sut.DeletePostTranslationAsync(postId, language);
+        await _sut.DeletePostTranslationAsync(postId, language, TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -639,7 +639,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
 
         // Act
         var ex = await Assert.ThrowsAsync<PostnomicApiException>(
-            () => _sut.DeletePostTranslationAsync(postId, language));
+            () => _sut.DeletePostTranslationAsync(postId, language, TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
@@ -660,7 +660,7 @@ public class PostnomicAuthoringServiceTests : IDisposable
 
         // Act
         var ex = await Assert.ThrowsAsync<PostnomicApiException>(
-            () => _sut.DeletePostTranslationAsync(postId, language));
+            () => _sut.DeletePostTranslationAsync(postId, language, TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, ex.StatusCode);

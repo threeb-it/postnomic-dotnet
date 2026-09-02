@@ -118,7 +118,7 @@ public class MultiLanguageRoutingTests
         sut.PostSlug = "slug";
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.EndsWith("/post/slug", sut.CanonicalUrl);
@@ -181,7 +181,7 @@ public class MultiLanguageRoutingTests
         var sut = CreateSut(mock, options);
         sut.PostSlug = "kurze-hoerbucher";
 
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(sut.AlternateUrls);
         Assert.Equal(

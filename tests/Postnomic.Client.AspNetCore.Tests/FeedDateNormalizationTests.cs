@@ -33,7 +33,7 @@ public class FeedDateNormalizationTests : IAsyncLifetime
     private IHost _host = null!;
     private HttpClient _client = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var blogServiceMock = new Mock<IPostnomicBlogService>();
 
@@ -115,7 +115,7 @@ public class FeedDateNormalizationTests : IAsyncLifetime
         _client = _host.GetTestClient();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _host.StopAsync();
@@ -125,8 +125,8 @@ public class FeedDateNormalizationTests : IAsyncLifetime
     [Fact]
     public async Task GetRss_UnspecifiedPublishedAt_IsRenderedAsUtc_RegardlessOfHostTimezone()
     {
-        var response = await _client.GetAsync("/blog/rss.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/rss.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         // RFC-822 rendering of 2026-07-02T00:00:00 interpreted as UTC. If Unspecified were
         // wrongly treated as local time, this would shift by the host's UTC offset instead.
@@ -136,8 +136,8 @@ public class FeedDateNormalizationTests : IAsyncLifetime
     [Fact]
     public async Task GetSitemap_UnspecifiedPublishedAt_IsRenderedAsUtc_RegardlessOfHostTimezone()
     {
-        var response = await _client.GetAsync("/blog/sitemap.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/sitemap.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("<lastmod>2026-07-02</lastmod>", xml);
     }

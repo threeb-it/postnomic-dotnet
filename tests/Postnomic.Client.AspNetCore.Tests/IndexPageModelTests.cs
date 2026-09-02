@@ -113,7 +113,7 @@ public class IndexPageModelTests
     public async Task OnGetAsync_ReturnsPageResult()
     {
         // Act
-        var result = await _sut.OnGetAsync();
+        var result = await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.IsType<PageResult>(result);
@@ -125,7 +125,7 @@ public class IndexPageModelTests
     public async Task OnGetAsync_PopulatesBlogInfo()
     {
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(_sut.BlogInfo);
@@ -162,7 +162,7 @@ public class IndexPageModelTests
             });
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(_sut.Posts.Items);
@@ -181,7 +181,7 @@ public class IndexPageModelTests
             });
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(_sut.Tags);
@@ -200,7 +200,7 @@ public class IndexPageModelTests
             });
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(_sut.Categories);
@@ -219,7 +219,7 @@ public class IndexPageModelTests
             });
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(_sut.Authors);
@@ -238,7 +238,7 @@ public class IndexPageModelTests
             });
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(_sut.TopCommented);
@@ -257,7 +257,7 @@ public class IndexPageModelTests
             });
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(_sut.MostRead);
@@ -273,7 +273,7 @@ public class IndexPageModelTests
         _sut.Tag = "csharp";
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _blogServiceMock.Verify(s => s.GetPostsAsync(
@@ -294,7 +294,7 @@ public class IndexPageModelTests
         _sut.Category = "tutorials";
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _blogServiceMock.Verify(s => s.GetPostsAsync(
@@ -315,7 +315,7 @@ public class IndexPageModelTests
         _sut.Author = "Jane Doe";
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _blogServiceMock.Verify(s => s.GetPostsAsync(
@@ -336,7 +336,7 @@ public class IndexPageModelTests
         _sut.Search = "blazor";
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _blogServiceMock.Verify(s => s.GetPostsAsync(
@@ -357,7 +357,7 @@ public class IndexPageModelTests
         _sut.PageNumber = 3;
 
         // Act
-        await _sut.OnGetAsync();
+        await _sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _blogServiceMock.Verify(s => s.GetPostsAsync(
@@ -483,7 +483,7 @@ public class IndexPageModelTests
         var sut = CreateSut(mock);
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(sut.ShowBranding,
@@ -523,7 +523,7 @@ public class IndexPageModelTests
         var sut = CreateSut(mock, options);
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(sut.ShowBranding,

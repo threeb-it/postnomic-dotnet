@@ -29,7 +29,7 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     private HttpClient _bootstrapClient = null!;
     private HttpClient _semanticClient = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _bootstrapHost = await BuildHostAsync(PostnomicMarkupStyle.Bootstrap);
         _semanticHost = await BuildHostAsync(PostnomicMarkupStyle.Semantic);
@@ -37,7 +37,7 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
         _semanticClient = _semanticHost.GetTestClient();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _bootstrapClient.Dispose();
         _semanticClient.Dispose();
@@ -181,7 +181,7 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     [Fact]
     public async Task Default_mode_emits_bootstrap_classes()
     {
-        var html = await _bootstrapClient.GetStringAsync("/blog");
+        var html = await _bootstrapClient.GetStringAsync("/blog", TestContext.Current.CancellationToken);
         Assert.Contains("card", html);
         Assert.Contains("col-lg-8", html);
         Assert.DoesNotContain("pn-card", html);
@@ -190,7 +190,7 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     [Fact]
     public async Task Semantic_mode_emits_pn_classes()
     {
-        var html = await _semanticClient.GetStringAsync("/blog");
+        var html = await _semanticClient.GetStringAsync("/blog", TestContext.Current.CancellationToken);
         Assert.Contains("pn-card", html);
         Assert.DoesNotContain("col-lg-8", html);
     }
@@ -198,7 +198,7 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     [Fact]
     public async Task Semantic_mode_blog_index_has_no_bootstrap_vestiges()
     {
-        var html = await _semanticClient.GetStringAsync("/blog");
+        var html = await _semanticClient.GetStringAsync("/blog", TestContext.Current.CancellationToken);
         foreach (var bs in new[] { "col-lg-", "card mb-4", "badge", "btn btn-", "bi bi-" })
             Assert.DoesNotContain(bs, html);
     }
@@ -206,7 +206,7 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     [Fact]
     public async Task Default_mode_post_page_emits_bootstrap_classes()
     {
-        var html = await _bootstrapClient.GetStringAsync($"/blog/post/{Slug}");
+        var html = await _bootstrapClient.GetStringAsync($"/blog/post/{Slug}", TestContext.Current.CancellationToken);
         Assert.Contains("col-lg-8", html);
         Assert.Contains("card mb-4 shadow-sm", html);
         Assert.DoesNotContain("pn-card", html);
@@ -215,7 +215,7 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     [Fact]
     public async Task Semantic_mode_post_page_has_no_bootstrap_vestiges()
     {
-        var html = await _semanticClient.GetStringAsync($"/blog/post/{Slug}");
+        var html = await _semanticClient.GetStringAsync($"/blog/post/{Slug}", TestContext.Current.CancellationToken);
         Assert.Contains("pn-post-content", html);
         Assert.Contains("pn-card", html);
         foreach (var bs in new[] { "col-lg-", "card mb-4", "badge", "btn btn-", "bi bi-" })
@@ -225,7 +225,7 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     [Fact]
     public async Task Default_mode_author_page_emits_bootstrap_classes()
     {
-        var html = await _bootstrapClient.GetStringAsync($"/blog/author/{AuthorSlug}");
+        var html = await _bootstrapClient.GetStringAsync($"/blog/author/{AuthorSlug}", TestContext.Current.CancellationToken);
         Assert.Contains("col-lg-8", html);
         Assert.Contains("card shadow-sm", html);
         Assert.DoesNotContain("pn-card", html);
@@ -234,7 +234,7 @@ public class MarkupStyleRenderingTests : IAsyncLifetime
     [Fact]
     public async Task Semantic_mode_author_page_has_no_bootstrap_vestiges()
     {
-        var html = await _semanticClient.GetStringAsync($"/blog/author/{AuthorSlug}");
+        var html = await _semanticClient.GetStringAsync($"/blog/author/{AuthorSlug}", TestContext.Current.CancellationToken);
         Assert.Contains("pn-main", html);
         Assert.Contains("pn-card", html);
         foreach (var bs in new[] { "col-lg-", "card mb-4", "badge", "btn btn-", "bi bi-" })

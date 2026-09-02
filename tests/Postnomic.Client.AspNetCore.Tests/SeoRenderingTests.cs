@@ -31,7 +31,7 @@ public class SeoRenderingTests : IAsyncLifetime
     private IHost _host = null!;
     private HttpClient _client = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var blogServiceMock = new Mock<IPostnomicBlogService>();
 
@@ -112,7 +112,7 @@ public class SeoRenderingTests : IAsyncLifetime
         _client = _host.GetTestClient();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _host.StopAsync();
@@ -123,8 +123,8 @@ public class SeoRenderingTests : IAsyncLifetime
     public async Task GetPostPage_WithPrefixLanguageRoute_ReturnsOkWithLangBoundAndBlogLinks()
     {
         // Act
-        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         // Assert — Prefix routing resolved, page-model bound Lang="de", and link generation
         // (PostnomicRouteBuilder) produced /de/blog/... links back into the page.
@@ -135,8 +135,8 @@ public class SeoRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetPostPage_RendersCanonicalLinkAsAbsoluteUrl()
     {
-        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("rel=\"canonical\"", html);
         Assert.Matches("<link rel=\"canonical\" href=\"https?://[^\"]+/blog/post/" + Slug + "\"", html);
@@ -147,8 +147,8 @@ public class SeoRenderingTests : IAsyncLifetime
     {
         // The canonical for a language variant must point to that variant's own URL, not to the
         // default/English URL — otherwise search engines treat the de page as a duplicate of en.
-        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Matches("<link rel=\"canonical\" href=\"https?://[^\"]+/de/blog/post/" + Slug + "\"", html);
     }
@@ -157,8 +157,8 @@ public class SeoRenderingTests : IAsyncLifetime
     public async Task GetPostPage_RendersOgLocaleInOpenGraphUnderscoreRegionFormat()
     {
         // og:locale must follow the OpenGraph convention (e.g. "de_DE"), not a bare language code.
-        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("property=\"og:locale\" content=\"de_DE\"", html);
     }
@@ -166,8 +166,8 @@ public class SeoRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetPostPage_RendersOpenGraphTitle()
     {
-        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("property=\"og:title\"", html);
         Assert.Contains("The SEO End-to-End Post", html);
@@ -176,8 +176,8 @@ public class SeoRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetPostPage_RendersTwitterCardMeta()
     {
-        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("name=\"twitter:card\"", html);
         Assert.Contains("summary_large_image", html);
@@ -186,8 +186,8 @@ public class SeoRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetPostPage_RendersJsonLdBlogPostingScript()
     {
-        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("application/ld+json", html);
         Assert.Contains("\"@type\":\"BlogPosting\"", html);
@@ -196,8 +196,8 @@ public class SeoRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetPostPage_RendersHreflangEnglishAlternate()
     {
-        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("hreflang=\"en\"", html);
     }
@@ -210,10 +210,10 @@ public class SeoRenderingTests : IAsyncLifetime
         // — otherwise Google sees a different x-default per page in the cluster. Under Prefix
         // routing there is no bare /blog/... route (only /{lang}/blog/...), so x-default must
         // carry the "en" language segment rather than being bare, or it would 404.
-        var deResponse = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var deHtml = await deResponse.Content.ReadAsStringAsync();
-        var enResponse = await _client.GetAsync($"/en/blog/post/{Slug}");
-        var enHtml = await enResponse.Content.ReadAsStringAsync();
+        var deResponse = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var deHtml = await deResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var enResponse = await _client.GetAsync($"/en/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var enHtml = await enResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         var xDefaultRegex = new Regex("hreflang=\"x-default\" href=\"([^\"]+)\"");
         var deXDefault = xDefaultRegex.Match(deHtml).Groups[1].Value;
@@ -231,8 +231,8 @@ public class SeoRenderingTests : IAsyncLifetime
         // routing, only /{lang}/blog/... routes are registered — a bare /blog/post/{slug} 404s.
         // Every hreflang alternate (including x-default) rendered for either language variant of
         // this post must therefore be language-prefixed.
-        var deResponse = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var deHtml = await deResponse.Content.ReadAsStringAsync();
+        var deResponse = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var deHtml = await deResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         var hrefs = Regex.Matches(deHtml, "hreflang=\"[^\"]+\" href=\"([^\"]+)\"")
             .Select(m => m.Groups[1].Value)
@@ -250,8 +250,8 @@ public class SeoRenderingTests : IAsyncLifetime
         // article:published_time and the JSON-LD datePublished must still carry a UTC "Z"
         // designator instead of a zoneless timestamp, consistent with the sitemap/RSS date
         // normalization covered by FeedDateNormalizationTests.
-        var response = await _client.GetAsync($"/de/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/de/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("property=\"article:published_time\" content=\"2025-06-01T00:00:00.0000000Z\"", html);
         Assert.Contains("\"datePublished\":\"2025-06-01T00:00:00.0000000Z\"", html);
@@ -260,10 +260,10 @@ public class SeoRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetAuthorPage_RendersSingleH1ForAuthorName()
     {
-        var response = await _client.GetAsync($"/de/blog/author/{AuthorSlug}");
+        var response = await _client.GetAsync($"/de/blog/author/{AuthorSlug}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("<h1", html);
         Assert.Contains("Jane Doe", html);
@@ -288,7 +288,7 @@ public class SeoAlternateUrlOverrideRenderingTests : IAsyncLifetime
     private IHost _host = null!;
     private HttpClient _client = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var blogServiceMock = new Mock<IPostnomicBlogService>();
 
@@ -373,7 +373,7 @@ public class SeoAlternateUrlOverrideRenderingTests : IAsyncLifetime
         _client = _host.GetTestClient();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _host.StopAsync();
@@ -383,8 +383,8 @@ public class SeoAlternateUrlOverrideRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetPostPage_SharedUrlAcrossLanguages_RendersOnlyOneHreflangAlternate_NotADuplicate()
     {
-        var response = await _client.GetAsync($"/blog/post/{SharedUrlSlug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/blog/post/{SharedUrlSlug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         var hreflangCount = Regex.Matches(html, "rel=\"alternate\" hreflang=\"[a-z]{2}\"").Count;
 
@@ -395,8 +395,8 @@ public class SeoAlternateUrlOverrideRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetPostPage_WithAlternateUrlResolverConfigured_RendersTheResolvedPerLanguageUrls()
     {
-        var response = await _client.GetAsync($"/blog/post/{OverriddenSlug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/blog/post/{OverriddenSlug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Matches("hreflang=\"de\" href=\"https?://[^\"]+/blog/post/kurze-hoerbucher\"", html);
         Assert.Matches("hreflang=\"en\" href=\"https?://[^\"]+/blog/post/kurze-hoerbucher-en\"", html);
@@ -405,8 +405,8 @@ public class SeoAlternateUrlOverrideRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetPostPage_DescriptionFallback_DoesNotLeakMarkdownIntoTheMetaTag()
     {
-        var response = await _client.GetAsync($"/blog/post/{SharedUrlSlug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/blog/post/{SharedUrlSlug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         var match = Regex.Match(html, "<meta name=\"description\" content=\"([^\"]*)\"");
         Assert.True(match.Success);
@@ -455,7 +455,7 @@ public class SeoAlternateUrlProviderRenderingTests : IAsyncLifetime
         }
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var blogServiceMock = new Mock<IPostnomicBlogService>();
         blogServiceMock
@@ -517,7 +517,7 @@ public class SeoAlternateUrlProviderRenderingTests : IAsyncLifetime
         _client = _host.GetTestClient();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _host.StopAsync();
@@ -527,8 +527,8 @@ public class SeoAlternateUrlProviderRenderingTests : IAsyncLifetime
     [Fact]
     public async Task GetPostPage_WithAlternateUrlProviderRegistered_RendersTheResolvedPerLanguageUrls()
     {
-        var response = await _client.GetAsync($"/blog/post/{Slug}");
-        var html = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync($"/blog/post/{Slug}", TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Matches("hreflang=\"de\" href=\"https?://[^\"]+/blog/post/kurze-hoerbucher\"", html);

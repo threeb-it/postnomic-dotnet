@@ -58,7 +58,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(expected));
 
         // Act
-        var result = await _sut.GetBlogAsync();
+        var result = await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -76,7 +76,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.NotFound);
 
         // Act
-        var result = await _sut.GetBlogAsync();
+        var result = await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -92,7 +92,7 @@ public class PostnomicBlogServiceTests : IDisposable
                 new PostnomicBlogInfo { Name = "Blog", Slug = BlogSlug }));
 
         // Act
-        await _sut.GetBlogAsync();
+        await _sut.GetBlogAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -115,7 +115,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(tags));
 
         // Act
-        var result = await _sut.GetTagsAsync();
+        var result = await _sut.GetTagsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count());
@@ -131,7 +131,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, new StringContent("null", System.Text.Encoding.UTF8, "application/json"));
 
         // Act
-        var result = await _sut.GetTagsAsync();
+        var result = await _sut.GetTagsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -154,7 +154,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(categories));
 
         // Act
-        var result = await _sut.GetCategoriesAsync();
+        var result = await _sut.GetCategoriesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -170,7 +170,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, new StringContent("null", System.Text.Encoding.UTF8, "application/json"));
 
         // Act
-        var result = await _sut.GetCategoriesAsync();
+        var result = await _sut.GetCategoriesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -194,7 +194,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(authors));
 
         // Act
-        var result = await _sut.GetAuthorsAsync();
+        var result = await _sut.GetAuthorsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count());
@@ -210,7 +210,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, new StringContent("null", System.Text.Encoding.UTF8, "application/json"));
 
         // Act
-        var result = await _sut.GetAuthorsAsync();
+        var result = await _sut.GetAuthorsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -232,7 +232,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(pagedResult));
 
         // Act
-        await _sut.GetPostsAsync();
+        await _sut.GetPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -250,7 +250,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(pagedResult));
 
         // Act
-        await _sut.GetPostsAsync(tag: "csharp");
+        await _sut.GetPostsAsync(tag: "csharp", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -268,7 +268,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(pagedResult));
 
         // Act
-        await _sut.GetPostsAsync(category: "tutorials");
+        await _sut.GetPostsAsync(category: "tutorials", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -286,7 +286,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(pagedResult));
 
         // Act
-        await _sut.GetPostsAsync(author: "Jane Doe");
+        await _sut.GetPostsAsync(author: "Jane Doe", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -304,7 +304,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(pagedResult));
 
         // Act
-        await _sut.GetPostsAsync(search: "hello world");
+        await _sut.GetPostsAsync(search: "hello world", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -323,7 +323,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(pagedResult));
 
         // Act
-        await _sut.GetPostsAsync(page: 3, pageSize: 10);
+        await _sut.GetPostsAsync(page: 3, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -356,7 +356,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(pagedResult));
 
         // Act
-        var result = await _sut.GetPostsAsync();
+        var result = await _sut.GetPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result.Items);
@@ -373,7 +373,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, new StringContent("null", System.Text.Encoding.UTF8, "application/json"));
 
         // Act
-        var result = await _sut.GetPostsAsync(page: 2, pageSize: 10);
+        var result = await _sut.GetPostsAsync(page: 2, pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -403,7 +403,7 @@ public class PostnomicBlogServiceTests : IDisposable
             });
 
         // Act
-        await _sut.GetPostsAsync(tag: null, category: null, author: null, search: null);
+        await _sut.GetPostsAsync(tag: null, category: null, author: null, search: null, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.DoesNotContain("tag=", capturedUrl);
@@ -424,7 +424,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(pagedResult));
 
         // Act
-        await _sut.GetPostsAsync(language: "de");
+        await _sut.GetPostsAsync(language: "de", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -450,7 +450,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(detail));
 
         // Act
-        var result = await _sut.GetPostAsync(postSlug);
+        var result = await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -468,7 +468,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.NotFound);
 
         // Act
-        var result = await _sut.GetPostAsync("missing-post");
+        var result = await _sut.GetPostAsync("missing-post", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -486,7 +486,7 @@ public class PostnomicBlogServiceTests : IDisposable
                 new PostnomicPostDetail { Slug = postSlug, Title = "T", AuthorName = "A" }));
 
         // Act
-        await _sut.GetPostAsync(postSlug);
+        await _sut.GetPostAsync(postSlug, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -505,7 +505,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(detail));
 
         // Act
-        await _sut.GetPostAsync(postSlug, "de");
+        await _sut.GetPostAsync(postSlug, "de", TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -531,7 +531,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.Created, JsonContent.Create(created));
 
         // Act
-        var result = await _sut.CreateCommentAsync(postSlug, request);
+        var result = await _sut.CreateCommentAsync(postSlug, request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -551,7 +551,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.BadRequest);
 
         // Act
-        var result = await _sut.CreateCommentAsync(postSlug, request);
+        var result = await _sut.CreateCommentAsync(postSlug, request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -569,7 +569,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.NotFound);
 
         // Act
-        var result = await _sut.CreateCommentAsync(postSlug, request);
+        var result = await _sut.CreateCommentAsync(postSlug, request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -587,7 +587,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(new List<PostnomicPopularPost>()));
 
         // Act
-        await _sut.GetTopCommentedPostsAsync();
+        await _sut.GetTopCommentedPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -603,7 +603,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(new List<PostnomicPopularPost>()));
 
         // Act
-        await _sut.GetTopCommentedPostsAsync(count: 5);
+        await _sut.GetTopCommentedPostsAsync(count: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -623,7 +623,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(posts));
 
         // Act
-        var result = await _sut.GetTopCommentedPostsAsync();
+        var result = await _sut.GetTopCommentedPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -640,7 +640,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, new StringContent("null", System.Text.Encoding.UTF8, "application/json"));
 
         // Act
-        var result = await _sut.GetTopCommentedPostsAsync();
+        var result = await _sut.GetTopCommentedPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -659,7 +659,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(new List<PostnomicPopularPost>()));
 
         // Act
-        await _sut.GetMostReadPostsAsync();
+        await _sut.GetMostReadPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -679,7 +679,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(posts));
 
         // Act
-        var result = await _sut.GetMostReadPostsAsync();
+        var result = await _sut.GetMostReadPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -695,7 +695,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, new StringContent("null", System.Text.Encoding.UTF8, "application/json"));
 
         // Act
-        var result = await _sut.GetMostReadPostsAsync();
+        var result = await _sut.GetMostReadPostsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -713,7 +713,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK);
 
         // Act
-        await _sut.RecordPageViewAsync("session-abc", "my-post", "https://referrer.com");
+        await _sut.RecordPageViewAsync("session-abc", "my-post", "https://referrer.com", TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -758,7 +758,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK);
 
         // Act
-        await _sut.UpdateReadDurationAsync("session-abc", 120);
+        await _sut.UpdateReadDurationAsync("session-abc", 120, TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -801,7 +801,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(profile));
 
         // Act
-        var result = await _sut.GetAuthorProfileAsync(authorSlug);
+        var result = await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -824,7 +824,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.NotFound);
 
         // Act
-        var result = await _sut.GetAuthorProfileAsync(authorSlug);
+        var result = await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -846,7 +846,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(profile));
 
         // Act
-        var result = await _sut.GetAuthorProfileAsync(authorSlug);
+        var result = await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -869,7 +869,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(profile));
 
         // Act
-        var result = await _sut.GetAuthorProfileAsync(authorSlug);
+        var result = await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -910,7 +910,7 @@ public class PostnomicBlogServiceTests : IDisposable
             .Respond(HttpStatusCode.OK, JsonContent.Create(profile));
 
         // Act
-        var result = await _sut.GetAuthorProfileAsync(authorSlug);
+        var result = await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -936,7 +936,7 @@ public class PostnomicBlogServiceTests : IDisposable
                 new PostnomicAuthorProfile { Name = "Jane Doe" }));
 
         // Act
-        await _sut.GetAuthorProfileAsync(authorSlug);
+        await _sut.GetAuthorProfileAsync(authorSlug, TestContext.Current.CancellationToken);
 
         // Assert
         _mockHttp.VerifyNoOutstandingExpectation();

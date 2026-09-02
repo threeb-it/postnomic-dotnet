@@ -208,7 +208,7 @@ public class PostPageGracefulDegradationTests : BunitContext
 
         // Act & Assert — disposing and then failing the in-flight call must not throw.
         cut.Instance.Dispose();
-        gate.SetCanceled();
+        gate.SetCanceled(Xunit.TestContext.Current.CancellationToken);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

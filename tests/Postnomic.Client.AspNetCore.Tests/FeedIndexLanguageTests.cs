@@ -113,8 +113,8 @@ public class FeedIndexLanguageTests
         var (host, client) = await StartHostAsync(PostnomicLanguageRouteStyle.Prefix, postLanguage: "de");
         using var _ = host;
 
-        var response = await client.GetAsync("/blog/sitemap.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync("/blog/sitemap.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         // The index <loc> (as opposed to the post's own <loc>, which carries a /post/{slug} tail)
@@ -128,8 +128,8 @@ public class FeedIndexLanguageTests
         var (host, client) = await StartHostAsync(PostnomicLanguageRouteStyle.Prefix, postLanguage: "de");
         using var _ = host;
 
-        var response = await client.GetAsync("/blog/rss.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync("/blog/rss.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Matches("<link>https?://[^<]+/de/blog</link>", xml);
@@ -143,8 +143,8 @@ public class FeedIndexLanguageTests
         var (host, client) = await StartHostAsync(PostnomicLanguageRouteStyle.Suffix, postLanguage: "en");
         using var _ = host;
 
-        var response = await client.GetAsync("/blog/sitemap.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync("/blog/sitemap.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Matches("<loc>https?://[^<]+/blog</loc>", xml);
     }
@@ -155,8 +155,8 @@ public class FeedIndexLanguageTests
         var (host, client) = await StartHostAsync(PostnomicLanguageRouteStyle.Suffix, postLanguage: "en");
         using var _ = host;
 
-        var response = await client.GetAsync("/blog/rss.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync("/blog/rss.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Matches("<link>https?://[^<]+/blog</link>", xml);
     }

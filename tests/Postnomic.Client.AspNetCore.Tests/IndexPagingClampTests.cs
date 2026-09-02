@@ -35,7 +35,7 @@ public class IndexPagingClampTests
         sut.PageNumber = requestedPage;
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert — neither the API nor the view sees the out-of-range value.
         Assert.Equal(1, sut.PageNumber);
@@ -51,7 +51,7 @@ public class IndexPagingClampTests
         sut.PageNumber = 3;
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, sut.PageNumber);
@@ -75,7 +75,7 @@ public class IndexPagingClampTests
         sut.PageSize = requested;
 
         // Act
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(expected, sut.PageSize);
@@ -93,7 +93,7 @@ public class IndexPagingClampTests
         // Arrange — the view renders the "previous" arrow as PageUrl(PageNumber - 1) whatever
         // the current page is, so page 1 asks for page 0.
         var sut = CreateSut(CreateService(totalPages: 3));
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Act & Assert
         Assert.Contains("p=1", sut.PageUrl(0));
@@ -106,7 +106,7 @@ public class IndexPagingClampTests
     {
         // Arrange
         var sut = CreateSut(CreateService(totalPages: 3));
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Act & Assert
         Assert.Contains("p=3", sut.PageUrl(4));
@@ -119,7 +119,7 @@ public class IndexPagingClampTests
     {
         // Arrange
         var sut = CreateSut(CreateService(totalPages: 3));
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Act & Assert
         Assert.Equal("1", sut.PageRouteValues(0)["p"]);
@@ -134,7 +134,7 @@ public class IndexPagingClampTests
         var mock = CreateService(totalPages: 2);
         var sut = CreateSut(mock);
         sut.PageSize = 100_000;
-        await sut.OnGetAsync();
+        await sut.OnGetAsync(TestContext.Current.CancellationToken);
 
         // Act & Assert
         Assert.Contains("PageSize=100", sut.PageUrl(2));

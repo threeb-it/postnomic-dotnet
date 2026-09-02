@@ -24,7 +24,7 @@ public class FeedEndpointTests : IAsyncLifetime
     private IHost _host = null!;
     private HttpClient _client = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var blogServiceMock = new Mock<IPostnomicBlogService>();
 
@@ -107,7 +107,7 @@ public class FeedEndpointTests : IAsyncLifetime
         _client = _host.GetTestClient();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _host.StopAsync();
@@ -119,7 +119,7 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetSitemap_ReturnsOkWithXmlContentType()
     {
-        var response = await _client.GetAsync("/blog/sitemap.xml");
+        var response = await _client.GetAsync("/blog/sitemap.xml", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("application/xml", response.Content.Headers.ContentType!.MediaType);
@@ -128,8 +128,8 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetSitemap_ContainsUrlsetElement()
     {
-        var response = await _client.GetAsync("/blog/sitemap.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/sitemap.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("<urlset", xml);
     }
@@ -139,8 +139,8 @@ public class FeedEndpointTests : IAsyncLifetime
     {
         // The blog is registered with LanguageRouteStyle.Prefix and the mocked post has
         // Language = "de", so its canonical loc must be the /de/blog/post/{slug} URL.
-        var response = await _client.GetAsync("/blog/sitemap.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/sitemap.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Matches($"<loc>https?://[^<]+/de/blog/post/{Slug}</loc>", xml);
     }
@@ -148,8 +148,8 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetSitemap_ContainsHreflangAlternateLink_ForEnglish()
     {
-        var response = await _client.GetAsync("/blog/sitemap.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/sitemap.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("hreflang=\"en\"", xml);
         Assert.Matches($"href=\"https?://[^\"]+/en/blog/post/{Slug}\"", xml);
@@ -158,8 +158,8 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetSitemap_ContainsHreflangAlternateLink_ForGerman()
     {
-        var response = await _client.GetAsync("/blog/sitemap.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/sitemap.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("hreflang=\"de\"", xml);
     }
@@ -169,7 +169,7 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetRss_ReturnsOkWithRssContentType()
     {
-        var response = await _client.GetAsync("/blog/rss.xml");
+        var response = await _client.GetAsync("/blog/rss.xml", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("application/rss+xml", response.Content.Headers.ContentType!.MediaType);
@@ -178,8 +178,8 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetRss_ContainsRssElement()
     {
-        var response = await _client.GetAsync("/blog/rss.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/rss.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("<rss", xml);
     }
@@ -187,8 +187,8 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetRss_ContainsItemWithAbsoluteLink()
     {
-        var response = await _client.GetAsync("/blog/rss.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/rss.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("<item>", xml);
         Assert.Matches($"<link>https?://[^<]+/de/blog/post/{Slug}</link>", xml);
@@ -197,8 +197,8 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetRss_ItemContainsTitleAndPubDate()
     {
-        var response = await _client.GetAsync("/blog/rss.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/rss.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("The Feed End-to-End Post", xml);
         Assert.Contains("<pubDate>", xml);
@@ -207,8 +207,8 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetRss_ChannelUsesBlogNameAsTitle()
     {
-        var response = await _client.GetAsync("/blog/rss.xml");
-        var xml = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/blog/rss.xml", TestContext.Current.CancellationToken);
+        var xml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains("<title>Feed Test Blog</title>", xml);
     }
@@ -218,8 +218,8 @@ public class FeedEndpointTests : IAsyncLifetime
     [Fact]
     public async Task GetRobots_ReferencesRegisteredBlogSitemap()
     {
-        var response = await _client.GetAsync("/robots.txt");
-        var text = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/robots.txt", TestContext.Current.CancellationToken);
+        var text = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Matches("Sitemap: https?://[^\\s]+/blog/sitemap.xml", text);
