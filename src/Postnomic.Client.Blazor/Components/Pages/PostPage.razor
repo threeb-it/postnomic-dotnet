@@ -1,3 +1,5 @@
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Logging
 @using Postnomic.Client.Blazor.Components.Sidebar
 @inject IPostnomicBlogService _injectedBlogService
 @inject NavigationManager Navigation
@@ -236,6 +238,22 @@
     private DateTime pageOpenedAt;
     private System.Threading.Timer? readDurationTimer;
 
+    /// <summary>
+    /// Cancelled when the component is disposed. This is Blazor's analogue of an aborted HTTP
+    /// request — the visitor navigated away — and is what tells the load path to stop quietly
+    /// instead of reporting a torn-down component as a failed widget.
+    /// </summary>
+    private readonly CancellationTokenSource disposalCts = new();
+
+    /// <summary>
+    /// Optional logger, resolved from the already-injected <see cref="IServiceProvider"/> rather
+    /// than with <c>@inject</c>/<c>[Inject]</c>. A Razor component has no primary constructor to
+    /// take a defaulted parameter, and <c>[Inject]</c> resolves with GetRequiredService — it would
+    /// throw for every host (and every existing bUnit test) that has not registered logging.
+    /// <see langword="null"/> there simply means the degradation is not logged; it never fails.
+    /// </summary>
+    private ILogger? Logger => _services.GetService<ILogger<PostPage>>();
+
     [CascadingParameter]
     private PostnomicBlogContext? BlogContext { get; set; }
 
@@ -316,6 +334,9 @@
     {
         readDurationTimer?.Dispose();
         _ = ReportReadDurationAsync();
+
+        disposalCts.Cancel();
+        disposalCts.Dispose();
     }
 
     private async Task TrackPageViewAsync()
@@ -349,30 +370,72 @@
         }
     }
 
+    /// <summary>
+    /// Loads the post and its decorative companions in parallel.
+    /// <para>
+    /// The post is essential; the blog info and the hreflang alternates are not. Classified from
+    /// this component's own markup rather than by analogy with the Razor Pages side: everything
+    /// below the <c>@if (post is null)</c> guard needs <c>post</c>, whereas <c>blogInfo</c> only
+    /// feeds <see cref="ShowBranding"/> (which falls back to the blog context and then to client
+    /// options) and <see cref="Seo"/> (whose builder accepts null), and <c>alternateUrls</c> is
+    /// host-supplied SEO output that is already nullable. Previously one bare
+    /// <c>Task.WhenAll</c> under one blanket <c>catch</c> meant a failing <c>GetBlogAsync</c>
+    /// also nulled <c>post</c> — leaving the visitor on a permanent "Loading…" for a post that
+    /// had loaded perfectly well, with nothing logged anywhere.
+    /// </para>
+    /// <para>
+    /// The post keeps its existing failure behaviour exactly: a null or a thrown post leaves
+    /// <c>post</c> null and renders the empty state. It is deliberately not rethrown — throwing
+    /// out of a Blazor lifecycle method tears down the circuit, which is the one thing worse
+    /// than the 500 this change set exists to remove.
+    /// </para>
+    /// </summary>
     private async Task LoadPostAsync()
     {
+        var cancellationToken = disposalCts.Token;
+
+        // Decorative — started first so it runs in parallel with the post, and degrades on its own.
+        var blogInfoTask = Optional<PostnomicBlogInfo?>(
+            () => BlogService.GetBlogAsync(cancellationToken), null, "blog-info", cancellationToken);
+
         try
         {
-            var postTask = BlogService.GetPostAsync(PostSlug, language: Language);
-            var blogInfoTask = BlogService.GetBlogAsync();
+            var postTask = BlogService.GetPostAsync(
+                PostSlug, language: Language, cancellationToken: cancellationToken);
+
             await Task.WhenAll(postTask, blogInfoTask);
+
             post = await postTask;
-            blogInfo = await blogInfoTask;
-            alternateUrls = post is null
-                ? null
-                : await PostnomicAlternateUrls.ResolveAsync(
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The component was disposed mid-flight. Not a failure: leave the state alone, log
+            // nothing, and do not rethrow into the render loop.
+            return;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(
+                ex, "Postnomic: the post '{PostSlug}' could not be loaded.", PostSlug);
+            post = null;
+        }
+
+        blogInfo = await blogInfoTask;
+
+        alternateUrls = post is null
+            ? null
+            : await Optional<IReadOnlyList<(string Language, string Url)>?>(
+                () => PostnomicAlternateUrls.ResolveAsync(
                     _services,
                     BlogContext?.Options ?? _injectedClientOptions.Value,
                     BlogContext?.BlogName,
-                    post);
-        }
-        catch
-        {
-            post = null;
-            blogInfo = null;
-            alternateUrls = null;
-        }
+                    post,
+                    cancellationToken).AsTask(),
+                null, "alternate-urls", cancellationToken);
     }
+
+    private Task<T> Optional<T>(Func<Task<T>> load, T fallback, string widget, CancellationToken cancellationToken)
+        => PostnomicOptionalPageData.LoadAsync(load, fallback, widget, Logger, cancellationToken);
 
     private async Task SubmitCommentAsync()
     {
