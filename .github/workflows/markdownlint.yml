@@ -13,9 +13,9 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Use Node.js
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       with:
         # 20 LTS, not 16. markdownlint-cli's dependency chain now uses the
         # regexp `v` flag, which Node 16 cannot parse — so the job died with
