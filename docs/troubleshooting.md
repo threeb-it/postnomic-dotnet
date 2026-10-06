@@ -7,6 +7,28 @@ Related: [Per-post hreflang alternates](./hreflang-alternates.md) ·
 
 ---
 
+## `The input does not contain any JSON tokens` / `PostnomicUpstreamException`
+
+```text
+System.Text.Json.JsonException: The input does not contain any JSON tokens.
+   at System.Net.Http.Json.HttpClientJsonExtensions.FromJsonAsyncCore...
+   at Postnomic.Client.PostnomicBlogService.GetPostsAsync(...)
+```
+
+**Symptom.** Blog pages fail intermittently; the error tracker shows a JSON parse error from the SDK
+(SDK 1.9.x and earlier), or a `PostnomicUpstreamException` with `Failure = EmptyBody` (later versions).
+
+**Cause.** The API — or a proxy or gateway in front of it — answered with a success status and an empty
+or truncated body. That is an upstream failure, not a missing post: a missing post is a `404`, which the
+SDK maps to `null`.
+
+**Fix.** Treat it like any other upstream outage. After 1.9.x the SDK throws `PostnomicUpstreamException`,
+which is an `HttpRequestException`, so a handler that already maps `HttpRequestException` to a fallback page
+covers it. A workaround that catches `JsonException` on blog routes can be removed after upgrading.
+Note that `AddStandardResilienceHandler()` does not retry it — see [Error handling](../README.md#error-handling).
+
+---
+
 ## `ValueFactory attempted to access the Value property of this instance.`
 
 ```text

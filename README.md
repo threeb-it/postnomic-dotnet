@@ -194,6 +194,33 @@ The SDK gives you access to the full Postnomic API:
 - **Client-Side Caching** -- optional in-memory cache with per-resource TTLs and explicit invalidation via `IPostnomicCacheControl`
 - **Theming** -- opt into framework-free `pn-*` classes and a shipped `--pn-*` variable-driven stylesheet instead of Bootstrap (see [Theming / MarkupStyle](#theming--markupstyle))
 
+## Error handling
+
+What `IPostnomicBlogService` does when the API does not answer with usable data:
+
+| API response | Result |
+|---|---|
+| `404` on `GetBlogAsync`, `GetPostAsync`, `GetAuthorProfileAsync` | `null` -- the resource does not exist |
+| Any other non-success status (and `404` on list endpoints) | `HttpRequestException` with `StatusCode` set |
+| Non-success on `CreateCommentAsync` | `null` -- the comment was rejected |
+| **Success status with an empty body** (`204`, `Content-Length: 0`, zero bytes or whitespace) | **`PostnomicUpstreamException`**, `Failure = EmptyBody` |
+| **Success status with a body that is not valid JSON** for the result type | **`PostnomicUpstreamException`**, `Failure = MalformedBody`, original `JsonException` as `InnerException` |
+
+`PostnomicUpstreamException` (in `Postnomic.Client.Abstractions`) derives from `HttpRequestException`, so
+an existing `catch (HttpRequestException)` already covers it. It carries `StatusCode`, `RequestPath` (the
+request path without its query string) and `Failure`. Up to SDK 1.9.x the same responses surfaced as a bare
+`System.Text.Json.JsonException` ("The input does not contain any JSON tokens").
+
+`IPostnomicAuthoringService` throws `PostnomicApiException` for non-success statuses as before, and
+`PostnomicUpstreamException` for an empty or malformed success body.
+
+> A `PostnomicUpstreamException` is raised *after* the `HttpClient` handler pipeline has returned, so a
+> resilience handler on the SDK's `HttpClient` (for example `AddStandardResilienceHandler()`) does **not**
+> retry it -- to the pipeline the exchange was a success. Retry at the call site, or render a fallback.
+
+Failures are never cached by the optional client-side cache; a `null` ("not found") result is cached for at
+most one minute, whatever the configured duration.
+
 ## Multi-language posts
 
 If a blog has posts translated into multiple languages, the SDK lets you request a specific language and exposes what's available so you can build language switchers and SEO metadata.
