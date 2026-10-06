@@ -28,7 +28,9 @@ namespace Postnomic.Client.Abstractions;
 /// The token's owner must be a member of the target blog with at least the <c>Author</c> role
 /// (for create/update/submit-for-review/media-upload) or <c>Editor</c> (for publish/unpublish/
 /// archive). A rejection surfaces as <see cref="PostnomicApiException"/>, carrying the API's
-/// HTTP status code and rejection reason.
+/// HTTP status code and rejection reason. A success status whose body is empty or not valid JSON
+/// surfaces as <see cref="PostnomicUpstreamException"/> instead — an upstream failure, after which a
+/// write has most likely been applied (check before retrying it).
 /// </para>
 /// </remarks>
 public interface IPostnomicAuthoringService
@@ -46,6 +48,10 @@ public interface IPostnomicAuthoringService
     /// when a subscription quota (post count) is exhausted, or 403 when the token's owner lacks
     /// the <c>Author</c> role on the blog.
     /// </exception>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. The write
+    /// has most likely been applied; verify the state before retrying, or it may be duplicated.
+    /// </exception>
     Task<PostnomicPost> CreatePostAsync(
         PostnomicCreatePostRequest request,
         CancellationToken cancellationToken = default);
@@ -62,6 +68,10 @@ public interface IPostnomicAuthoringService
     /// The API rejected the request — e.g. 404 when no such post exists on this blog, or 409
     /// when the new slug collides with another post.
     /// </exception>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. The write
+    /// has most likely been applied; verify the state before retrying, or it may be duplicated.
+    /// </exception>
     Task<PostnomicPost> UpdatePostAsync(
         string postId,
         PostnomicUpdatePostRequest request,
@@ -77,6 +87,10 @@ public interface IPostnomicAuthoringService
     /// <param name="cancellationToken">A token that can be used to cancel the asynchronous operation.</param>
     /// <returns>The matching <see cref="PostnomicPost"/>, or <see langword="null"/> when the API returns a 404.</returns>
     /// <exception cref="PostnomicApiException">The API rejected the request for a reason other than 404.</exception>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<PostnomicPost?> GetPostAsync(string postId, CancellationToken cancellationToken = default);
 
     /// <summary>Publishes a post, making it visible to readers immediately.</summary>
@@ -89,6 +103,10 @@ public interface IPostnomicAuthoringService
     /// <see cref="PostnomicPostStatus.InReview"/>, or when <see cref="PostnomicPost.ReviewRequired"/>
     /// is set but reviews are missing or not all approved.
     /// </exception>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. The write
+    /// has most likely been applied; verify the state before retrying, or it may be duplicated.
+    /// </exception>
     Task<PostnomicPost> PublishPostAsync(string postId, CancellationToken cancellationToken = default);
 
     /// <summary>Unpublishes a previously published post, taking it offline.</summary>
@@ -98,6 +116,10 @@ public interface IPostnomicAuthoringService
     /// <exception cref="PostnomicApiException">
     /// The API rejected the request — e.g. 409 when the post's status is not
     /// <see cref="PostnomicPostStatus.Published"/>.
+    /// </exception>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. The write
+    /// has most likely been applied; verify the state before retrying, or it may be duplicated.
     /// </exception>
     Task<PostnomicPost> UnpublishPostAsync(string postId, CancellationToken cancellationToken = default);
 
@@ -113,6 +135,10 @@ public interface IPostnomicAuthoringService
     /// <returns>The updated <see cref="PostnomicPost"/>.</returns>
     /// <exception cref="PostnomicApiException">
     /// The API rejected the request — e.g. 404 when no such post exists on this blog.
+    /// </exception>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. The write
+    /// has most likely been applied; verify the state before retrying, or it may be duplicated.
     /// </exception>
     Task<PostnomicPost> ArchivePostAsync(string postId, CancellationToken cancellationToken = default);
 
@@ -138,6 +164,10 @@ public interface IPostnomicAuthoringService
     /// The API rejected the request — e.g. 400 for a disallowed file extension or content type,
     /// or 403 when the blog's storage quota is exhausted.
     /// </exception>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. The write
+    /// has most likely been applied; verify the state before retrying, or it may be duplicated.
+    /// </exception>
     Task<PostnomicMediaItem> UploadImageAsync(
         Stream content,
         string fileName,
@@ -158,6 +188,10 @@ public interface IPostnomicAuthoringService
     /// </returns>
     /// <exception cref="PostnomicApiException">
     /// The API rejected the request — e.g. 404 when no such post exists on this blog.
+    /// </exception>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
     /// </exception>
     Task<IReadOnlyList<PostnomicPostTranslation>> GetPostTranslationsAsync(
         string postId,
@@ -184,6 +218,10 @@ public interface IPostnomicAuthoringService
     /// default language, 404 when no such post exists on this blog, or 409 when another post
     /// already uses <see cref="PostnomicUpsertTranslationRequest.Slug"/> in this language on
     /// this blog.
+    /// </exception>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. The write
+    /// has most likely been applied; verify the state before retrying, or it may be duplicated.
     /// </exception>
     Task<PostnomicPostTranslation> SetPostTranslationAsync(
         string postId,

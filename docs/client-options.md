@@ -92,6 +92,10 @@ quoted above.
 | `PostDetailDuration` | `TimeSpan` | 5 min |
 | `PopularPostsDuration` | `TimeSpan` | 10 min |
 
+A `null` result (a post, author or blog that was not found) is cached for at most **one minute**, or the
+configured duration if that is shorter, so a mistyped slug cannot pin a long-lived entry and a post published
+right after a miss shows up quickly. Exceptions are never cached.
+
 ### `AlternateUrlResolver` — obsolete
 
 ```csharp

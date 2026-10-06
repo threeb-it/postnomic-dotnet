@@ -32,15 +32,27 @@ internal sealed class CachingPostnomicBlogService : IPostnomicBlogService, IPost
         _prefix = $"postnomic:{options.Value.BlogSlug}:";
     }
 
+    /// <summary>
+    /// Upper bound on how long a <see langword="null"/> ("not found") result is cached. Not-found
+    /// results are keyed by caller-supplied slugs, so arbitrary URLs would otherwise fill the cache
+    /// with entries that live for the full configured duration — and a post published moments
+    /// after a miss would stay invisible for that long.
+    /// </summary>
+    internal static readonly TimeSpan NotFoundMaxDuration = TimeSpan.FromMinutes(1);
+
     private async Task<T?> GetOrTrackAsync<T>(string key, TimeSpan duration, Func<CancellationToken, Task<T?>> factory, CancellationToken ct)
     {
         if (_cache.TryGetValue(key, out T? cached))
             return cached;
 
+        // A throwing factory (an HTTP error, a PostnomicUpstreamException) propagates before
+        // anything is cached, so failures always go upstream again on the next call.
         var value = await factory(ct);
         var options = new MemoryCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = duration
+            AbsoluteExpirationRelativeToNow = value is null && duration > NotFoundMaxDuration
+                ? NotFoundMaxDuration
+                : duration
         };
         _cache.Set(key, value, options);
         TrackKey(key);
