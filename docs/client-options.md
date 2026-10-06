@@ -80,6 +80,7 @@ quoted above.
 | `LanguageRouteStyle` | `PostnomicLanguageRouteStyle` | `Suffix` | Where the language code appears in generated URLs. |
 | `MarkupStyle` | `PostnomicMarkupStyle` | `Bootstrap` | `Semantic` opts into CSS-variable theming. |
 | `UiStrings` | `PostnomicUiStringOverrides?` | `null` | Overrides the SDK's own chrome strings, not post content. |
+| `FilterLinkRel` | `string?` | `null` | `rel` for filter, archive and pagination links. See below. |
 | `AlternateUrlResolver` | `Func<...>?` | `null` | **Obsolete.** See below. |
 
 ### `Cache` (`PostnomicCacheOptions`)
@@ -95,6 +96,65 @@ quoted above.
 A `null` result (a post, author or blog that was not found) is cached for at most **one minute**, or the
 configured duration if that is shorter, so a mistyped slug cannot pin a long-lived entry and a post published
 right after a miss shows up quickly. Exceptions are never cached.
+
+### `FilterLinkRel`
+
+A `rel` value — typically `"nofollow"` — that the SDK's own views add to their **filter, archive and
+pagination links**. Space-separated tokens are allowed (`"nofollow ugc"`).
+
+```csharp
+builder.Services.AddPostnomicBlog(options =>
+{
+    // ...
+    options.FilterLinkRel = "nofollow";
+});
+```
+
+```json
+{ "Postnomic": { "FilterLinkRel": "nofollow" } }
+```
+
+**Why.** Every tag, category, author, search and page link is a distinct URL (`?tag=dotnet`,
+`?p=3`, `?author=Jane`, …). A crawler follows all of them, and each one is a separate post-list
+request to the API and a separate cache key — in the SDK's `CachingPostnomicBlogService` and in
+the API's output cache — so crawl traffic multiplies the number of entries instead of hitting the
+cache. Measured on one production blog: ~42 filter and paging variants per blog page and 86.5k
+post-list requests a week before this was addressed. `nofollow` tells well-behaved crawlers not
+to follow those links; the posts themselves stay fully linked and crawlable. It is a hint, not a
+block: pair it with `robots.txt` rules if a crawler ignores it, and remember it does not remove
+URLs that are already indexed (use `noindex` on the host page for that).
+
+**Where it applies.**
+
+| Link | Razor Pages (`Postnomic.Client.AspNetCore`) | Blazor (`Postnomic.Client.Blazor`) |
+|---|---|---|
+| Tag / category filter (`?tag=`, `?category=`) | Index (post cards + sidebar), Post | — (interactive buttons, no `href`) |
+| Author filter (`?author=`) | Index sidebar | — (interactive button) |
+| Author archive (`/author/{slug}`) | Index post cards, Post | `BlogPage`, `PostPage` |
+| Search | the GET search `<form>` (`rel` is valid on `<form>`) | — (interactive button) |
+| Pagination (`?p=`) | Index | — (interactive buttons) |
+
+The Blazor tag cloud, category list, author list, search box and pager are `<button>`s with click
+handlers — there is no URL for a crawler to follow, so there is nothing to mark.
+
+Author archive pages (`/author/{slug}`) are real content pages, not query-string variants; they
+are included because they are archive views of posts that are already linked directly. If you
+want them crawled, leave the option unset and use `robots.txt` for the query-string variants
+instead.
+
+**Where it never applies.** Links to individual posts, the "back to blog" / "clear filter" links
+to the plain index, the `<link rel="canonical">` / `<link rel="alternate">` tags, and external
+links. An anchor that already carries a `rel` keeps it; the configured tokens are merged in
+without duplicates.
+
+**Default.** `null` (or whitespace) renders no `rel` attribute at all — the markup is unchanged.
+Each named `AddPostnomicBlog(name, ...)` registration uses its own value.
+
+**Related: the default page size is no longer in pagination URLs.** Independently of this option,
+Razor Pages pagination links and the search form omit `PageSize` when it equals the default (5):
+`/blog?p=2` instead of `/blog?p=2&PageSize=5`. The page binds the same default either way, so this
+only removes a duplicate URL (and cache key) for the same page. A non-default `?PageSize=` is still
+carried through.
 
 ### `AlternateUrlResolver` — obsolete
 

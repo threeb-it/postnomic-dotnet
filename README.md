@@ -146,6 +146,7 @@ builder.Services.AddPostnomicBlog(options =>
 | `ShowBranding` | `bool` | `false` | Renders a "Powered by Postnomic" footer; server-enforced value from your plan takes precedence. |
 | `LanguageRouteStyle` | `PostnomicLanguageRouteStyle` | `Suffix` | Where the language code appears in generated URLs. See [Language route style](#language-route-style) below. |
 | `MarkupStyle` | `PostnomicMarkupStyle` | `Bootstrap` | CSS class vocabulary emitted by Postnomic-rendered markup. See [Theming / MarkupStyle](#theming--markupstyle) below. |
+| `FilterLinkRel` | `string?` | `null` | `rel` (e.g. `"nofollow"`) added to tag, category, author, search and pagination links so crawlers don't follow every filter/paging variant. Never on post links. See [Client options](docs/client-options.md#filterlinkrel). |
 | `Cache` | `PostnomicCacheOptions?` | `null` | Optional client-side in-memory caching. |
 | `AlternateUrlResolver` | `Func<...>?` | `null` | **Obsolete** -- superseded by `IPostnomicAlternateUrlProvider`. See [Per-post hreflang alternates](docs/hreflang-alternates.md). |
 
