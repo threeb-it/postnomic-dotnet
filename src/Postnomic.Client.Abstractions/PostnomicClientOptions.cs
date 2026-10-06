@@ -86,6 +86,36 @@ public class PostnomicClientOptions
     public PostnomicMarkupStyle MarkupStyle { get; set; } = PostnomicMarkupStyle.Bootstrap;
 
     /// <summary>
+    /// Optional <c>rel</c> value (e.g. <c>"nofollow"</c>) added to the blog's <b>filter, archive and
+    /// pagination</b> links: tag, category and author filters, author archive links
+    /// (<c>/author/{slug}</c>), the search form and the pager. Lets a host keep crawlers from following
+    /// every filter and paging variant — each of which is its own post-list request and its own
+    /// cache key — without forking the SDK's views.
+    /// <para>
+    /// Never applied to links to individual posts (those should stay crawlable), to the
+    /// <c>&lt;link rel="canonical"&gt;</c> / <c>&lt;link rel="alternate"&gt;</c> tags, or to external
+    /// links. Space-separated tokens are allowed (<c>"nofollow noopener"</c>); they are merged with
+    /// any <c>rel</c> an anchor already has, without duplicates.
+    /// </para>
+    /// <para>
+    /// <see langword="null"/> or whitespace (the default) leaves the rendered markup exactly as it
+    /// was — no <c>rel</c> attribute is emitted. Set per blog; a named
+    /// <c>AddPostnomicBlog(name, ...)</c> registration uses its own value.
+    /// </para>
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// services.AddPostnomicBlog(options =>
+    /// {
+    ///     // ...
+    ///     options.FilterLinkRel = "nofollow";
+    /// });
+    /// </code>
+    /// or in <c>appsettings.json</c>: <c>"Postnomic": { "FilterLinkRel": "nofollow" }</c>.
+    /// </example>
+    public string? FilterLinkRel { get; set; }
+
+    /// <summary>
     /// Optional overrides for the Blazor blog components' built-in UI chrome strings (the pager,
     /// the search box, comment-form labels, empty states, and similar SDK-authored copy — not a
     /// post's own content). The SDK ships English and German built-ins; set this to replace
