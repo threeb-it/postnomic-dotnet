@@ -19,6 +19,10 @@ public interface IPostnomicBlogService
     /// A <see cref="PostnomicBlogInfo"/> when the blog exists, or <see langword="null"/>
     /// when the API returns a 404 response.
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<PostnomicBlogInfo?> GetBlogAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -31,6 +35,10 @@ public interface IPostnomicBlogService
     /// <returns>
     /// A list of <see cref="PostnomicTag"/> objects. The list is empty when no tags exist.
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<List<PostnomicTag>> GetTagsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -43,6 +51,10 @@ public interface IPostnomicBlogService
     /// <returns>
     /// A list of <see cref="PostnomicCategory"/> objects. The list is empty when no categories exist.
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<List<PostnomicCategory>> GetCategoriesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -55,6 +67,10 @@ public interface IPostnomicBlogService
     /// <returns>
     /// A list of <see cref="PostnomicAuthor"/> objects. The list is empty when no authors exist.
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<List<PostnomicAuthor>> GetAuthorsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -68,6 +84,10 @@ public interface IPostnomicBlogService
     /// A <see cref="PostnomicAuthorProfile"/> when the author exists and has published posts,
     /// or <see langword="null"/> when the API returns a 404 response.
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<PostnomicAuthorProfile?> GetAuthorProfileAsync(
         string authorSlug,
         CancellationToken cancellationToken = default);
@@ -104,6 +124,10 @@ public interface IPostnomicBlogService
     /// A <see cref="PostnomicPagedResult{T}"/> containing the matching
     /// <see cref="PostnomicPostSummary"/> items and paging metadata.
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<PostnomicPagedResult<PostnomicPostSummary>> GetPostsAsync(
         int page = 1,
         int pageSize = 5,
@@ -129,6 +153,10 @@ public interface IPostnomicBlogService
     /// A <see cref="PostnomicPostDetail"/> when the post exists and is published, or
     /// <see langword="null"/> when the API returns a 404 response.
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<PostnomicPostDetail?> GetPostAsync(
         string postSlug,
         string? language = null,
@@ -148,6 +176,10 @@ public interface IPostnomicBlogService
     /// The newly created <see cref="PostnomicComment"/> when the request is accepted, or
     /// <see langword="null"/> when the API returns a non-success response (e.g. 400 or 404).
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. The write
+    /// has most likely been applied; verify the state before retrying, or it may be duplicated.
+    /// </exception>
     Task<PostnomicComment?> CreateCommentAsync(
         string postSlug,
         PostnomicCreateCommentRequest request,
@@ -167,6 +199,10 @@ public interface IPostnomicBlogService
     /// A list of <see cref="PostnomicPopularPost"/> objects sorted by comment count descending.
     /// The list is empty when no published posts exist.
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<List<PostnomicPopularPost>> GetTopCommentedPostsAsync(
         int count = 3,
         CancellationToken cancellationToken = default);
@@ -185,6 +221,10 @@ public interface IPostnomicBlogService
     /// A list of <see cref="PostnomicPopularPost"/> objects sorted by view count descending.
     /// The list is empty when no published posts exist or no analytics data has been recorded.
     /// </returns>
+    /// <exception cref="PostnomicUpstreamException">
+    /// The API answered with a success status but an empty or malformed (non-JSON) body. This is an
+    /// upstream failure, not a missing resource.
+    /// </exception>
     Task<List<PostnomicPopularPost>> GetMostReadPostsAsync(
         int count = 3,
         CancellationToken cancellationToken = default);

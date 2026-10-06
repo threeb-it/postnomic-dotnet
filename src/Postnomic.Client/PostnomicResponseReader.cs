@@ -45,8 +45,7 @@ internal static class PostnomicResponseReader
         // it guarantees the content can be inspected and then read again by the JSON reader.
         await response.Content.LoadIntoBufferAsync(cancellationToken).ConfigureAwait(false);
 
-        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        if (IsBlank(bytes))
+        if (await IsBlankAsync(response.Content, cancellationToken).ConfigureAwait(false))
             throw Upstream(PostnomicUpstreamFailure.EmptyBody, response, requestPath);
 
         try
@@ -80,12 +79,50 @@ internal static class PostnomicResponseReader
 
     /// <summary>
     /// <see langword="true"/> when the body has no JSON token at all: zero bytes, or only JSON
-    /// whitespace (space, tab, CR, LF), optionally after a UTF-8 byte order mark.
+    /// whitespace (space, tab, CR, LF), optionally after a UTF-8 byte order mark. Scans the buffered
+    /// body in place and stops at the first significant byte, so a normal body is not copied.
     /// </summary>
+    private static async Task<bool> IsBlankAsync(HttpContent content, CancellationToken cancellationToken)
+    {
+        var stream = await content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        if (!stream.CanSeek)
+        {
+            // Not expected after LoadIntoBufferAsync; fall back to inspecting a copy.
+            return IsBlank(await content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false));
+        }
+
+        var start = stream.Position;
+        try
+        {
+            var buffer = new byte[256];
+            var first = true;
+            int read;
+            while ((read = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+            {
+                ReadOnlySpan<byte> chunk = buffer.AsSpan(0, read);
+                if (first && chunk.StartsWith(Utf8Bom))
+                    chunk = chunk[Utf8Bom.Length..];
+                first = false;
+
+                if (!IsBlank(chunk))
+                    return false;
+            }
+
+            return true;
+        }
+        finally
+        {
+            // Leave the buffered stream where the JSON reader expects it.
+            stream.Position = start;
+        }
+    }
+
+    private static ReadOnlySpan<byte> Utf8Bom => [0xEF, 0xBB, 0xBF];
+
     private static bool IsBlank(ReadOnlySpan<byte> bytes)
     {
-        if (bytes.StartsWith((ReadOnlySpan<byte>)[0xEF, 0xBB, 0xBF]))
-            bytes = bytes[3..];
+        if (bytes.StartsWith(Utf8Bom))
+            bytes = bytes[Utf8Bom.Length..];
 
         foreach (var b in bytes)
         {
