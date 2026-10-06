@@ -226,6 +226,25 @@ public class IndexModel(
     public bool Semantic => MarkupStyle == PostnomicMarkupStyle.Semantic;
 
     /// <summary>
+    /// The <c>rel</c> value for a filter, archive or pagination link on this page, from
+    /// <see cref="PostnomicClientOptions.FilterLinkRel"/> of the currently resolved blog — or
+    /// <see langword="null"/> when unset, which makes Razor omit the attribute entirely. Use as
+    /// <c>rel="@Model.FilterRel"</c> on every such link; for an anchor that already has a <c>rel</c>,
+    /// merge with <see cref="PostnomicLinkRel.ForFilterLink"/> instead. Never use it on post links.
+    /// </summary>
+    public string? FilterRel
+    {
+        get
+        {
+            var blogName = blogResolver.ResolveBlogName(HttpContext.Request.Path.Value ?? "");
+            var filterLinkRel = blogName is not null
+                ? optionsMonitor.Get(blogName).FilterLinkRel
+                : defaultClientOptions.Value.FilterLinkRel;
+            return PostnomicLinkRel.ForFilterLink(filterLinkRel);
+        }
+    }
+
+    /// <summary>
     /// Returns <see langword="true"/> when at least one filter (tag, category, author, or
     /// search) is currently active.
     /// </summary>
