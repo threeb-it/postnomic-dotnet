@@ -48,7 +48,7 @@
                 <span>@Localizer["By"]
                     @if (!string.IsNullOrEmpty(Model.Post.AuthorSlug))
                     {
-                        <a href="@PostnomicRouteBuilder.BuildAuthor(Model.BasePath, Model.RouteStyle, Model.Lang, Model.Post.AuthorSlug)"
+                        <a href="@PostnomicRouteBuilder.BuildAuthor(Model.BasePath, Model.RouteStyle, Model.Lang, Model.Post.AuthorSlug)" rel="@Model.FilterRel"
                            class="text-decoration-none"><strong>@Model.Post.AuthorName</strong></a>
                     }
                     else
@@ -71,7 +71,7 @@
                 <div class="d-flex flex-wrap gap-1 mb-1">
                     @foreach (var tag in Model.Post.Tags)
                     {
-                        <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)"
+                        <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)" rel="@Model.FilterRel"
                            class="@(Model.Semantic ? Model.Cls.Tag : "badge bg-secondary text-decoration-none")">@tag.Name</a>
                     }
                 </div>
@@ -83,7 +83,7 @@
                 <div class="d-flex flex-wrap gap-1 mb-3">
                     @foreach (var cat in Model.Post.Categories)
                     {
-                        <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
+                        <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)" rel="@Model.FilterRel"
                            class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary text-decoration-none")">@cat.Name</a>
                     }
                 </div>

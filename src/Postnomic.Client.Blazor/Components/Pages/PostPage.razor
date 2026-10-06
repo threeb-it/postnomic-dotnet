@@ -58,7 +58,7 @@
                             @Icon("bi bi-person")
                             @if (!string.IsNullOrEmpty(post.AuthorSlug))
                             {
-                                <a href="@PostnomicRouteBuilder.BuildAuthor(BasePath, RouteStyle, Language, post.AuthorSlug)" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">@post.AuthorName</a>
+                                <a href="@PostnomicRouteBuilder.BuildAuthor(BasePath, RouteStyle, Language, post.AuthorSlug)" rel="@FilterRel" class="@(MarkupStyle == PostnomicMarkupStyle.Semantic ? "" : "text-decoration-none")">@post.AuthorName</a>
                             }
                             else
                             {
@@ -271,6 +271,12 @@
     private PostnomicMarkupStyle MarkupStyle =>
         BlogContext?.Options.MarkupStyle ?? _injectedClientOptions.Value.MarkupStyle;
     private PostnomicCssClasses Cls => new(MarkupStyle);
+
+    /// <summary>
+    /// The <c>rel</c> for filter / archive links (see <see cref="PostnomicClientOptions.FilterLinkRel"/>);
+    /// <see langword="null"/> when unset, so the attribute is omitted.
+    /// </summary>
+    private string? FilterRel => PostnomicFilterLinks.Rel(BlogContext, _injectedClientOptions);
 
     /// <summary>
     /// Consumer-supplied overrides for the built-in UI chrome strings, if any. See

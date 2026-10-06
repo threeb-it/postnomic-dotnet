@@ -25,6 +25,12 @@ public class IndexModel(
     /// <summary>Largest accepted <see cref="PageSize"/>; anything above is clamped down to it.</summary>
     private const int MaxPageSize = 100;
 
+    /// <summary>
+    /// The page size used when the request carries no <c>?PageSize=</c>. Generated links leave the
+    /// parameter out when it equals this value, so the default page size has exactly one URL.
+    /// </summary>
+    public static readonly int DefaultPageSize = 5;
+
     // ── Query parameters ──────────────────────────────────────────────────────
 
     /// <summary>The 1-based page number to display. Defaults to <c>1</c>.</summary>
@@ -33,7 +39,7 @@ public class IndexModel(
 
     /// <summary>Number of posts per page. Defaults to <c>5</c>.</summary>
     [BindProperty(SupportsGet = true)]
-    public int PageSize { get; set; } = 5;
+    public int PageSize { get; set; } = DefaultPageSize;
 
     /// <summary>Optional tag slug filter.</summary>
     [BindProperty(SupportsGet = true)]
@@ -226,6 +232,25 @@ public class IndexModel(
     public bool Semantic => MarkupStyle == PostnomicMarkupStyle.Semantic;
 
     /// <summary>
+    /// The <c>rel</c> value for a filter, archive or pagination link on this page, from
+    /// <see cref="PostnomicClientOptions.FilterLinkRel"/> of the currently resolved blog — or
+    /// <see langword="null"/> when unset, which makes Razor omit the attribute entirely. Use as
+    /// <c>rel="@Model.FilterRel"</c> on every such link; for an anchor that already has a <c>rel</c>,
+    /// merge with <see cref="PostnomicLinkRel.ForFilterLink"/> instead. Never use it on post links.
+    /// </summary>
+    public string? FilterRel
+    {
+        get
+        {
+            var blogName = blogResolver.ResolveBlogName(HttpContext.Request.Path.Value ?? "");
+            var filterLinkRel = blogName is not null
+                ? optionsMonitor.Get(blogName).FilterLinkRel
+                : defaultClientOptions.Value.FilterLinkRel;
+            return PostnomicLinkRel.ForFilterLink(filterLinkRel);
+        }
+    }
+
+    /// <summary>
     /// Returns <see langword="true"/> when at least one filter (tag, category, author, or
     /// search) is currently active.
     /// </summary>
@@ -265,16 +290,21 @@ public class IndexModel(
     };
 
     /// <summary>
+    /// Whether the (clamped) <see cref="PageSize"/> is <see cref="DefaultPageSize"/>, in which case
+    /// generated links and the search form leave the <c>PageSize</c> parameter out: omitting it binds
+    /// the very same default, so including it would only mint a duplicate URL for the same page.
+    /// </summary>
+    public bool IsDefaultPageSize => Math.Clamp(PageSize, 1, MaxPageSize) == DefaultPageSize;
+
+    /// <summary>
     /// Builds a full URL for a pagination link, including the base path and query parameters.
-    /// The target page is clamped into range — see <see cref="ClampTargetPage"/>.
+    /// The target page is clamped into range — see <see cref="ClampTargetPage"/>. <c>PageSize</c>
+    /// is included only when it differs from <see cref="DefaultPageSize"/>.
     /// </summary>
     public string PageUrl(int targetPage)
     {
-        var parts = new List<string>
-        {
-            $"p={ClampTargetPage(targetPage)}",
-            $"PageSize={Math.Clamp(PageSize, 1, MaxPageSize)}"
-        };
+        var parts = new List<string> { $"p={ClampTargetPage(targetPage)}" };
+        if (!IsDefaultPageSize) parts.Add($"PageSize={Math.Clamp(PageSize, 1, MaxPageSize)}");
         if (!string.IsNullOrWhiteSpace(Tag)) parts.Add($"Tag={Uri.EscapeDataString(Tag)}");
         if (!string.IsNullOrWhiteSpace(Category)) parts.Add($"Category={Uri.EscapeDataString(Category)}");
         if (!string.IsNullOrWhiteSpace(Author)) parts.Add($"Author={Uri.EscapeDataString(Author)}");

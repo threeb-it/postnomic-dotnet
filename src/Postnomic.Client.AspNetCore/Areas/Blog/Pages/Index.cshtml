@@ -118,7 +118,7 @@
                                 <span>@Localizer["By"]
                                     @if (!string.IsNullOrEmpty(post.AuthorSlug))
                                     {
-                                        <a href="@PostnomicRouteBuilder.BuildAuthor(Model.BasePath, Model.RouteStyle, Model.Lang, post.AuthorSlug)"
+                                        <a href="@PostnomicRouteBuilder.BuildAuthor(Model.BasePath, Model.RouteStyle, Model.Lang, post.AuthorSlug)" rel="@Model.FilterRel"
                                            class="text-decoration-none"><strong>@post.AuthorName</strong></a>
                                     }
                                     else
@@ -138,7 +138,7 @@
                                 <div class="d-flex flex-wrap gap-1 mb-1">
                                     @foreach (var tag in post.Tags)
                                     {
-                                        <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)"
+                                        <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)" rel="@Model.FilterRel"
                                            class="@(Model.Semantic ? Model.Cls.Tag : "badge bg-secondary text-decoration-none")">@tag.Name</a>
                                     }
                                 </div>
@@ -150,7 +150,7 @@
                                 <div class="d-flex flex-wrap gap-1 mb-2">
                                     @foreach (var cat in post.Categories)
                                     {
-                                        <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
+                                        <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)" rel="@Model.FilterRel"
                                            class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary text-decoration-none")">@cat.Name</a>
                                     }
                                 </div>
@@ -175,7 +175,7 @@
                         <ul class="@(Model.Semantic ? Model.Cls.Pagination : "pagination justify-content-center")">
                             <li class="@Model.Cls.Page @(Model.PageNumber <= 1 ? Model.Cls.PageDisabled : "")">
                                 <a class="@(Model.Semantic ? "" : "page-link")"
-                                   href="@Model.PageUrl(Model.PageNumber - 1)"
+                                   href="@Model.PageUrl(Model.PageNumber - 1)" rel="@Model.FilterRel"
                                    aria-label="@Localizer["PaginationPrevious"]">
                                     <span aria-hidden="true">&laquo;</span>
                                 </a>
@@ -185,13 +185,13 @@
                             {
                                 <li class="@Model.Cls.Page @(p == Model.PageNumber ? Model.Cls.PageActive : "")">
                                     <a class="@(Model.Semantic ? "" : "page-link")"
-                                       href="@Model.PageUrl(p)">@p</a>
+                                       href="@Model.PageUrl(p)" rel="@Model.FilterRel">@p</a>
                                 </li>
                             }
 
                             <li class="@Model.Cls.Page @(Model.PageNumber >= Model.Posts.TotalPages ? Model.Cls.PageDisabled : "")">
                                 <a class="@(Model.Semantic ? "" : "page-link")"
-                                   href="@Model.PageUrl(Model.PageNumber + 1)"
+                                   href="@Model.PageUrl(Model.PageNumber + 1)" rel="@Model.FilterRel"
                                    aria-label="@Localizer["PaginationNext"]">
                                     <span aria-hidden="true">&raquo;</span>
                                 </a>
@@ -212,8 +212,11 @@
             <div class="@(Model.Semantic ? Model.Cls.Widget : "card mb-4 shadow-sm")">
                 <div class="@(Model.Semantic ? "" : "card-body")">
                     <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Search"]</h5>
-                    <form method="get" action="@indexUrl">
+                    <form method="get" action="@indexUrl" rel="@Model.FilterRel">
+                        @if (!Model.IsDefaultPageSize)
+                        {
                         <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                        }
                         <div class="@(Model.Semantic ? Model.Cls.SearchBox : "input-group")">
                             <input type="search"
                                    name="search"
@@ -235,7 +238,7 @@
                         <div class="d-flex flex-wrap gap-2">
                             @foreach (var tag in Model.Tags)
                             {
-                                <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)"
+                                <a href="@indexUrl?tag=@Uri.EscapeDataString(tag.Slug)" rel="@Model.FilterRel"
                                    class="@(Model.Semantic ? Model.Cls.Tag : "badge bg-secondary text-decoration-none fs-6")">
                                     @tag.Name
                                     <span class="ms-1 opacity-75">(@tag.PostCount)</span>
@@ -256,7 +259,7 @@
                             @foreach (var cat in Model.Categories)
                             {
                                 <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
-                                    <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)"
+                                    <a href="@indexUrl?category=@Uri.EscapeDataString(cat.Slug)" rel="@Model.FilterRel"
                                        class="@(Model.Semantic ? Model.Cls.TagCategory : "badge bg-primary text-decoration-none")">@cat.Name</a>
                                     <span class="text-muted small">@Localizer[cat.PostCount == 1 ? "PostCountOne" : "PostCountMany", cat.PostCount]</span>
                                 </li>
@@ -276,7 +279,7 @@
                             @foreach (var author in Model.Authors)
                             {
                                 <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
-                                    <a href="@indexUrl?author=@Uri.EscapeDataString(author.Name)"
+                                    <a href="@indexUrl?author=@Uri.EscapeDataString(author.Name)" rel="@Model.FilterRel"
                                        class="text-decoration-none">@author.Name</a>
                                     <span class="text-muted small">@Localizer[author.PostCount == 1 ? "PostCountOne" : "PostCountMany", author.PostCount]</span>
                                 </li>
