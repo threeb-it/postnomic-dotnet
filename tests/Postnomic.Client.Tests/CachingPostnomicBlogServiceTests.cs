@@ -598,6 +598,51 @@ public class CachingPostnomicBlogServiceTests : IDisposable
         _innerMock.Verify(s => s.GetPostAsync(postSlug, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    // ── Upstream failures are never cached ───────────────────────────────────
+
+    [Fact]
+    public async Task GetPostsAsync_WhenInnerThrowsUpstreamException_DoesNotCacheTheFailure()
+    {
+        // Arrange — first call: the API answered 200 with an empty body; second call: it recovered
+        var page = CreateEmptyPagedResult(page: 1, pageSize: 5);
+        _innerMock.SetupSequence(s => s.GetPostsAsync(1, 5, null, null, null, null, null, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new PostnomicUpstreamException(
+                PostnomicUpstreamFailure.EmptyBody, System.Net.HttpStatusCode.OK, "/public/blogs/test-blog/posts"))
+            .ReturnsAsync(page);
+
+        // Act
+        await Assert.ThrowsAsync<PostnomicUpstreamException>(
+            () => _sut.GetPostsAsync(1, 5, cancellationToken: TestContext.Current.CancellationToken));
+        var recovered = await _sut.GetPostsAsync(1, 5, cancellationToken: TestContext.Current.CancellationToken);
+        var cached = await _sut.GetPostsAsync(1, 5, cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert — the failure went upstream again, the recovery was cached
+        Assert.Same(page, recovered);
+        Assert.Same(page, cached);
+        _innerMock.Verify(
+            s => s.GetPostsAsync(1, 5, null, null, null, null, null, It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task GetPostAsync_WhenInnerThrowsUpstreamException_DoesNotCacheNull()
+    {
+        // Arrange
+        _innerMock.SetupSequence(s => s.GetPostAsync("hello", null, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new PostnomicUpstreamException(
+                PostnomicUpstreamFailure.MalformedBody, System.Net.HttpStatusCode.OK, "/public/blogs/test-blog/posts/hello"))
+            .ReturnsAsync(new PostnomicPostDetail { Slug = "hello", Title = "Hello", AuthorName = "Jane" });
+
+        // Act
+        await Assert.ThrowsAsync<PostnomicUpstreamException>(
+            () => _sut.GetPostAsync("hello", cancellationToken: TestContext.Current.CancellationToken));
+        var result = await _sut.GetPostAsync("hello", cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert — the failed call did not leave a cached "not found" behind
+        Assert.NotNull(result);
+        _innerMock.Verify(s => s.GetPostAsync("hello", null, It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
     // ── IPostnomicCacheControl.InvalidateAll ──────────────────────────────────
 
     [Fact]

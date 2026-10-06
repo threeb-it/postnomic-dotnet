@@ -33,8 +33,8 @@ public sealed class PostnomicAuthoringService(
         PostnomicCreatePostRequest request,
         CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.PostAsJsonAsync(PostsRoute, request, cancellationToken);
-        var post = await ReadOrThrowAsync<PostnomicPost>(response, cancellationToken);
+        using var response = await httpClient.PostAsJsonAsync(PostsRoute, request, cancellationToken);
+        var post = await ReadOrThrowAsync<PostnomicPost>(response, PostsRoute, cancellationToken);
 
         if (request.PublishImmediately)
         {
@@ -50,37 +50,42 @@ public sealed class PostnomicAuthoringService(
         PostnomicUpdatePostRequest request,
         CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.PutAsJsonAsync($"{PostsRoute}/{postId}", request, cancellationToken);
-        return await ReadOrThrowAsync<PostnomicPost>(response, cancellationToken);
+        var path = $"{PostsRoute}/{postId}";
+        using var response = await httpClient.PutAsJsonAsync(path, request, cancellationToken);
+        return await ReadOrThrowAsync<PostnomicPost>(response, path, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<PostnomicPost?> GetPostAsync(string postId, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.GetAsync($"{PostsRoute}/{postId}", cancellationToken);
+        var path = $"{PostsRoute}/{postId}";
+        using var response = await httpClient.GetAsync(path, cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound) return null;
-        return await ReadOrThrowAsync<PostnomicPost>(response, cancellationToken);
+        return await ReadOrThrowAsync<PostnomicPost>(response, path, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<PostnomicPost> PublishPostAsync(string postId, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.PostAsync($"{PostsRoute}/{postId}/publish", content: null, cancellationToken);
-        return await ReadOrThrowAsync<PostnomicPost>(response, cancellationToken);
+        var path = $"{PostsRoute}/{postId}/publish";
+        using var response = await httpClient.PostAsync(path, content: null, cancellationToken);
+        return await ReadOrThrowAsync<PostnomicPost>(response, path, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<PostnomicPost> UnpublishPostAsync(string postId, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.PostAsync($"{PostsRoute}/{postId}/unpublish", content: null, cancellationToken);
-        return await ReadOrThrowAsync<PostnomicPost>(response, cancellationToken);
+        var path = $"{PostsRoute}/{postId}/unpublish";
+        using var response = await httpClient.PostAsync(path, content: null, cancellationToken);
+        return await ReadOrThrowAsync<PostnomicPost>(response, path, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<PostnomicPost> ArchivePostAsync(string postId, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.PostAsync($"{PostsRoute}/{postId}/archive", content: null, cancellationToken);
-        return await ReadOrThrowAsync<PostnomicPost>(response, cancellationToken);
+        var path = $"{PostsRoute}/{postId}/archive";
+        using var response = await httpClient.PostAsync(path, content: null, cancellationToken);
+        return await ReadOrThrowAsync<PostnomicPost>(response, path, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -97,10 +102,10 @@ public sealed class PostnomicAuthoringService(
         form.Add(fileContent, "files", fileName);
 
         var query = string.IsNullOrEmpty(path) ? "" : $"?path={Uri.EscapeDataString(path)}";
-        var response = await httpClient.PostAsync(
-            $"blogs/{_options.BlogId}/media/upload{query}", form, cancellationToken);
+        var uploadRoute = $"blogs/{_options.BlogId}/media/upload{query}";
+        using var response = await httpClient.PostAsync(uploadRoute, form, cancellationToken);
 
-        var items = await ReadOrThrowAsync<List<PostnomicMediaItem>>(response, cancellationToken);
+        var items = await ReadOrThrowAsync<List<PostnomicMediaItem>>(response, uploadRoute, cancellationToken);
         if (items.Count == 0)
         {
             throw new PostnomicApiException(response.StatusCode, "The API accepted the upload but returned no media items.");
@@ -114,8 +119,9 @@ public sealed class PostnomicAuthoringService(
         string postId,
         CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.GetAsync(TranslationsRoute(postId), cancellationToken);
-        return await ReadOrThrowAsync<List<PostnomicPostTranslation>>(response, cancellationToken);
+        var path = TranslationsRoute(postId);
+        using var response = await httpClient.GetAsync(path, cancellationToken);
+        return await ReadOrThrowAsync<List<PostnomicPostTranslation>>(response, path, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -125,9 +131,9 @@ public sealed class PostnomicAuthoringService(
         PostnomicUpsertTranslationRequest request,
         CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.PutAsJsonAsync(
-            $"{TranslationsRoute(postId)}/{Uri.EscapeDataString(language)}", request, cancellationToken);
-        return await ReadOrThrowAsync<PostnomicPostTranslation>(response, cancellationToken);
+        var path = $"{TranslationsRoute(postId)}/{Uri.EscapeDataString(language)}";
+        using var response = await httpClient.PutAsJsonAsync(path, request, cancellationToken);
+        return await ReadOrThrowAsync<PostnomicPostTranslation>(response, path, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -160,13 +166,19 @@ public sealed class PostnomicAuthoringService(
 
     /// <summary>
     /// Reads and deserializes a successful response body, or throws
-    /// <see cref="PostnomicApiException"/> via <see cref="EnsureSuccessAsync"/>.
+    /// <see cref="PostnomicApiException"/> via <see cref="EnsureSuccessAsync"/>. A success status
+    /// with an empty or malformed body throws <see cref="PostnomicUpstreamException"/> (see
+    /// <see cref="PostnomicResponseReader"/>); a body that is the JSON literal <c>null</c> still
+    /// throws <see cref="PostnomicApiException"/>, as before.
     /// </summary>
-    private static async Task<T> ReadOrThrowAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken)
+    private static async Task<T> ReadOrThrowAsync<T>(
+        HttpResponseMessage response,
+        string path,
+        CancellationToken cancellationToken)
     {
         await EnsureSuccessAsync(response, cancellationToken);
 
-        var result = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
+        var result = await PostnomicResponseReader.ReadJsonAsync<T>(response, path, cancellationToken);
         return result ?? throw new PostnomicApiException(response.StatusCode, "The API returned an empty response body.");
     }
 }

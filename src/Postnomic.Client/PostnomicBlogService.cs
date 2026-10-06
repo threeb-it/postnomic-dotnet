@@ -24,16 +24,14 @@ public sealed class PostnomicBlogService(
     /// <inheritdoc />
     public async Task<PostnomicBlogInfo?> GetBlogAsync(CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.GetAsync($"public/blogs/{_options.BlogSlug}", cancellationToken);
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<PostnomicBlogInfo>(cancellationToken);
+        return await GetJsonOrNullIfNotFoundAsync<PostnomicBlogInfo>(
+            $"public/blogs/{_options.BlogSlug}", cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<List<PostnomicTag>> GetTagsAsync(CancellationToken cancellationToken = default)
     {
-        var result = await httpClient.GetFromJsonAsync<List<PostnomicTag>>(
+        var result = await GetJsonAsync<List<PostnomicTag>>(
             $"public/blogs/{_options.BlogSlug}/tags", cancellationToken);
         return result ?? [];
     }
@@ -41,7 +39,7 @@ public sealed class PostnomicBlogService(
     /// <inheritdoc />
     public async Task<List<PostnomicCategory>> GetCategoriesAsync(CancellationToken cancellationToken = default)
     {
-        var result = await httpClient.GetFromJsonAsync<List<PostnomicCategory>>(
+        var result = await GetJsonAsync<List<PostnomicCategory>>(
             $"public/blogs/{_options.BlogSlug}/categories", cancellationToken);
         return result ?? [];
     }
@@ -49,7 +47,7 @@ public sealed class PostnomicBlogService(
     /// <inheritdoc />
     public async Task<List<PostnomicAuthor>> GetAuthorsAsync(CancellationToken cancellationToken = default)
     {
-        var result = await httpClient.GetFromJsonAsync<List<PostnomicAuthor>>(
+        var result = await GetJsonAsync<List<PostnomicAuthor>>(
             $"public/blogs/{_options.BlogSlug}/authors", cancellationToken);
         return result ?? [];
     }
@@ -59,11 +57,8 @@ public sealed class PostnomicBlogService(
         string authorSlug,
         CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.GetAsync(
+        var profile = await GetJsonOrNullIfNotFoundAsync<PostnomicAuthorProfile>(
             $"public/blogs/{_options.BlogSlug}/authors/{authorSlug}", cancellationToken);
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
-        response.EnsureSuccessStatusCode();
-        var profile = await response.Content.ReadFromJsonAsync<PostnomicAuthorProfile>(cancellationToken);
         if (profile is null) return null;
 
         return profile with
@@ -96,7 +91,7 @@ public sealed class PostnomicBlogService(
             ("search", search),
             ("lang", language));
 
-        var result = await httpClient.GetFromJsonAsync<PostnomicPagedResult<PostnomicPostSummary>>(
+        var result = await GetJsonAsync<PostnomicPagedResult<PostnomicPostSummary>>(
             $"public/blogs/{_options.BlogSlug}/posts{query}", cancellationToken);
 
         if (result is not null)
@@ -126,11 +121,8 @@ public sealed class PostnomicBlogService(
         CancellationToken cancellationToken = default)
     {
         var langQuery = language is null ? string.Empty : $"?lang={Uri.EscapeDataString(language)}";
-        var response = await httpClient.GetAsync(
+        var post = await GetJsonOrNullIfNotFoundAsync<PostnomicPostDetail>(
             $"public/blogs/{_options.BlogSlug}/posts/{postSlug}{langQuery}", cancellationToken);
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
-        response.EnsureSuccessStatusCode();
-        var post = await response.Content.ReadFromJsonAsync<PostnomicPostDetail>(cancellationToken);
         return post is null ? null : post with { CoverImageUrl = ResolveImageUrl(post.CoverImageUrl) };
     }
 
@@ -140,12 +132,10 @@ public sealed class PostnomicBlogService(
         PostnomicCreateCommentRequest request,
         CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.PostAsJsonAsync(
-            $"public/blogs/{_options.BlogSlug}/posts/{postSlug}/comments",
-            request,
-            cancellationToken);
+        var path = $"public/blogs/{_options.BlogSlug}/posts/{postSlug}/comments";
+        using var response = await httpClient.PostAsJsonAsync(path, request, cancellationToken);
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<PostnomicComment>(cancellationToken);
+        return await PostnomicResponseReader.ReadJsonAsync<PostnomicComment>(response, path, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -153,7 +143,7 @@ public sealed class PostnomicBlogService(
         int count = 3,
         CancellationToken cancellationToken = default)
     {
-        var result = await httpClient.GetFromJsonAsync<List<PostnomicPopularPost>>(
+        var result = await GetJsonAsync<List<PostnomicPopularPost>>(
             $"public/blogs/{_options.BlogSlug}/posts/top-commented?count={count}",
             cancellationToken);
         return result ?? [];
@@ -164,7 +154,7 @@ public sealed class PostnomicBlogService(
         int count = 3,
         CancellationToken cancellationToken = default)
     {
-        var result = await httpClient.GetFromJsonAsync<List<PostnomicPopularPost>>(
+        var result = await GetJsonAsync<List<PostnomicPopularPost>>(
             $"public/blogs/{_options.BlogSlug}/posts/most-read?count={count}",
             cancellationToken);
         return result ?? [];
@@ -210,6 +200,32 @@ public sealed class PostnomicBlogService(
             cancellationToken);
 
         response.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>
+    /// GETs <paramref name="path"/> and deserializes the body. A non-success status throws
+    /// <see cref="HttpRequestException"/> via <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/>
+    /// — exactly what <c>HttpClient.GetFromJsonAsync</c> did before — and an unusable success body
+    /// throws <see cref="PostnomicUpstreamException"/> (see <see cref="PostnomicResponseReader"/>).
+    /// </summary>
+    private async Task<T?> GetJsonAsync<T>(string path, CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.GetAsync(path, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await PostnomicResponseReader.ReadJsonAsync<T>(response, path, cancellationToken);
+    }
+
+    /// <summary>
+    /// Like <see cref="GetJsonAsync{T}"/>, but a <c>404 Not Found</c> means "does not exist" and
+    /// returns <see langword="null"/>.
+    /// </summary>
+    private async Task<T?> GetJsonOrNullIfNotFoundAsync<T>(string path, CancellationToken cancellationToken)
+        where T : class
+    {
+        using var response = await httpClient.GetAsync(path, cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+        response.EnsureSuccessStatusCode();
+        return await PostnomicResponseReader.ReadJsonAsync<T>(response, path, cancellationToken);
     }
 
     /// <summary>
