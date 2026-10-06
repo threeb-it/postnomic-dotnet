@@ -29,7 +29,7 @@ public class IndexModel(
     /// The page size used when the request carries no <c>?PageSize=</c>. Generated links leave the
     /// parameter out when it equals this value, so the default page size has exactly one URL.
     /// </summary>
-    public const int DefaultPageSize = 5;
+    public static readonly int DefaultPageSize = 5;
 
     // ── Query parameters ──────────────────────────────────────────────────────
 
