@@ -213,7 +213,10 @@
                 <div class="@(Model.Semantic ? "" : "card-body")">
                     <h5 class="@(Model.Semantic ? Model.Cls.WidgetTitle : "card-title")">@Localizer["Search"]</h5>
                     <form method="get" action="@indexUrl" rel="@Model.FilterRel">
+                        @if (!Model.IsDefaultPageSize)
+                        {
                         <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                        }
                         <div class="@(Model.Semantic ? Model.Cls.SearchBox : "input-group")">
                             <input type="search"
                                    name="search"
