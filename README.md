@@ -195,6 +195,76 @@ The SDK gives you access to the full Postnomic API:
 - **Client-Side Caching** -- optional in-memory cache with per-resource TTLs and explicit invalidation via `IPostnomicCacheControl`
 - **Theming** -- opt into framework-free `pn-*` classes and a shipped `--pn-*` variable-driven stylesheet instead of Bootstrap (see [Theming / MarkupStyle](#theming--markupstyle))
 
+## Authoring and blog management
+
+`IPostnomicAuthoringService` (registered with `AddPostnomicAuthoringClient`) is the write side: it
+authenticates with a **Personal Access Token** and is scoped to one blog by its public ID.
+
+```csharp
+builder.Services.AddPostnomicAuthoringClient(options =>
+{
+    options.BaseUrl = "https://api.postnomic.com";
+    options.PersonalAccessToken = "pnp_...";   // from the dashboard's "Access Tokens" page
+    options.BlogId = "3f2a1c9e-....";          // the blog's public ID, not its slug
+});
+```
+
+| Method | What it does |
+|---|---|
+| `CreatePostAsync`, `UpdatePostAsync` | Create a draft / replace a post. Both accept `PublishedAt` (see below). |
+| `GetPostAsync`, `GetPostBySlugAsync` | Read a post by public ID or by slug, **in any status** -- the reader client only sees published posts. `null` when there is no such post. |
+| `PublishPostAsync`, `UnpublishPostAsync`, `ArchivePostAsync` | Lifecycle. Archiving takes a post offline and keeps it. |
+| `DeletePostAsync` | **Permanently** deletes a post with its translations. Cannot be undone. |
+| `UploadImageAsync` | Upload an image; returns its `/media/blob/...` URL. |
+| `GetPostTranslationsAsync`, `SetPostTranslationAsync`, `DeletePostTranslationAsync` | Translations in the blog's non-default languages. |
+| `GetBlogAsync`, `GetBlogsAsync` | The blog(s) as a member sees them, including `DefaultLanguage`. |
+| `CreateBlogAsync` | Create a blog (not scoped to `BlogId`). `403` "Blog limit reached" when the plan allows no further blog. |
+| `RenameBlogAsync` | Rename a blog's name and/or slug (see below). |
+
+### Which language is the post's own?
+
+`GetBlogAsync()` returns the blog's `DefaultLanguage`. A post's own title, slug and content are in
+that language; every other language goes through `SetPostTranslationAsync`, and the API refuses a
+translation *in* the default language with `400`. Read it instead of inferring it from that `400`.
+
+### Importing content with its original date
+
+`PublishedAt` on `PostnomicCreatePostRequest` creates the post already published, dated as given,
+in one call. It needs the `Editor` role and a time that is not in the future. On
+`PostnomicUpdatePostRequest` it corrects the publish date of a post that is `Published` or
+`Unpublished`; left `null`, the stored date is untouched.
+
+```csharp
+var existing = await authoring.GetPostBySlugAsync("hello-world");   // drafts included
+if (existing is null)
+{
+    await authoring.CreatePostAsync(new PostnomicCreatePostRequest
+    {
+        Title = "Hello World",
+        Slug = "hello-world",
+        Content = html,
+        PublishedAt = new DateTime(2024, 3, 9, 8, 15, 0, DateTimeKind.Utc)
+    });
+}
+```
+
+### Renaming a blog
+
+```csharp
+var result = await authoring.RenameBlogAsync(new PostnomicRenameBlogRequest { Slug = "new-slug" });
+// result.PreviousSlug, result.FormerSlugExpiresAt, result.MediaFiles, result.PostsRewritten
+```
+
+Changing the slug copies the blog's media to the new slug, rewrites the media references stored in
+that blog's posts and translations, and switches the blog's address. **Nothing breaks on the day:**
+for a grace period (`FormerSlugExpiresAt`, 90 days by default) the API keeps answering public
+requests made with the old slug -- so a reader client still configured with the old
+`options.BlogSlug` keeps working -- and every old media URL keeps being served. Responses to an old
+slug carry the header `X-Postnomic-Blog-Slug` with the current one. Update `BlogSlug` within the
+grace period. `BlogId` does not change. A rename is reversed by renaming back, and a call that
+fails part-way (for example `503`) leaves the blog unchanged and is completed by calling again with
+the same request. Requires the `Admin` role and API support for the rename endpoint.
+
 ## Error handling
 
 What `IPostnomicBlogService` does when the API does not answer with usable data:
@@ -222,7 +292,8 @@ request path without its query string) and `Failure`. Before 1.10.0 the same res
 > - **Reads** (`GetPostsAsync`, `GetPostAsync`, `GetBlogAsync`, ...) are safe to retry at the call site, or
 >   render a fallback.
 > - **Writes** (`CreatePostAsync`, `UpdatePostAsync`, `PublishPostAsync`, `UploadImageAsync`,
->   `SetPostTranslationAsync`, `CreateCommentAsync`, ...) must **not** be retried blindly. A success status
+>   `SetPostTranslationAsync`, `CreateBlogAsync`, `CreateCommentAsync`, ...) must **not** be retried
+>   blindly. (`RenameBlogAsync` is the exception: repeating it is safe by design.) A success status
 >   with an empty body means the server most likely performed the write and only the response was lost;
 >   retrying can create a duplicate post, image or comment. Verify the state first (for example fetch the
 >   post by id or slug) and retry only if the write is really missing.
