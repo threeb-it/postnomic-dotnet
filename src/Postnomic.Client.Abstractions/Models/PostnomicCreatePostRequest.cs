@@ -71,4 +71,14 @@ public record PostnomicCreatePostRequest
     /// <see langword="false"/>.
     /// </summary>
     public bool PublishImmediately { get; init; }
+
+    /// <summary>
+    /// Optional. Creates the post already <b>published</b>, with this as its publish date, in the
+    /// one create call — for bringing in content that was first published elsewhere. Interpreted
+    /// as UTC. The API refuses a future time (schedule the post instead), a caller below the
+    /// <c>Editor</c> role, and a post with <see cref="ReviewRequired"/> set; nothing is created in
+    /// any of those cases. When set, <see cref="PublishImmediately"/> is redundant and no separate
+    /// publish call is made. Leave <see langword="null"/> to create a draft.
+    /// </summary>
+    public DateTime? PublishedAt { get; init; }
 }

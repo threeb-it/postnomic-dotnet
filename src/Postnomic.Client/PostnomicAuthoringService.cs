@@ -36,7 +36,9 @@ public sealed class PostnomicAuthoringService(
         using var response = await httpClient.PostAsJsonAsync(PostsRoute, request, cancellationToken);
         var post = await ReadOrThrowAsync<PostnomicPost>(response, PostsRoute, cancellationToken);
 
-        if (request.PublishImmediately)
+        // With PublishedAt the API created the post already published; a second publish would be
+        // refused, and would overwrite the date if it were not.
+        if (request.PublishImmediately && request.PublishedAt is null)
         {
             post = await PublishPostAsync(post.PublicId, cancellationToken);
         }
@@ -62,6 +64,66 @@ public sealed class PostnomicAuthoringService(
         using var response = await httpClient.GetAsync(path, cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound) return null;
         return await ReadOrThrowAsync<PostnomicPost>(response, path, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<PostnomicPost?> GetPostBySlugAsync(
+        string slug,
+        bool includeUnpublished = true,
+        CancellationToken cancellationToken = default)
+    {
+        var path = $"{PostsRoute}/by-slug/{Uri.EscapeDataString(slug)}?includeUnpublished={(includeUnpublished ? "true" : "false")}";
+        using var response = await httpClient.GetAsync(path, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound) return null;
+        return await ReadOrThrowAsync<PostnomicPost>(response, path, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task DeletePostAsync(string postId, CancellationToken cancellationToken = default)
+    {
+        using var response = await httpClient.DeleteAsync($"{PostsRoute}/{postId}", cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<PostnomicBlog?> GetBlogAsync(string? blogId = null, CancellationToken cancellationToken = default)
+    {
+        var path = $"blogs/{blogId ?? _options.BlogId}";
+        using var response = await httpClient.GetAsync(path, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound) return null;
+        return await ReadOrThrowAsync<PostnomicBlog>(response, path, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<PostnomicBlog>> GetBlogsAsync(CancellationToken cancellationToken = default)
+    {
+        const string path = "blogs";
+        using var response = await httpClient.GetAsync(path, cancellationToken);
+        return await ReadOrThrowAsync<List<PostnomicBlog>>(response, path, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<PostnomicBlog> CreateBlogAsync(
+        PostnomicCreateBlogRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        const string path = "blogs";
+        using var response = await httpClient.PostAsJsonAsync(path, request, cancellationToken);
+        return await ReadOrThrowAsync<PostnomicBlog>(response, path, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<PostnomicBlogRenameResult> RenameBlogAsync(
+        PostnomicRenameBlogRequest request,
+        string? blogId = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name) && string.IsNullOrWhiteSpace(request.Slug))
+            throw new ArgumentException("Supply a new name, a new slug, or both.", nameof(request));
+
+        var path = $"blogs/{blogId ?? _options.BlogId}/rename";
+        using var response = await httpClient.PostAsJsonAsync(path, request, cancellationToken);
+        return await ReadOrThrowAsync<PostnomicBlogRenameResult>(response, path, cancellationToken);
     }
 
     /// <inheritdoc />
