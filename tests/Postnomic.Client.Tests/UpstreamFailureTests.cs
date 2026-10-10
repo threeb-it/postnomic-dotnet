@@ -54,6 +54,13 @@ public class UpstreamFailureTests
         [nameof(IPostnomicAuthoringService.GetPostTranslationsAsync)] = (s, ct) => s.GetPostTranslationsAsync("p1", ct),
         [nameof(IPostnomicAuthoringService.SetPostTranslationAsync)] = (s, ct) =>
             s.SetPostTranslationAsync("p1", "de", new PostnomicUpsertTranslationRequest { Title = "T", Slug = "t" }, ct),
+        [nameof(IPostnomicAuthoringService.GetPostBySlugAsync)] = (s, ct) => s.GetPostBySlugAsync("hello", cancellationToken: ct),
+        [nameof(IPostnomicAuthoringService.GetBlogAsync)] = (s, ct) => s.GetBlogAsync(cancellationToken: ct),
+        [nameof(IPostnomicAuthoringService.GetBlogsAsync)] = (s, ct) => s.GetBlogsAsync(ct),
+        [nameof(IPostnomicAuthoringService.CreateBlogAsync)] = (s, ct) =>
+            s.CreateBlogAsync(new PostnomicCreateBlogRequest { Name = "N", Slug = "n", CanonicalBaseUrl = "https://n.example" }, ct),
+        [nameof(IPostnomicAuthoringService.RenameBlogAsync)] = (s, ct) =>
+            s.RenameBlogAsync(new PostnomicRenameBlogRequest { Slug = "n" }, cancellationToken: ct),
     };
 
     /// <summary>The unusable success responses, by name.</summary>
@@ -128,7 +135,9 @@ public class UpstreamFailureTests
         var ex = await Assert.ThrowsAsync<PostnomicUpstreamException>(
             () => AuthoringReads[method](sut, TestContext.Current.CancellationToken));
 
-        AssertUpstream(ex, failure, respond().StatusCode, $"/blogs/{BlogId}/");
+        // Blog management is not scoped to one blog (POST /blogs, GET /blogs), so the common prefix
+        // of every authoring route is the collection itself.
+        AssertUpstream(ex, failure, respond().StatusCode, "/blogs");
     }
 
     [Fact]

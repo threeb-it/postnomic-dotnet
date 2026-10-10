@@ -109,6 +109,104 @@ public interface IPostnomicAuthoringService
     /// </exception>
     Task<PostnomicPost> PublishPostAsync(string postId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Retrieves a single post by its slug, in any status by default — the authoring counterpart of
+    /// <see cref="IPostnomicBlogService.GetPostAsync"/>, which can only see published posts. Use it
+    /// to find out whether a post already exists before creating it.
+    /// </summary>
+    /// <param name="slug">The post's slug: its own, or that of one of its translations.</param>
+    /// <param name="includeUnpublished">
+    /// <see langword="true"/> (the default) also finds drafts and scheduled, unpublished and archived
+    /// posts, and requires the <c>Editor</c> role. <see langword="false"/> looks among published posts
+    /// only, which any member of the blog may do.
+    /// </param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The post, or <see langword="null"/> if the blog has no such post.</returns>
+    /// <exception cref="PostnomicApiException">Thrown when the API rejects the request (e.g. 403).</exception>
+    Task<PostnomicPost?> GetPostBySlugAsync(
+        string slug,
+        bool includeUnpublished = true,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Permanently deletes a post together with its translations, reviews and cross-posts. This
+    /// cannot be undone — <see cref="ArchivePostAsync"/> takes a post offline and keeps it.
+    /// Requires the <c>Editor</c> role.
+    /// </summary>
+    /// <param name="postId">The post's public ID.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <exception cref="PostnomicApiException">Thrown when the API rejects the request (e.g. 404).</exception>
+    Task DeletePostAsync(string postId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a blog as its members see it, including its
+    /// <see cref="PostnomicBlog.DefaultLanguage"/>.
+    /// </summary>
+    /// <param name="blogId">
+    /// The blog's public ID, or <see langword="null"/> for the configured
+    /// <see cref="PostnomicClientOptions.BlogId"/>.
+    /// </param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The blog, or <see langword="null"/> if it does not exist.</returns>
+    /// <exception cref="PostnomicApiException">Thrown when the API rejects the request (e.g. 403 for a blog the token's owner is not a member of).</exception>
+    Task<PostnomicBlog?> GetBlogAsync(string? blogId = null, CancellationToken cancellationToken = default);
+
+    /// <summary>Lists every blog the token's owner is a member of.</summary>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <exception cref="PostnomicApiException">Thrown when the API rejects the request.</exception>
+    Task<IReadOnlyList<PostnomicBlog>> GetBlogsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a new blog owned by the token's owner, who becomes its <c>Admin</c>. This call is
+    /// not scoped to <see cref="PostnomicClientOptions.BlogId"/>; to author in the new blog,
+    /// configure a client with the returned <see cref="PostnomicBlog.PublicId"/>.
+    /// </summary>
+    /// <param name="request">The new blog.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <exception cref="PostnomicApiException">
+    /// Thrown when the API rejects the request: 403 "Blog limit reached" when the owner's plan allows
+    /// no further blog, 409 when the slug is taken or reserved.
+    /// </exception>
+    Task<PostnomicBlog> CreateBlogAsync(
+        PostnomicCreateBlogRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Renames a blog: its display name, its slug, or both. Requires the <c>Admin</c> role.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Changing the slug copies all of the blog's media to the new slug, rewrites the media
+    /// references stored in that blog's posts and translations, and then switches the blog's
+    /// address; no other blog is touched. The old slug and every old media URL keep answering for a
+    /// grace period (<see cref="PostnomicBlogRenameResult.FormerSlugExpiresAt"/>, 90 days by
+    /// default), so a reader client still configured with the old
+    /// <see cref="PostnomicClientOptions.BlogSlug"/> keeps working until it is updated. The blog's
+    /// public ID — <see cref="PostnomicClientOptions.BlogId"/> — does not change.
+    /// </para>
+    /// <para>
+    /// A rename is reversed by renaming back. If the call fails part-way (for instance a 503 when
+    /// not every media file arrived) the blog is unchanged; calling again with the same request
+    /// continues where it stopped.
+    /// </para>
+    /// </remarks>
+    /// <param name="request">The new name and/or slug.</param>
+    /// <param name="blogId">
+    /// The blog's public ID, or <see langword="null"/> for the configured
+    /// <see cref="PostnomicClientOptions.BlogId"/>.
+    /// </param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <exception cref="ArgumentException">Thrown when the request names neither a name nor a slug.</exception>
+    /// <exception cref="PostnomicApiException">
+    /// Thrown when the API rejects the request: 400 for an invalid slug, 403 below <c>Admin</c>,
+    /// 409 when the slug is taken or reserved or a different rename is still in progress, 503 when
+    /// the media copy could not be verified.
+    /// </exception>
+    Task<PostnomicBlogRenameResult> RenameBlogAsync(
+        PostnomicRenameBlogRequest request,
+        string? blogId = null,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Unpublishes a previously published post, taking it offline.</summary>
     /// <param name="postId">The public ID of the post to unpublish.</param>
     /// <param name="cancellationToken">A token that can be used to cancel the asynchronous operation.</param>

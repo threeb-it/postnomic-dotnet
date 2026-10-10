@@ -46,4 +46,13 @@ public record PostnomicUpdatePostRequest
 
     /// <summary>The slugs of the categories to assign to this post. Unknown slugs are ignored by the API.</summary>
     public ICollection<string> CategorySlugs { get; init; } = [];
+
+    /// <summary>
+    /// Optional. Sets the post's publish date — for restoring an original date that republishing
+    /// overwrote. Interpreted as UTC. The API accepts it only while the post is
+    /// <see cref="PostnomicPostStatus.Published"/> or <see cref="PostnomicPostStatus.Unpublished"/>
+    /// and never for a future time; both are refused with 400. Leave <see langword="null"/> and the
+    /// stored publish date is left untouched.
+    /// </summary>
+    public DateTime? PublishedAt { get; init; }
 }
